@@ -928,7 +928,7 @@ typedef struct tagSEOBdynamics
     REAL8 *polarprDotVec;
 } SEOBdynamics;
 
-#define v4SAdynamicsVariables 8
+#define v4SAdynamicsVariables 10
 typedef struct {
     UINT length;
     REAL8 th22Peak;
@@ -943,11 +943,12 @@ typedef struct {
 
     REAL8 *drVec;
     REAL8 *dphiVec;
+
+    REAL8 *HVec;
     
     REAL8 *dprTVec;
     REAL8 *dpphiVec;
 
-    REAL8 *HVec;
 }SEOBSAdynamics;
 
 typedef struct tagSphHarmListEOBNonQCCoeffs {

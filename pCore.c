@@ -3429,9 +3429,10 @@ INT SEOBComputeExtendedSEOBSAdynamics(SEOBSAdynamics **seobsadynamics,
 
     ret->drVec = ret->array->data + 5*length;
     ret->dphiVec = ret->array->data + 6*length;
-    // ret->dprTVec = ret->array->data + 7*length;
-    // ret->dpphiVec = ret->array->data + 8*length;
     ret->HVec = ret->array->data + 7*length;
+    
+    ret->dprTVec = ret->array->data + 8*length;
+    ret->dpphiVec = ret->array->data + 9*length;
     *seobsadynamics = ret;
     return CEV_SUCCESS;
 }

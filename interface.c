@@ -796,6 +796,8 @@ void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, RE
         vf = r * dyn_debug->dphiVec[i];
         prT = dyn_debug->prTVec[i];
         pphi = dyn_debug->pphiVec[i];
+        // print_debug("[%d](r, phi, vr, vf, prT, pphi) = (%f, %f, %f, %f, %f)\n",
+        //     i, r, phi, vr, vf, prT, pphi);
         output->timeM->data[i] = dyn_debug->tVec[i];
         output->xVec->data[i] = r * cos(phi);
         output->yVec->data[i] = r * sin(phi);
