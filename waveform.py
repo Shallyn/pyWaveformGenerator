@@ -66,7 +66,7 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 2, **kwargs)
     ge = SEOBNRWaveformCaller()
     ge.set_params(m1 = m1, m2 = m2, 
                   s1x = s1x, s1y = s1y, s1z = s1z,
-                  s2x = s2x, s2y = s2y, s2z = s2z,
+                  s2x = s2x, s2y = s2y, s2z = s2z, srate=srate,
                   ecc = e0, distance = dL, code_version=code_version,
                   inc_rad = iota_rad, beta_rad = beta_rad, phiRef_rad = Phi_rad, f_min = f_min, ret_dyn = True, **kwargs)
     waveform, dynamics = ge.run()
