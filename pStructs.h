@@ -35,6 +35,8 @@ typedef struct tagHyperParams
     REAL8 pphi_ini;
     REAL8 ptheta_ini;
     REAL8 tStepBack;
+    REAL8 inEPS_REL;
+    REAL8 inEPS_ABS;
 }HyperParams;
 
 typedef struct {

@@ -113,6 +113,8 @@ typedef struct {
     REAL8 dtPeak;
     INT egw_flag;
     INT ret_dyn;
+    REAL8 inEPS_REL;
+    REAL8 inEPS_ABS;
 }pyInputParams_t;
 
 typedef struct {
@@ -300,6 +302,8 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     hparams.dSO = params->dSO;
     hparams.dtPeak = params->dtPeak;
     hparams.flagZframe = FLAG_SEOBNRv4P_ZFRAME_L;
+    hparams.inEPS_REL = params->inEPS_REL;
+    hparams.inEPS_ABS = params->inEPS_ABS;
     set_egw_flag(params->egw_flag);
     SET_CODE_VERSION(params->code_version);
     set_PrecFlag(params->prec_flag);

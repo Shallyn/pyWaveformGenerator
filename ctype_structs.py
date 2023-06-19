@@ -753,7 +753,9 @@ class pyInputParams(ctypes.Structure):
                 ('dSO', ctypes.c_double),
                 ('dtPeak', ctypes.c_double),
                 ('egw_flag', ctypes.c_int),
-                ('ret_dyn', ctypes.c_int))
+                ('ret_dyn', ctypes.c_int),
+                ('inEPS_REL', ctypes.c_double),
+                ('inEPS_ABS', ctypes.c_double))
 
 
 class pyOutputStruct(ctypes.Structure):

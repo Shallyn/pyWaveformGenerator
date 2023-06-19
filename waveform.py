@@ -11,7 +11,7 @@ from . import SEOBNRWaveformCaller
 from .psd import GWDetector
 from .pyUtils import rTimeSeries
 
-def calculate_waveform(params, f_min, code_version = 2, **kwargs):
+def calculate_waveform(params, f_min, srate = 16384, code_version = 2, **kwargs):
     '''
         Calculate EOB waveform
         INPUT
@@ -26,6 +26,13 @@ def calculate_waveform(params, f_min, code_version = 2, **kwargs):
                 which is equivalent to the phiRef parameter in lalsim-inspiral
             > Phi_rad the complex angle of h+ - ihx at the merge stage
         f_min: initial orbital frequency
+        srate: the output sample rate
+            Note. Lowering this value does not significantly improve computational speed, 
+                as the time consuming part of the code is the numerical solution of the dynamic system, 
+                where adaptive stepping is used. 
+                If you want to sacrifice accuracy to improve calculation speed, 
+                you can set EPS_REL and EPS_ABS (in kwargs).
+                For spin aligned cases, the default setting is EPS_REL=1e-9, EPS_ABS=1e-10
         code_version: if you set code_version=0, this code would equivalent to SEOBNRv4PHM 
                         (sometimes you may need to add an extra argument is_constp=True)
                       if you set code_version=1, this code will use another eccentricity definition

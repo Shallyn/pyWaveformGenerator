@@ -253,6 +253,10 @@ if(1) {failed = 1; goto QUIT;}
         EPS_REL = 1.0e-9;
         EPS_ABS = 1.0e-10;
     }
+    if (hparams->inEPS_REL > 0.)
+        EPS_REL = hparams->inEPS_REL;
+    if (hparams->inEPS_ABS > 0.)
+        EPS_ABS = hparams->inEPS_ABS;
     status = SEOBIntegrateDynamics(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
@@ -344,8 +348,11 @@ if(1) {failed = 1; goto QUIT;}
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Step back and evolve EOB trajectory at high sampling rate (HiS).", this_step);
     if (!core->alignedSpins)
     {
-        REAL8 EPS_ABS = 1.0e-8;
-        REAL8 EPS_REL = 1.0e-8;
+        EPS_ABS = 1.0e-8;
+        EPS_REL = 1.0e-8;
+    } else {
+        EPS_REL = 1.0e-9;
+        EPS_ABS = 1.0e-10;
     }
     REAL8 deltaTHiS = 1. / 50; /* Fixed at 1/50M */
     REAL8 tstartHiSTarget = seobdynamicsAdaS->tVec[retLenAdaS - 1] - tStepBack;
@@ -1329,6 +1336,10 @@ if(1) {failed = 1; goto QUIT;}
         EPS_REL = 1.0e-9;
         EPS_ABS = 1.0e-10;
     }
+    if (hparams->inEPS_REL > 0.)
+        EPS_REL = hparams->inEPS_REL;
+    if (hparams->inEPS_ABS > 0.)
+        EPS_ABS = hparams->inEPS_ABS;
     status = SEOBIntegrateDynamics_Conserve(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
@@ -1657,6 +1668,10 @@ INT evolve_adaptive(REAL8 m1,  REAL8 m2,
         EPS_REL = 1.0e-9;
         EPS_ABS = 1.0e-10;
     }
+    if (hparams->inEPS_REL > 0.)
+        EPS_REL = hparams->inEPS_REL;
+    if (hparams->inEPS_ABS > 0.)
+        EPS_ABS = hparams->inEPS_ABS;
     status = SEOBIntegrateDynamics_adaptive(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
@@ -1727,8 +1742,11 @@ INT evolve_adaptive(REAL8 m1,  REAL8 m2,
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Step back and evolve EOB trajectory at high sampling rate (HiS).", this_step);
     if (!core->alignedSpins)
     {
-        REAL8 EPS_ABS = 1.0e-8;
-        REAL8 EPS_REL = 1.0e-8;
+        EPS_ABS = 1.0e-8;
+        EPS_REL = 1.0e-8;
+    } else {
+        EPS_REL = 1.0e-9;
+        EPS_ABS = 1.0e-10;
     }
     REAL8 deltaTHiS = 1. / 50; /* Fixed at 1/50M */
     REAL8 tstartHiSTarget = seobdynamicsAdaS->tVec[retLenAdaS - 1] - tStepBack;
@@ -2650,6 +2668,10 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
     REAL8 deltaT_min = 8.0e-5;
     REAL8 EPS_REL = 1.0e-10;
     REAL8 EPS_ABS = 1.0e-10;
+    if (hparams->inEPS_REL > 0.)
+        EPS_REL = hparams->inEPS_REL;
+    if (hparams->inEPS_ABS > 0.)
+        EPS_ABS = hparams->inEPS_ABS;
     status = SEOBIntegrateDynamics_SA(&dynamicsAdaS, &retLenAdaS, 
         ICvalues_SA, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core);
@@ -3622,6 +3644,10 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     REAL8 deltaT_min = 8.0e-5;
     REAL8 EPS_ABS = 1.0e-8;
     REAL8 EPS_REL = 1.0e-8;
+    if (hparams->inEPS_REL > 0.)
+        EPS_REL = hparams->inEPS_REL;
+    if (hparams->inEPS_ABS > 0.)
+        EPS_ABS = hparams->inEPS_ABS;
     status = SEOBIntegrateDynamics_prec(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);
