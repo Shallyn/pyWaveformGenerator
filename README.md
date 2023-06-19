@@ -7,6 +7,8 @@ Installation && compile
 ./configure
 make
 ```
+sometimes the lib cannot use in Apple core macbook.
+
 
 Run in python
 ```
