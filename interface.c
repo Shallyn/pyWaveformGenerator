@@ -485,7 +485,7 @@ static void apply_phic_on_hpc(REAL8Vector *tMVec, REAL8Vector *hplus, REAL8Vecto
     REAL8 hp, hc, phi0, dphi;
     hp = hplus->data[ipeak22];
     hc = hcross->data[ipeak22];
-    phi0 = atan2(-hp, hc);
+    phi0 = atan2(-hc, hp);
     dphi = phic - phi0;
     for(int i=0; i<hplus->length; i++)
     {
@@ -619,7 +619,7 @@ void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, 
     {
         for (m = -l; m <= l; m++) 
         {
-            if (is_only22 && l != 2 && abs(m) != 2)
+            if (is_only22 && (l != 2 || abs(m) != 2))
                 continue;
             SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
             COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All_prec->hLM, l, m);
@@ -763,7 +763,7 @@ void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL
     {
         for (m = -l; m <= l; m++) 
         {
-            if (is_only22 && l != 2 && abs(m) != 2)
+            if (is_only22 && (l != 2 || abs(m) != 2))
                 continue;
             SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
             COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
@@ -867,7 +867,7 @@ void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22,
     {
         for (m = -l; m <= l; m++) 
         {
-            if (is_only22 && l != 2 && abs(m) != 2)
+            if (is_only22 && (l != 2 || abs(m) != 2))
                 continue;
             SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
             // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
@@ -982,7 +982,7 @@ void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REA
     {
         for (m = -l; m <= l; m++) 
         {
-            if (is_only22 && l != 2 && abs(m) != 2)
+            if (is_only22 && (l != 2 || abs(m) != 2))
                 continue;
             SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
             // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
