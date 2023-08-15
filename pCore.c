@@ -1143,7 +1143,6 @@ static INT XLALSimIMREOBSACalcCalibCoefficientHigherModes (
     gsl_interp_accel_reset (acc);
     /* rho_lm^l + f_lm before the calibration parameter is set */
     rholmBeforeCalibAttachmentPoint = gsl_spline_eval (spline, timewavePeak, acc);
-
     REAL8 rholmErealDot, rholmEimagDot, rholmErealDDot, rholmEimagDDot;
     status = gsl_spline_init (spline, timeVec->data, rholmpwrlEVecReal->data, rholmpwrlEVecReal->length);
     if (status != GSL_SUCCESS)

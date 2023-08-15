@@ -863,23 +863,91 @@ void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22,
 
     INT l, m;
     COMPLEX16 hpc_contrib, sYlm;
-    for (l = 2; l <= 5; l++) 
-    {
-        for (m = -l; m <= l; m++) 
-        {
-            if (is_only22 && (l != 2 || abs(m) != 2))
-                continue;
-            SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-            // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
-            CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(PLM, l, m)->campphase;
-            for (i = 0; i < length; i++) 
+    // for (l = 2; l <= 5; l++) 
+    // {
+    //     for (m = -l; m <= l; m++) 
+    //     {
+    //         if (is_only22 && (l != 2 || abs(m) != 2))
+    //             continue;
+    //         SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+    //         // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
+    //         CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(PLM, l, m)->campphase;
+            for (i = 0; i < length; i++)
             {
-                hpc_contrib = sYlm * (hIlm->camp_real->data[i]*cos(hIlm->phase->data[i]) + I*hIlm->camp_real->data[i]*sin(hIlm->phase->data[i]));
+                // 22
+                l=2;m=2;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) + I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 2-2
+                l=2;m=-2;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) - I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                if (is_only22)
+                    continue;
+                // 21
+                l=2;m=1;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h21->camp_real->data[i]*cos(h21->phase->data[i]) + I*h21->camp_real->data[i]*sin(h21->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 2-1
+                l=2;m=-1;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h21->camp_real->data[i]*cos(h21->phase->data[i]) - I*h21->camp_real->data[i]*sin(h21->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 33
+                l=3;m=3;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h33->camp_real->data[i]*cos(h33->phase->data[i]) + I*h33->camp_real->data[i]*sin(h33->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 3-3
+                l=3;m=-3;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (-h33->camp_real->data[i]*cos(h33->phase->data[i]) + I*h33->camp_real->data[i]*sin(h33->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 44
+                l=4;m=4;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h44->camp_real->data[i]*cos(h44->phase->data[i]) + I*h44->camp_real->data[i]*sin(h44->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 4-4
+                l=4;m=-4;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h44->camp_real->data[i]*cos(h44->phase->data[i]) - I*h44->camp_real->data[i]*sin(h44->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 55
+                l=5;m=5;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h55->camp_real->data[i]*cos(h55->phase->data[i]) + I*h55->camp_real->data[i]*sin(h55->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 5-5
+                l=5;m=-5;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (-h55->camp_real->data[i]*cos(h55->phase->data[i]) + I*h55->camp_real->data[i]*sin(h55->phase->data[i]));
                 output->hplus->data[i] += amp0 * creal(hpc_contrib);
                 output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
             }
-        }
-    }
+    //     }
+    // }
     INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
     apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
     STRUCTFREE(amp22, REAL8Vector);
@@ -975,26 +1043,94 @@ void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REA
         }
 #endif
     }
-
     INT l, m;
     COMPLEX16 hpc_contrib, sYlm;
-    for (l = 2; l <= 5; l++) 
-    {
-        for (m = -l; m <= l; m++) 
-        {
-            if (is_only22 && (l != 2 || abs(m) != 2))
-                continue;
-            SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-            // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
-            CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(hLM, l, m)->campphase;
-            for (i = 0; i < length; i++) 
+    // for (l = 2; l <= 5; l++) 
+    // {
+    //     for (m = -l; m <= l; m++) 
+    //     {
+    //         if (is_only22 && (l != 2 || abs(m) != 2))
+    //             continue;
+    //         //print_debug("here%d%d\n", l, m);
+    //         SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+    //         // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
+    //         CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(hLM, l, abs(m))->campphase;
+            for (i = 0; i < length; i++)
             {
-                hpc_contrib = sYlm * (hIlm->camp_real->data[i]*cos(hIlm->phase->data[i]) + I*hIlm->camp_real->data[i]*sin(hIlm->phase->data[i]));
+                // 22
+                l=2;m=2;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) + I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 2-2
+                l=2;m=-2;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) - I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                if (is_only22)
+                    continue;
+                // 21
+                l=2;m=1;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h21->camp_real->data[i]*cos(h21->phase->data[i]) + I*h21->camp_real->data[i]*sin(h21->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 2-1
+                l=2;m=-1;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h21->camp_real->data[i]*cos(h21->phase->data[i]) - I*h21->camp_real->data[i]*sin(h21->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 33
+                l=3;m=3;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h33->camp_real->data[i]*cos(h33->phase->data[i]) + I*h33->camp_real->data[i]*sin(h33->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 3-3
+                l=3;m=-3;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (-h33->camp_real->data[i]*cos(h33->phase->data[i]) + I*h33->camp_real->data[i]*sin(h33->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 44
+                l=4;m=4;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h44->camp_real->data[i]*cos(h44->phase->data[i]) + I*h44->camp_real->data[i]*sin(h44->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 4-4
+                l=4;m=-4;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h44->camp_real->data[i]*cos(h44->phase->data[i]) - I*h44->camp_real->data[i]*sin(h44->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 55
+                l=5;m=5;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (h55->camp_real->data[i]*cos(h55->phase->data[i]) + I*h55->camp_real->data[i]*sin(h55->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+
+                // 5-5
+                l=5;m=-5;
+                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+                hpc_contrib = sYlm * (-h55->camp_real->data[i]*cos(h55->phase->data[i]) + I*h55->camp_real->data[i]*sin(h55->phase->data[i]));
                 output->hplus->data[i] += amp0 * creal(hpc_contrib);
                 output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
             }
-        }
-    }
+    //     }
+    // }
     INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
     apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
     STRUCTFREE(amp22, REAL8Vector);
