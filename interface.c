@@ -874,7 +874,7 @@ void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22,
             CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(PLM, l, m)->campphase;
             for (i = 0; i < length; i++) 
             {
-                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) + I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
+                hpc_contrib = sYlm * (hIlm->camp_real->data[i]*cos(hIlm->phase->data[i]) + I*hIlm->camp_real->data[i]*sin(hIlm->phase->data[i]));
                 output->hplus->data[i] += amp0 * creal(hpc_contrib);
                 output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
             }
@@ -989,7 +989,7 @@ void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REA
             CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(hLM, l, m)->campphase;
             for (i = 0; i < length; i++) 
             {
-                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) + I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
+                hpc_contrib = sYlm * (hIlm->camp_real->data[i]*cos(hIlm->phase->data[i]) + I*hIlm->camp_real->data[i]*sin(hIlm->phase->data[i]));
                 output->hplus->data[i] += amp0 * creal(hpc_contrib);
                 output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
             }
