@@ -516,10 +516,16 @@ def simulate_mcmc(argv):
             f_minE = f_min
             if args.adjust:
                 f_minE = f_min * (1. - ecc)
-            hstrain_list, waveform = simulate_waveform_from_detector_list(params0,
-                            gps0 = gps0, f_min = f_minE,
-                            detectors = detector_list, is_only22 = False, retall=True,
-                            prec_flag=3, log_level = args.log_level, code_version = args.code_version)
+            if args.model.lower() == 'spinaligned' or args.model.lower() == 'sa':
+                hstrain_list, waveform = simulate_waveform_from_detector_list(params0,
+                                gps0 = gps0, f_min = f_minE,
+                                detectors = detector_list, is_only22 = False, retall=True,
+                                egw_flag = 1, log_level = args.log_level, code_version = args.code_version)
+            else:
+                hstrain_list, waveform = simulate_waveform_from_detector_list(params0,
+                                gps0 = gps0, f_min = f_minE,
+                                detectors = detector_list, is_only22 = False, retall=True,
+                                prec_flag=3, log_level = args.log_level, code_version = args.code_version)
             hstrain_rts_list = [hstrain.resample(sample_rate) for hstrain in hstrain_list]
             dump_waveform_to_hdf5(waveform, fh5_fake_signal)
         else:
@@ -611,7 +617,7 @@ def simulate_mcmc(argv):
         # X.L. It is best not to set the eccentricity over 0.6, otherwise it will be easy to raise problems.
         # chi1 = np.array([s1x, s1y, s1z])
         # chi2 = np.array([s2x, s2y, s2z])
-        if  1<=q<=20 and (10. <= Mchirp <= 200.) and 0<= chi1 <= 0.95 and 0<= chi2 <= 0.95 and \
+        if  1<=q<=20 and (5. <= Mchirp <= 200.) and 0<= chi1 <= 0.95 and 0<= chi2 <= 0.95 and \
             0.0 <= th1 <= np.pi and 0.0 <= ph1 <= 2.*np.pi and \
             0.0 <= th2 <= np.pi and 0.0 <= ph2 <= 2.*np.pi and \
             (0.0<= e0 < args.emax) and dL > 0.0 and \
@@ -642,7 +648,7 @@ def simulate_mcmc(argv):
         # X.L. It is best not to set the eccentricity over 0.6, otherwise it will be easy to raise problems.
         # chi1 = np.array([s1x, s1y, s1z])
         # chi2 = np.array([s2x, s2y, s2z])
-        if  1<=q<=20 and (10. <= Mchirp <= 200.) and 0<= chi1 <= 0.95 and 0<= chi2 <= 0.95 and \
+        if  1<=q<=20 and (5. <= Mchirp <= 200.) and 0<= chi1 <= 0.95 and 0<= chi2 <= 0.95 and \
             0.0 <= th1 <= np.pi and 0.0 <= ph1 <= 2.*np.pi and \
             0.0 <= th2 <= np.pi and 0.0 <= ph2 <= 2.*np.pi and dL > 0.0 and \
             0.0 <= theta <= np.pi and 0.0 <= phi <= 2.*np.pi and \
@@ -670,7 +676,7 @@ def simulate_mcmc(argv):
         q, Mchirp, chi1, chi2, e0, dL, theta, phi, iota, psi, t_c, Phi_c = params
         # we may include the spin parameters here if it is more convenient
         # X.L. It is best not to set the eccentricity over 0.6, otherwise it will be easy to raise problems.
-        if  1<=q<=20 and (10. <= Mchirp <= 200.) and 0<= chi1 <= 0.95 and 0<= chi2 <= 0.95 and \
+        if  1<=q<=20 and (5. <= Mchirp <= 200.) and 0<= chi1 <= 0.95 and 0<= chi2 <= 0.95 and \
             dL > 0.0 and 0.0<= e0 < args.emax and \
             0.0 <= theta <= np.pi and 0.0 <= phi <= 2.*np.pi and \
             0.0 <= psi <= np.pi and \
@@ -704,7 +710,7 @@ def simulate_mcmc(argv):
             # X.L. It is best not to set the eccentricity over 0.6, otherwise it will be easy to raise problems.
             # chi1 = np.array([s1x, s1y, s1z])
             # chi2 = np.array([s2x, s2y, s2z])
-            if  1<=q<=20 and (10. <= Mchirp <= 200.) and 0<= chi1 <= 0.95 and 0<= chi2 <= 0.95 and \
+            if  1<=q<=20 and (5. <= Mchirp <= 200.) and 0<= chi1 <= 0.95 and 0<= chi2 <= 0.95 and \
                 0.0 <= th1 <= np.pi and 0.0 <= ph1 <= 2.*np.pi and \
                 0.0 <= th2 <= np.pi and 0.0 <= ph2 <= 2.*np.pi and dL > 0.0 and \
                 0.0 <= theta <= np.pi and 0.0 <= phi <= 2.*np.pi and \

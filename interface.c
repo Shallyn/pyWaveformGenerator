@@ -115,6 +115,7 @@ typedef struct {
     INT ret_dyn;
     REAL8 inEPS_REL;
     REAL8 inEPS_ABS;
+    INT is_coframe;
 }pyInputParams_t;
 
 typedef struct {
@@ -273,6 +274,7 @@ void DestroypyDynOutputStruct_t(pyDynOutputStruct_t *out)
 void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec, pyOutputStruct_t **ret);
 void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBCoreOutputs *All_prec, pyOutputStruct_t **ret);
 void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *hLM, SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret);
+void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *PLM, pyOutputStruct_t **ret);
 
 void convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(SEOBPrecCoreOutputs *All_prec, pyDynOutputStruct_t **ret);
 void convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(SEOBCoreOutputs *All, pyDynOutputStruct_t **ret);
@@ -304,6 +306,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     hparams.flagZframe = FLAG_SEOBNRv4P_ZFRAME_L;
     hparams.inEPS_REL = params->inEPS_REL;
     hparams.inEPS_ABS = params->inEPS_ABS;
+    hparams.is_coframe = params->is_coframe;
     set_egw_flag(params->egw_flag);
     SET_CODE_VERSION(params->code_version);
     set_PrecFlag(params->prec_flag);
@@ -355,7 +358,10 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
             params->deltaT, params->inc, &hparams, All_prec);
         if (status == CEV_SUCCESS)
         {
-            convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All_prec, output);
+            if (hparams.is_coframe)
+                convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(params->is_only22, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All_prec->tVec, All_prec->Plm, output);
+            else
+                convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All_prec, output);
             if (params->ret_dyn)
                 convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(All_prec, dynoutput);
         }
@@ -821,6 +827,66 @@ void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, RE
     return;
 }
 
+void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *PLM, pyOutputStruct_t **ret)
+{
+    INT i;
+    REAL8 mT, amp0;
+    mT = mtot * CST_MTSUN_SI;
+    amp0 = mtot * CST_MRSUN_SI / dL / 1e6 / CST_PC_SI;
+    CAmpPhaseSequence *h22 = SphHarmListCAmpPhaseSequence_GetMode(PLM, 2, 2)->campphase;
+    CAmpPhaseSequence *h21 = SphHarmListCAmpPhaseSequence_GetMode(PLM, 2, 1)->campphase;
+    CAmpPhaseSequence *h33 = SphHarmListCAmpPhaseSequence_GetMode(PLM, 3, 3)->campphase;
+    CAmpPhaseSequence *h44 = SphHarmListCAmpPhaseSequence_GetMode(PLM, 4, 4)->campphase;
+    CAmpPhaseSequence *h55 = SphHarmListCAmpPhaseSequence_GetMode(PLM, 5, 5)->campphase;
+    // REAL8Vector *tVec = h22->xdata;
+    INT length = tVec->length;
+    pyOutputStruct_t *output = CreatePyOutputStruct_t(length);
+    REAL8Vector *amp22 = CreateREAL8Vector(length);
+    for(i=0;i<length;i++)
+    {
+        output->timeM->data[i] = tVec->data[i];
+        output->time->data[i] = output->timeM->data[i] * mT;
+        output->h22_real->data[i] = h22->camp_real->data[i]*cos(h22->phase->data[i]);
+        output->h22_imag->data[i] = h22->camp_real->data[i]*sin(h22->phase->data[i]);
+        output->h21_real->data[i] = h21->camp_real->data[i]*cos(h21->phase->data[i]);
+        output->h21_imag->data[i] = h21->camp_real->data[i]*sin(h21->phase->data[i]);
+        output->h33_real->data[i] = h33->camp_real->data[i]*cos(h33->phase->data[i]);
+        output->h33_imag->data[i] = h33->camp_real->data[i]*sin(h33->phase->data[i]);
+        output->h44_real->data[i] = h44->camp_real->data[i]*cos(h44->phase->data[i]);
+        output->h44_imag->data[i] = h44->camp_real->data[i]*sin(h44->phase->data[i]);
+        output->h55_real->data[i] = h55->camp_real->data[i]*cos(h55->phase->data[i]);
+        output->h55_imag->data[i] = h55->camp_real->data[i]*sin(h55->phase->data[i]);
+        output->hplus->data[i] = 0.0;
+        output->hcross->data[i] = 0.0;
+        amp22->data[i] = h22->camp_real->data[i];
+    }
+
+    INT l, m;
+    COMPLEX16 hpc_contrib, sYlm;
+    for (l = 2; l <= 5; l++) 
+    {
+        for (m = -l; m <= l; m++) 
+        {
+            if (is_only22 && l != 2 && abs(m) != 2)
+                continue;
+            SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+            // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
+            CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(PLM, l, m)->campphase;
+            for (i = 0; i < length; i++) 
+            {
+                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) + I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
+                output->hplus->data[i] += amp0 * creal(hpc_contrib);
+                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+            }
+        }
+    }
+    INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
+    apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
+    STRUCTFREE(amp22, REAL8Vector);
+    *ret = output;
+    return;
+}
+
 void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *hLM, SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret)
 {
     INT i;
@@ -920,7 +986,7 @@ void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REA
                 continue;
             SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
             // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
-            CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(hLM, 2, 2)->campphase;
+            CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(hLM, l, m)->campphase;
             for (i = 0; i < length; i++) 
             {
                 hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) + I*h22->camp_real->data[i]*sin(h22->phase->data[i]));

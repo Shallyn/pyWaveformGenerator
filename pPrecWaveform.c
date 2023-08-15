@@ -1199,7 +1199,7 @@ static COMPLEX16 prec_CalculateWaveformFactor_mode22_v3(SEOBPrecWaveformVariable
         175*(lchia + dm*lchis))*nchia - ((I*(-296*dm + 167*dm*eta + 525*dm*lchia + 525*lchis - 84*eta*lchis) + 
         21*dm*(-1 + 16*eta)*nchia)*nchis)/336 + ((-9*eta)/8 + eta2)*nchis2 + 
         (-82220 + 21168*echis2 - 66050*eta + 19656*lchia + 63*nchia*(592*I + 21*nchia) + 1323*nchis2)/42336;
-    if (PREC_FLAG == 4)
+    if (PREC_FLAG == 4 || PREC_FLAG == 3)
         return 1. + v2 * (rho22v2 + v * (rho22v3
                                     + v * (rho22v4
                         + v * (hCoeffs->rho22v5 + v * (hCoeffs->rho22v6
@@ -1246,21 +1246,32 @@ static COMPLEX16 prec_CalculateWaveformFactor_mode21_v3(SEOBPrecWaveformVariable
     z18 = vars->z18;z20 = vars->z20;z21 = vars->z21;z22 = vars->z22;z24 = vars->z24;
     z30 = vars->z30;
     COMPLEX16 fEpn1, fEpn2, fEpn3, fEpn4;
-    fEpn1 = -1. + 1./z8;
-    fEpn2 = 3. * x * (-1. + z16) * (echia + echis*dm) / (2.*z14*dm);
-    fEpn3 = (-(x2*((84*I)*(-3 + eta)*nchis*(-1 + z12)*z12 + dm*y2*(-14*(-3 + eta) + (106 + 19*eta)*z12 - 112*z6) + 
-        (3*I)*y*(42*dm*lchia + 14*(3 - 2*eta)*lchis + dm*(-83 + 12*eta)*z12)*z6 + 2*(14*dm*(1 + eta) + 
-        (-21*eta*lchis + dm*(97 - 26*eta + (126*I)*nchia))*z12 + (21*eta*lchis + dm*(-55 + 12*eta - (126*I)*nchia))*z24 - 56*dm*z6)))) / (42*dm*z20);
-    fEpn4 = (-(x3*(echia*(-294*(1 + eta) + (-2261 + 1889*eta + (1260*I)*(-1 + 4*eta)*nchia - (252*I)*dm*(5 + 2*eta)*nchis)*z12 - 
-        42*(1 + eta)*z16 - 12*((21*I)*(-7 + lchia + dm*lchis) - (2*I)*eta*(-52 + 42*lchia + 21*dm*lchis) + 21*(-1 + 4*eta)*nchia + 
-        21*dm*(-1 + 2*eta)*nchis)*y*z18 + 168*z22 + 3*(175 - 84*lchia - 84*dm*lchis + eta*(-605 + 336*lchia + 168*dm*lchis))*z24 - 
-        21*(7 + eta)*z20*z8 + 2*(427 + 131*eta + 126*lchia - 504*eta*lchia + 126*dm*lchis - 252*dm*eta*lchis - (630*I)*(-1 + 4*eta)*nchia + 
-        (126*I)*dm*(5 + 2*eta)*nchis)*z20*z12 + 21*(1 + eta)*z20*z20 + 1176*z6 + 3*y2*(49*(-3 + eta) - I*((-I)*(203 + 141*eta) + 84*(-1 + 4*eta)*nchia + 
-        84*dm*(-1 + 2*eta)*nchis)*z12 + 7*(-3 + eta)*z16 + 56*z22 + 7*(1 + eta)*z20*z8 + 392*z6)) + echis*(dm*(eta*(-294 + (673 - (504*I)*nchia)*z12 - 
-        42*z16 + (72*I)*(1 + 7*lchia + (7*I)*nchia)*y*z18 + 9*(-55 + 56*lchia)*z24 - 21*z20*z8 + 3*y2*(49 + (-69 - (168*I)*nchia)*z12 + 7*z16 + 7*z20*z8) + 
-        (158 - 504*lchia + (504*I)*nchia)*z20*z12 + 21*z20*z20) + 7*(-42 + (-323 - (180*I)*nchia)*z12 - 6*z16 + 36*(7*I - I*lchia + nchia)*y*z18 + 24*z22 + 
-        (75 - 36*lchia)*z24 - 21*z20*z8 + 2*(61 + 18*lchia + (90*I)*nchia)*z20*z12 + 3*z20*z20 + 168*z6 + 3*y2*(-21 + (-29 + (12*I)*nchia)*z12 - 3*z16 + 8*z22 + z20*z8 + 56*z6))) - 
-        (252*I)*z12*(-(nchis*(-5 + y2 + 5*z20 - I*y*z6 - 4*eta*(1 + y2 - z20 - I*y*z6) + 4*eta2*(1 + y2 - z20 - I*y*z6))) + (1 - 2*eta)*(1 - 2*eta)*lchis*z6*(y + I*z6*(-1 + z8))))))) / (168*dm*z20*z6);
+    if (dm)
+    {
+        fEpn1 = -1. + 1./z8;
+        fEpn2 = 3. * x * (-1. + z16) * (echia + echis*dm) / (2.*z14*dm);
+        fEpn3 = (-(x2*((84*I)*(-3 + eta)*nchis*(-1 + z12)*z12 + dm*y2*(-14*(-3 + eta) + (106 + 19*eta)*z12 - 112*z6) + 
+            (3*I)*y*(42*dm*lchia + 14*(3 - 2*eta)*lchis + dm*(-83 + 12*eta)*z12)*z6 + 2*(14*dm*(1 + eta) + 
+            (-21*eta*lchis + dm*(97 - 26*eta + (126*I)*nchia))*z12 + (21*eta*lchis + dm*(-55 + 12*eta - (126*I)*nchia))*z24 - 56*dm*z6)))) / (42*dm*z20);
+        fEpn4 = (-(x3*(echia*(-294*(1 + eta) + (-2261 + 1889*eta + (1260*I)*(-1 + 4*eta)*nchia - (252*I)*dm*(5 + 2*eta)*nchis)*z12 - 
+            42*(1 + eta)*z16 - 12*((21*I)*(-7 + lchia + dm*lchis) - (2*I)*eta*(-52 + 42*lchia + 21*dm*lchis) + 21*(-1 + 4*eta)*nchia + 
+            21*dm*(-1 + 2*eta)*nchis)*y*z18 + 168*z22 + 3*(175 - 84*lchia - 84*dm*lchis + eta*(-605 + 336*lchia + 168*dm*lchis))*z24 - 
+            21*(7 + eta)*z20*z8 + 2*(427 + 131*eta + 126*lchia - 504*eta*lchia + 126*dm*lchis - 252*dm*eta*lchis - (630*I)*(-1 + 4*eta)*nchia + 
+            (126*I)*dm*(5 + 2*eta)*nchis)*z20*z12 + 21*(1 + eta)*z20*z20 + 1176*z6 + 3*y2*(49*(-3 + eta) - I*((-I)*(203 + 141*eta) + 84*(-1 + 4*eta)*nchia + 
+            84*dm*(-1 + 2*eta)*nchis)*z12 + 7*(-3 + eta)*z16 + 56*z22 + 7*(1 + eta)*z20*z8 + 392*z6)) + echis*(dm*(eta*(-294 + (673 - (504*I)*nchia)*z12 - 
+            42*z16 + (72*I)*(1 + 7*lchia + (7*I)*nchia)*y*z18 + 9*(-55 + 56*lchia)*z24 - 21*z20*z8 + 3*y2*(49 + (-69 - (168*I)*nchia)*z12 + 7*z16 + 7*z20*z8) + 
+            (158 - 504*lchia + (504*I)*nchia)*z20*z12 + 21*z20*z20) + 7*(-42 + (-323 - (180*I)*nchia)*z12 - 6*z16 + 36*(7*I - I*lchia + nchia)*y*z18 + 24*z22 + 
+            (75 - 36*lchia)*z24 - 21*z20*z8 + 2*(61 + 18*lchia + (90*I)*nchia)*z20*z12 + 3*z20*z20 + 168*z6 + 3*y2*(-21 + (-29 + (12*I)*nchia)*z12 - 3*z16 + 8*z22 + z20*z8 + 56*z6))) - 
+            (252*I)*z12*(-(nchis*(-5 + y2 + 5*z20 - I*y*z6 - 4*eta*(1 + y2 - z20 - I*y*z6) + 4*eta2*(1 + y2 - z20 - I*y*z6))) + (1 - 2*eta)*(1 - 2*eta)*lchis*z6*(y + I*z6*(-1 + z8))))))) / (168*dm*z20*z6);
+    } else {
+        fEpn1 = -1. + 1./z8;
+        fEpn2 = 3.*echia*x*(-1. + z16) / (2.*z14);
+        fEpn3 = (I*x2*(6*nchis*(-1. + z12)*z12 - 2.*eta*nchis*(-1. + z12)*z12 - 3*lchis*y*z6 + eta*lchis*(-I*z12 + I*z24 + 2.*y*z6)))/z20;
+        fEpn4 = (x3*((I*252)*echis*z12*(nchis*(5 - y2 - 5*z20 + (I)*y*z6 + 4*eta*(1 + y2 - z20 - (I)*y*z6) - 4*eta2*(1 + y2 - z20 - (I*1)*y*z6)) + (1. - 2.*eta)*(1.-2.*eta)*lchis*z6*(y + (I)*z6*(-1. + z8))) + 
+            echia*(7*(z12*(323 - (I*180)*nchia*(-1 + z20) - 2*(61 + 18*lchia)*z20) + 3*y2*(21 + (29 - (I*12)*nchia)*z12 + 3*z16 - 8*z22 - 56*z6 - z20*z8) + 3*(14 + 2*z16 + (I*12)*(-7 + lchia + (I)*nchia)*y*z18 - z20*z20 - 
+            8*z22 - 25*z24 + 12*lchia*z24 - 56*z6 + 7*z20*z8)) + eta*(z12*(-1889 + (I*5040)*nchia*(-1 + z20) + 2*(-131 + 504*lchia)*z20) + 3*(98 + 14*z16 + 16*((I*26) - (I*21)*lchia + 21*nchia)*y*z18 - 7*(z20*z20) + 605*z24 - 
+            336*lchia*z24 + 7*z20*z8) + 3*y2*(3*(47 + (I*112)*nchia)*z12 - 7*(7 + z16 + z20*z8))))))/(168.*z20*z6);
+    }
     if (PREC_FLAG > 3 || PREC_FLAG==1)
         *fEcc = 0.0;
     else
@@ -1278,7 +1289,7 @@ static COMPLEX16 prec_CalculateWaveformFactor_mode21_v3(SEOBPrecWaveformVariable
         f21v2 = (-6.*I*nchis + 2.*I*nchis*eta + eta*lchis);
         f21v3 = (61*echia)/12. + (131*echia*eta)/84. + (3*echia*lchia)/2. - 6.*echia*eta*lchia + (3*echis*lchis)/2. - 6.*echis*eta*lchis + 6.*echis*eta2*lchis + ((15.*I)/2.)*echia*nchia - (30.*I)*echia*eta*nchia + ((15.*I)/2.)*echis*nchis + (6.*I)*echis*eta*nchis - (6.*I)*echis*eta2*nchis;
     }
-    if (PREC_FLAG == 4)
+    if (PREC_FLAG == 4 || PREC_FLAG == 3)
         auxflm = v * (f21v1 + 
             v * (f21v2 + 
             v * (f21v3 + 
@@ -1349,7 +1360,7 @@ static COMPLEX16 prec_CalculateWaveformFactor_mode33_v3(SEOBPrecWaveformVariable
         f33v2 = -16.*(I*nchis + lchis)*eta/9.;
         f33v3 = echia*(-2. + 19.*eta/2.);
     }
-    if (PREC_FLAG == 4)
+    if (PREC_FLAG == 4 || PREC_FLAG == 3)
         auxflm = v2 * (f33v2 + v * (f33v3 + v * (hCoeffs->f33v4 + v * (hCoeffs->f33v5  + v * hCoeffs->f33v6)))) + _Complex_I * vh3 * vh3 * hCoeffs->f33vh6;
     else
         auxflm = v2 * (0.0 + v * (hCoeffs->f33v3 + v * (hCoeffs->f33v4 + v * (hCoeffs->f33v5  + v * hCoeffs->f33v6)))) + _Complex_I * vh3 * vh3 * hCoeffs->f33vh6;
@@ -1402,7 +1413,7 @@ static COMPLEX16 prec_CalculateWaveformFactor_mode44_v3(SEOBPrecWaveformVariable
     COMPLEX16 rho44v2;
     rho44v2 = hCoeffs->rho44v2 + 81.*eta*(-I*nchia + I*nchis*dm - lchia + dm*lchis) / (256.*m1Plus3eta);
     COMPLEX16 rholm;
-    if (PREC_FLAG == 4)
+    if (PREC_FLAG == 4 || PREC_FLAG == 3)
         rholm = 1. + v2 * (rho44v2
             + v * (hCoeffs->rho44v3 + v * (hCoeffs->rho44v4 + v * (hCoeffs->rho44v5 + v * (hCoeffs->rho44v6 + hCoeffs->rho44v6l *
             eulerlogxabs + v2 *( hCoeffs->rho44v8 + hCoeffs->rho44v8l * eulerlogxabs +v2 * (hCoeffs->rho44v10 + hCoeffs->rho44v10l * eulerlogxabs) ) )))));
@@ -1929,7 +1940,8 @@ prec_EOBGetPrecEccSpinFactorizedWaveform_v2(
         return CEV_FAILURE;
         break;
     }
-
+        // if (isnan(creal(facEcc)) || isnan(cimag(facEcc)))
+        //     print_debug("(%d,%d)this is nan\n", l, m);
     //debugPK
     //     if (debugPK)
     //     XLAL_PRINT_INFO("rho_%d_%d = %.12e + %.12e \n", l, m, creal(rholm),cimag(rholm));

@@ -219,7 +219,28 @@ if(1) {failed = 1; goto QUIT;}
     REAL8 MfMin = mTScaled * f_min;
     // print_debug("f_min = %.16e, MfMin = %.16e, mTScaled = %.16e, mTotal = %.16e, CST_MTSUN_SI = %.16e\n",
     //      f_min, MfMin, mTScaled, mTotal, CST_MTSUN_SI);
-    status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+    if (core->hParams && core->hParams->d_ini > 0.0)
+    {
+        REAL8 d_ini = core->hParams->d_ini; //initial seperation
+        REAL8 pr_ini = core->hParams->pr_ini;
+        REAL8 pphi_ini = core->hParams->pphi_ini;
+        REAL8 ptheta_ini = core->hParams->ptheta_ini;
+        REAL8 xSph[3] = {d_ini, 0., 0.};
+        REAL8 pSph[3] = {pr_ini, ptheta_ini, pphi_ini};
+        REAL8 xCart[3] = {0,0,0};
+        REAL8 pCart[3] = {0,0,0};
+        if (ptheta_ini > 0)
+            core->alignedSpins = TRUE;
+        SphericalToCartesian(xCart, pCart, xSph, pSph);
+        memset(ICvalues->data, 0, ICvalues->length*sizeof(REAL8));
+        memcpy(ICvalues->data, xCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+3, pCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+6, core->s1Vec->data, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+9, core->s2Vec->data, 3*sizeof(REAL8));
+    } else {
+        status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
     PRINT_LOG_INFO(LOG_DEBUG, "(x,y,z) = (%.16e %.16e %.16e)", 
             ICvalues->data[0], ICvalues->data[1], ICvalues->data[2]);
@@ -1267,7 +1288,28 @@ INT evolve_conserv(REAL8 m1,  REAL8 m2,
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Solve Initial Conditions (conserved).", this_step);
     ICvalues = CreateREAL8Vector(14);
     REAL8 MfMin = mTScaled * f_min;
-    status = SEOBInitialConditions_Conserve(ICvalues, MfMin, ecc, core);
+    if (core->hParams && core->hParams->d_ini > 0.0)
+    {
+        REAL8 d_ini = core->hParams->d_ini; //initial seperation
+        REAL8 pr_ini = core->hParams->pr_ini;
+        REAL8 pphi_ini = core->hParams->pphi_ini;
+        REAL8 ptheta_ini = core->hParams->ptheta_ini;
+        REAL8 xSph[3] = {d_ini, 0., 0.};
+        REAL8 pSph[3] = {pr_ini, ptheta_ini, pphi_ini};
+        REAL8 xCart[3] = {0,0,0};
+        REAL8 pCart[3] = {0,0,0};
+        if (ptheta_ini > 0)
+            core->alignedSpins = TRUE;
+        SphericalToCartesian(xCart, pCart, xSph, pSph);
+        memset(ICvalues->data, 0, ICvalues->length*sizeof(REAL8));
+        memcpy(ICvalues->data, xCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+3, pCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+6, core->s1Vec->data, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+9, core->s2Vec->data, 3*sizeof(REAL8));
+    } else {
+        status = SEOBInitialConditions_Conserve(ICvalues, MfMin, ecc, core);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
     PRINT_LOG_INFO(LOG_DEBUG, "(x,y,z) = (%.16e %.16e %.16e)", 
             ICvalues->data[0], ICvalues->data[1], ICvalues->data[2]);
@@ -1635,7 +1677,28 @@ INT evolve_adaptive(REAL8 m1,  REAL8 m2,
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Solve Initial Conditions.", this_step);
     ICvalues = CreateREAL8Vector(14);
     REAL8 MfMin = mTScaled * f_min;
-    status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+    if (core->hParams && core->hParams->d_ini > 0.0)
+    {
+        REAL8 d_ini = core->hParams->d_ini; //initial seperation
+        REAL8 pr_ini = core->hParams->pr_ini;
+        REAL8 pphi_ini = core->hParams->pphi_ini;
+        REAL8 ptheta_ini = core->hParams->ptheta_ini;
+        REAL8 xSph[3] = {d_ini, 0., 0.};
+        REAL8 pSph[3] = {pr_ini, ptheta_ini, pphi_ini};
+        REAL8 xCart[3] = {0,0,0};
+        REAL8 pCart[3] = {0,0,0};
+        if (ptheta_ini > 0)
+            core->alignedSpins = TRUE;
+        SphericalToCartesian(xCart, pCart, xSph, pSph);
+        memset(ICvalues->data, 0, ICvalues->length*sizeof(REAL8));
+        memcpy(ICvalues->data, xCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+3, pCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+6, core->s1Vec->data, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+9, core->s2Vec->data, 3*sizeof(REAL8));
+    } else {
+        status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
     PRINT_LOG_INFO(LOG_DEBUG, "(x,y,z) = (%.16e %.16e %.16e)", 
             ICvalues->data[0], ICvalues->data[1], ICvalues->data[2]);
@@ -2617,15 +2680,33 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Solve Initial Conditions.", this_step);
     ICvalues = CreateREAL8Vector(14);
     REAL8 MfMin = mTScaled * f_min;
-    if (ecc > 0.0 && get_egw_flag())
-        status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
-        if (status != CEV_SUCCESS && ecc < 0.05)
-        {
+    if (core->hParams && core->hParams->d_ini > 0.0)
+    {
+        REAL8 d_ini = core->hParams->d_ini; //initial seperation
+        REAL8 pr_ini = core->hParams->pr_ini;
+        REAL8 pphi_ini = core->hParams->pphi_ini;
+        REAL8 ptheta_ini = core->hParams->ptheta_ini;
+        REAL8 xSph[3] = {d_ini, 0., 0.};
+        REAL8 pSph[3] = {pr_ini, 0.0, pphi_ini};
+        REAL8 xCart[3] = {0,0,0};
+        REAL8 pCart[3] = {0,0,0};
+        SphericalToCartesian(xCart, pCart, xSph, pSph);
+        memset(ICvalues->data, 0, ICvalues->length*sizeof(REAL8));
+        memcpy(ICvalues->data, xCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+3, pCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+6, core->s1Vec->data, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+9, core->s2Vec->data, 3*sizeof(REAL8));
+    } else {
+        if (ecc > 0.0 && get_egw_flag())
+            status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
+            if (status != CEV_SUCCESS && ecc < 0.05)
+            {
+                status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+            }
+        else 
             status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
-        }
-    else 
-        status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
-    if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
     PRINT_LOG_INFO(LOG_DEBUG, "(x,y,z) = (%.16e %.16e %.16e)", 
             ICvalues->data[0], ICvalues->data[1], ICvalues->data[2]);
@@ -3608,8 +3689,26 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Solve Initial Conditions.", this_step);
     ICvalues = CreateREAL8Vector(14);
     REAL8 MfMin = mTScaled * f_min;
-    status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
-    if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    if (core->hParams && core->hParams->d_ini > 0.0)
+    {
+        REAL8 d_ini = core->hParams->d_ini; //initial seperation
+        REAL8 pr_ini = core->hParams->pr_ini;
+        REAL8 pphi_ini = core->hParams->pphi_ini;
+        REAL8 ptheta_ini = core->hParams->ptheta_ini;
+        REAL8 xSph[3] = {d_ini, 0., 0.};
+        REAL8 pSph[3] = {pr_ini, ptheta_ini, pphi_ini};
+        REAL8 xCart[3] = {0,0,0};
+        REAL8 pCart[3] = {0,0,0};
+        SphericalToCartesian(xCart, pCart, xSph, pSph);
+        memset(ICvalues->data, 0, ICvalues->length*sizeof(REAL8));
+        memcpy(ICvalues->data, xCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+3, pCart, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+6, core->s1Vec->data, 3*sizeof(REAL8));
+        memcpy(ICvalues->data+9, core->s2Vec->data, 3*sizeof(REAL8));
+    } else {
+        status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
     PRINT_LOG_INFO(LOG_DEBUG, "(x,y,z) = (%.16e %.16e %.16e)", 
             ICvalues->data[0], ICvalues->data[1], ICvalues->data[2]);

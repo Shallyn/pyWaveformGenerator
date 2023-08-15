@@ -755,7 +755,8 @@ class pyInputParams(ctypes.Structure):
                 ('egw_flag', ctypes.c_int),
                 ('ret_dyn', ctypes.c_int),
                 ('inEPS_REL', ctypes.c_double),
-                ('inEPS_ABS', ctypes.c_double))
+                ('inEPS_ABS', ctypes.c_double),
+                ('is_coframe', ctypes.c_int))
 
 
 class pyOutputStruct(ctypes.Structure):

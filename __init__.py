@@ -293,6 +293,7 @@ class SEOBNRWaveformCaller(object):
         self.ret_dyn = 0
         self.EPS_REL = -1.
         self.EPS_ABS = -1.
+        self.is_coframe = 0 # only valid when prec_flag > 0
 
     def set_params(self, **kwargs):
         self.__parse_params(**kwargs)
@@ -357,6 +358,8 @@ class SEOBNRWaveformCaller(object):
         self.ret_dyn = self.ret_dyn if 'ret_dyn' not in kwargs else kwargs['ret_dyn']
         self.EPS_REL = self.EPS_REL if 'EPS_REL' not in kwargs else kwargs['EPS_REL']
         self.EPS_ABS = self.EPS_ABS if 'EPS_ABS' not in kwargs else kwargs['EPS_ABS']
+        if 'is_coframe' in kwargs:
+            self.is_coframe = 0 if kwargs['is_coframe'] == False else 1
 
     def calculate_hcorrections(self, l:int, m:int, dyn:npDynamicData):
         hparams = pyHyperParams()
@@ -483,7 +486,8 @@ class SEOBNRWaveformCaller(object):
                       ctypes.c_int(self.egw_flag),
                       ctypes.c_int(self.ret_dyn),
                       ctypes.c_double(self.EPS_REL),
-                      ctypes.c_double(self.EPS_ABS)
+                      ctypes.c_double(self.EPS_ABS),
+                      ctypes.c_int(self.is_coframe)
                       ]
         input_pms = pyInputParams(*value_list)
         ret_struct = ctypes.POINTER(pyOutputStruct)()

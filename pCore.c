@@ -2469,30 +2469,30 @@ INT SEOBInitialConditions(REAL8Vector *ICvalues,
     REAL8 mSpin1data[3] = {0., 0., 0.};
     REAL8 mSpin2data[3] = {0., 0., 0.};
     /* Check given params */
-    if (seobParams->hParams)
-    {
-        REAL8 d_ini = seobParams->hParams->d_ini; //initial seperation
-        REAL8 pr_ini = seobParams->hParams->pr_ini;
-        REAL8 pphi_ini = seobParams->hParams->pphi_ini;
-        REAL8 ptheta_ini = seobParams->hParams->ptheta_ini;
-        REAL8 xSph[3] = {d_ini, 0., 0.};
-        REAL8 pSph[3] = {pr_ini, ptheta_ini, pphi_ini};
-        REAL8 xCart[3] = {0,0,0};
-        REAL8 pCart[3] = {0,0,0};
-        if (d_ini > 0. && pphi_ini > 0.)
-        {
-            if (ptheta_ini > 0)
-                seobParams->alignedSpins = TRUE;
-            else
-                pSph[1] = 0.0;
-            SphericalToCartesian(xCart, pCart, xSph, pSph);
-            memcpy( ICvalues->data, xCart, sizeof(xCart) );
-            memcpy( ICvalues->data+3, pCart, sizeof(pCart) );
-            memcpy( ICvalues->data+6, seobParams->s1Vec->data, sizeof(mSpin1data) );
-            memcpy( ICvalues->data+9, seobParams->s2Vec->data, sizeof(mSpin1data) );
-            return CEV_SUCCESS;
-        }
-    }
+    // if (seobParams->hParams)
+    // {
+    //     REAL8 d_ini = seobParams->hParams->d_ini; //initial seperation
+    //     REAL8 pr_ini = seobParams->hParams->pr_ini;
+    //     REAL8 pphi_ini = seobParams->hParams->pphi_ini;
+    //     REAL8 ptheta_ini = seobParams->hParams->ptheta_ini;
+    //     REAL8 xSph[3] = {d_ini, 0., 0.};
+    //     REAL8 pSph[3] = {pr_ini, ptheta_ini, pphi_ini};
+    //     REAL8 xCart[3] = {0,0,0};
+    //     REAL8 pCart[3] = {0,0,0};
+    //     if (d_ini > 0. && pphi_ini > 0.)
+    //     {
+    //         if (ptheta_ini > 0)
+    //             seobParams->alignedSpins = TRUE;
+    //         else
+    //             pSph[1] = 0.0;
+    //         SphericalToCartesian(xCart, pCart, xSph, pSph);
+    //         memcpy( ICvalues->data, xCart, sizeof(xCart) );
+    //         memcpy( ICvalues->data+3, pCart, sizeof(pCart) );
+    //         memcpy( ICvalues->data+6, seobParams->s1Vec->data, sizeof(mSpin1data) );
+    //         memcpy( ICvalues->data+9, seobParams->s2Vec->data, sizeof(mSpin1data) );
+    //         return CEV_SUCCESS;
+    //     }
+    // }
 
     if (seobParams->alignedSpins)
     {
@@ -2543,30 +2543,30 @@ INT SEOBInitialConditions_Conserve(REAL8Vector *ICvalues,
     REAL8 mSpin1data[3] = {0., 0., 0.};
     REAL8 mSpin2data[3] = {0., 0., 0.};
     /* Check given params */
-    if (seobParams->hParams)
-    {
-        REAL8 d_ini = seobParams->hParams->d_ini; //initial seperation
-        REAL8 pr_ini = seobParams->hParams->pr_ini;
-        REAL8 pphi_ini = seobParams->hParams->pphi_ini;
-        REAL8 ptheta_ini = seobParams->hParams->ptheta_ini;
-        REAL8 xSph[3] = {d_ini, 0., 0.};
-        REAL8 pSph[3] = {pr_ini, ptheta_ini, pphi_ini};
-        REAL8 xCart[3] = {0,0,0};
-        REAL8 pCart[3] = {0,0,0};
-        if (d_ini > 0. && pphi_ini > 0.)
-        {
-            if (ptheta_ini > 0)
-                seobParams->alignedSpins = TRUE;
-            else
-                pSph[1] = 0.0;
-            SphericalToCartesian(xCart, pCart, xSph, pSph);
-            memcpy( ICvalues->data, xCart, sizeof(xCart) );
-            memcpy( ICvalues->data+3, pCart, sizeof(pCart) );
-            memcpy( ICvalues->data+6, seobParams->s1Vec->data, sizeof(mSpin1data) );
-            memcpy( ICvalues->data+9, seobParams->s2Vec->data, sizeof(mSpin1data) );
-            return CEV_SUCCESS;
-        }
-    }
+    // if (seobParams->hParams)
+    // {
+    //     REAL8 d_ini = seobParams->hParams->d_ini; //initial seperation
+    //     REAL8 pr_ini = seobParams->hParams->pr_ini;
+    //     REAL8 pphi_ini = seobParams->hParams->pphi_ini;
+    //     REAL8 ptheta_ini = seobParams->hParams->ptheta_ini;
+    //     REAL8 xSph[3] = {d_ini, 0., 0.};
+    //     REAL8 pSph[3] = {pr_ini, ptheta_ini, pphi_ini};
+    //     REAL8 xCart[3] = {0,0,0};
+    //     REAL8 pCart[3] = {0,0,0};
+    //     if (d_ini > 0. && pphi_ini > 0.)
+    //     {
+    //         if (ptheta_ini > 0)
+    //             seobParams->alignedSpins = TRUE;
+    //         else
+    //             pSph[1] = 0.0;
+    //         SphericalToCartesian(xCart, pCart, xSph, pSph);
+    //         memcpy( ICvalues->data, xCart, sizeof(xCart) );
+    //         memcpy( ICvalues->data+3, pCart, sizeof(pCart) );
+    //         memcpy( ICvalues->data+6, seobParams->s1Vec->data, sizeof(mSpin1data) );
+    //         memcpy( ICvalues->data+9, seobParams->s2Vec->data, sizeof(mSpin1data) );
+    //         return CEV_SUCCESS;
+    //     }
+    // }
 
     REAL8 tcons;
     tcons = GET_CONSERV_TIME;
@@ -6546,6 +6546,26 @@ int SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
             }
         }
     }
+#if 0
+    {
+        CAmpPhaseSequence *h22 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 2, 2)->campphase;
+        CAmpPhaseSequence *h21 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 2, 1)->campphase;
+        CAmpPhaseSequence *h33 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 3, 3)->campphase;
+        CAmpPhaseSequence *h44 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 4, 4)->campphase;
+        CAmpPhaseSequence *h55 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 5, 5)->campphase;
+        char fout[STR_COMM_SIZE];
+        strncpy(fout, "tmp_debug_ecc.dat", STR_COMM_SIZE);
+        FILE *out = fopen(fout, "w");
+        for (i = 0; i < retLenTS; i++)
+        {
+            t = timeTSdata[i];
+            fprintf(out, "%.16e\t%.16e\t%.16e\n", 
+                t, h22->camp_real->data[i],
+                   h22->camp_imag->data[i]);
+        }
+        fclose(out);
+    }
+#endif
 QUIT:
     /* Cleanup */
     STRUCTFREE(listhPlm_TS, SphHarmListCAmpPhaseSequence);

@@ -37,6 +37,7 @@ typedef struct tagHyperParams
     REAL8 tStepBack;
     REAL8 inEPS_REL;
     REAL8 inEPS_ABS;
+    INT is_coframe;
 }HyperParams;
 
 typedef struct {
