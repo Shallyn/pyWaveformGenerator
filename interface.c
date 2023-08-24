@@ -468,10 +468,11 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
 
 REAL8 calculate_QNMFrequency(REAL8 m1, REAL8 m2, 
                         REAL8 chi1x, REAL8 chi1y, REAL8 chi1z,
-                        REAL8 chi2x, REAL8 chi2y, REAL8 chi2z) 
+                        REAL8 chi2x, REAL8 chi2y, REAL8 chi2z,
+                        UINT modeL, UINT modeM) 
 {
-    UINT mode_highest_freqL = 5;
-    UINT mode_highest_freqM = 5;
+    // UINT mode_highest_freqL = 5;
+    // UINT mode_highest_freqM = 5;
     /* Ringdown freq used to check the sample rate */
     COMPLEX16Vector modefreqVec;
     COMPLEX16 modeFreq;
@@ -486,7 +487,7 @@ REAL8 calculate_QNMFrequency(REAL8 m1, REAL8 m2,
     spin2[1] = chi2y;
     spin2[2] = chi2z;
     if (XLALSimIMREOBGenerateQNMFreqV2Prec(&modefreqVec, m1, m2, spin1, spin2,
-                                            mode_highest_freqL, mode_highest_freqM,
+                                            modeL, modeM,
                                             1) == CEV_FAILURE) 
     {
         return CEV_FAILURE;

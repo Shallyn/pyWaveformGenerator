@@ -23,7 +23,8 @@ my_waveform_lib.calculate_QNMFrequency.restype = ctypes.c_double
 
 def calculate_QNMFrequency(m1:float, m2:float, 
                            chi1x:float, chi1y:float, chi1z:float, 
-                           chi2x:float, chi2y:float, chi2z:float):
+                           chi2x:float, chi2y:float, chi2z:float,
+                           modeL:int=5, modeM:int=5):
     value_list = [ctypes.c_double(m1),
                   ctypes.c_double(m2),
                   ctypes.c_double(chi1x),
@@ -31,7 +32,9 @@ def calculate_QNMFrequency(m1:float, m2:float,
                   ctypes.c_double(chi1z),
                   ctypes.c_double(chi2x),
                   ctypes.c_double(chi2y),
-                  ctypes.c_double(chi2z)]
+                  ctypes.c_double(chi2z),
+                  ctypes.c_uint(modeL),
+                  ctypes.c_uint(modeM)]
     return my_waveform_lib.calculate_QNMFrequency(*value_list)
 
 def convert_REAL8Vector_to_numpy(vec:ctypes.POINTER(pyREAL8Vector)):
