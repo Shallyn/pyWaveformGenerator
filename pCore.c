@@ -2665,6 +2665,7 @@ int XLALEOBCheckNyquistFrequency(REAL8 m1, REAL8 m2, REAL8 spin1[3],
     {
         return CEV_FAILURE;
     }
+    
     if (deltaT > CST_PI / creal(modeFreq)) {
         PRINT_LOG_INFO(LOG_CRITICAL, "Ringdown frequency > Nyquist");
         return CEV_FAILURE;

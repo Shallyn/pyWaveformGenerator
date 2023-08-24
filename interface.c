@@ -22,6 +22,16 @@ void set_PrecFlag(INT flag);
 
 INT set_egw_flag(INT flag);
 
+INT4 XLALSimIMREOBGenerateQNMFreqV2Prec(
+  COMPLEX16Vector *modefreqs, /**<< OUTPUT, complex freqs of overtones in unit of Hz */
+  const REAL8      mass1,     /**<< The mass of the 1st component (in Solar masses) */
+  const REAL8      mass2,     /**<< The mass of the 2nd component (in Solar masses) */
+  const REAL8      spin1[3],  /**<< The spin of the 1st object; only needed for spin waveforms */
+  const REAL8      spin2[3],  /**<< The spin of the 2nd object; only needed for spin waveforms */
+  UINT            l,         /**<< The l value of the mode in question */
+  INT             m,         /**<< The m value of the mode in question */
+  UINT            nmodes    /**<< The number of overtones that should be included (max 8) */
+);
 
 INT evolve(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
@@ -456,6 +466,38 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     return CEV_SUCCESS;
 }
 
+REAL8 calculate_QNMFrequency(REAL8 m1, REAL8 m2, 
+                        REAL8 chi1x, REAL8 chi1y, REAL8 chi1z,
+                        REAL8 chi2x, REAL8 chi2y, REAL8 chi2z) 
+{
+    UINT mode_highest_freqL = 5;
+    UINT mode_highest_freqM = 5;
+    /* Ringdown freq used to check the sample rate */
+    COMPLEX16Vector modefreqVec;
+    COMPLEX16 modeFreq;
+    modefreqVec.length = 1;
+    modefreqVec.data = &modeFreq;
+    REAL8 spin1[3] = {0};
+    REAL8 spin2[3] = {0};
+    spin1[0] = chi1x;
+    spin1[1] = chi1y;
+    spin1[2] = chi1z;
+    spin2[0] = chi2x;
+    spin2[1] = chi2y;
+    spin2[2] = chi2z;
+    if (XLALSimIMREOBGenerateQNMFreqV2Prec(&modefreqVec, m1, m2, spin1, spin2,
+                                            mode_highest_freqL, mode_highest_freqM,
+                                            1) == CEV_FAILURE) 
+    {
+        return CEV_FAILURE;
+    }
+    // if (deltaT > CST_PI / creal(modeFreq)) {
+    //     PRINT_LOG_INFO(LOG_CRITICAL, "Ringdown frequency > Nyquist");
+    //     return CEV_FAILURE;
+    // }
+// print_debug("deltaT = %.16e, modeFreq = %.16e\n", deltaT, CST_PI /creal(modeFreq));
+    return creal(modeFreq) / CST_PI;
+}
 
 static INT find_exact_amp_peak(REAL8Vector *tMVec, REAL8Vector *amp22)
 {

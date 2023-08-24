@@ -19,6 +19,20 @@ lib_path = Path(__file__).parent / '.libs/libEOB.so'
 my_waveform_lib = ctypes.CDLL(lib_path)
 my_waveform_lib.CreateREAL8Vector.restype = ctypes.POINTER(pyREAL8Vector)
 my_waveform_lib.CreateSpinEOBParams.restype = ctypes.POINTER(pySpinEOBParams)
+my_waveform_lib.calculate_QNMFrequency.restype = ctypes.c_double
+
+def calculate_QNMFrequency(m1:float, m2:float, 
+                           chi1x:float, chi1y:float, chi1z:float, 
+                           chi2x:float, chi2y:float, chi2z:float):
+    value_list = [ctypes.c_double(m1),
+                  ctypes.c_double(m2),
+                  ctypes.c_double(chi1x),
+                  ctypes.c_double(chi1y),
+                  ctypes.c_double(chi1z),
+                  ctypes.c_double(chi2x),
+                  ctypes.c_double(chi2y),
+                  ctypes.c_double(chi2z)]
+    return my_waveform_lib.calculate_QNMFrequency(*value_list)
 
 def convert_REAL8Vector_to_numpy(vec:ctypes.POINTER(pyREAL8Vector)):
     length = vec.contents.length
