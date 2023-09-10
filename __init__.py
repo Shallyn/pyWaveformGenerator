@@ -20,6 +20,55 @@ my_waveform_lib = ctypes.CDLL(lib_path)
 my_waveform_lib.CreateREAL8Vector.restype = ctypes.POINTER(pyREAL8Vector)
 my_waveform_lib.CreateSpinEOBParams.restype = ctypes.POINTER(pySpinEOBParams)
 my_waveform_lib.calculate_QNMFrequency.restype = ctypes.c_double
+my_waveform_lib.calculate_QNMFrequencies.restype = ctypes.c_int
+my_waveform_lib.calculate_QNMFrequenciesFromFinal.restype = ctypes.c_int
+
+def calculate_QNMFrequenciesFromFinal(mFinal:float, chiFinal:float,
+                        modeL:int=2, modeM:int=2, nmodes:int=1):
+    FreqRVec = ctypes.POINTER(pyREAL8Vector)()
+    FreqIVec = ctypes.POINTER(pyREAL8Vector)()
+    value_list = [ctypes.c_double(mFinal),
+                  ctypes.c_double(chiFinal),
+                  ctypes.c_uint(modeL),
+                  ctypes.c_uint(modeM),
+                  ctypes.c_size_t(nmodes),
+                  ctypes.byref(FreqRVec), ctypes.byref(FreqIVec)]
+    ret = my_waveform_lib.calculate_QNMFrequenciesFromFinal(*value_list)
+    if ret != 0:
+        return None
+    npFreqRVec = convert_REAL8Vector_to_numpy(FreqRVec)
+    npFreqIVec = convert_REAL8Vector_to_numpy(FreqIVec)
+    my_waveform_lib.DestroyREAL8Vector(FreqRVec)
+    my_waveform_lib.DestroyREAL8Vector(FreqIVec)
+    return npFreqRVec + 1.j*npFreqIVec
+
+def calculate_QNMFrequencies(m1:float, m2:float, 
+                           chi1x:float, chi1y:float, chi1z:float, 
+                           chi2x:float, chi2y:float, chi2z:float,
+                           modeL:int=2, modeM:int=2, nmodes:int=1):
+    FreqRVec = ctypes.POINTER(pyREAL8Vector)()
+    FreqIVec = ctypes.POINTER(pyREAL8Vector)()
+    value_list = [ctypes.c_double(m1),
+                  ctypes.c_double(m2),
+                  ctypes.c_double(chi1x),
+                  ctypes.c_double(chi1y),
+                  ctypes.c_double(chi1z),
+                  ctypes.c_double(chi2x),
+                  ctypes.c_double(chi2y),
+                  ctypes.c_double(chi2z),
+                  ctypes.c_uint(modeL),
+                  ctypes.c_uint(modeM),
+                  ctypes.c_size_t(nmodes),
+                  ctypes.byref(FreqRVec), ctypes.byref(FreqIVec)]
+    ret = my_waveform_lib.calculate_QNMFrequencies(*value_list)
+    if ret != 0:
+        return None
+    npFreqRVec = convert_REAL8Vector_to_numpy(FreqRVec)
+    npFreqIVec = convert_REAL8Vector_to_numpy(FreqIVec)
+    my_waveform_lib.DestroyREAL8Vector(FreqRVec)
+    my_waveform_lib.DestroyREAL8Vector(FreqIVec)
+    return npFreqRVec + 1.j*npFreqIVec
+
 
 def calculate_QNMFrequency(m1:float, m2:float, 
                            chi1x:float, chi1y:float, chi1z:float, 

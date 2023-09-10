@@ -744,6 +744,7 @@ typedef struct {
     REAL8 PdsKu3;
 
     REAL8 Peffss;
+    REAL8 sign;
 }SpinEOBHSACoeffs;
 
 typedef struct

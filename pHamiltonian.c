@@ -270,12 +270,16 @@ void CalculateSpinEOBHSACoeffs(REAL8 m1, REAL8 m2, REAL8 s1z, REAL8 s2z, SpinEOB
     REAL8 sigmaStar, sigmaKerr;
     sigmaStar = coeffs->sigmaStar = m2*s1N/m1 + m1*s2N/m2;
     sigmaKerr = coeffs->sigmaKerr = s1N + s2N;
+    if(sigmaKerr < 0.0)
+        coeffs->sign = -1.;
+    else
+        coeffs->sign = 1.;
     REAL8 a;
     a = coeffs->a = fabs(coeffs->sigmaKerr);
     coeffs->a2 = a*a;
     REAL8 chi, chi2, chi3;
     REAL8 eta2, eta3;
-    chi = a / (1. - eta*2.);
+    chi = sigmaKerr / (1. - eta*2.);
     chi2 = chi*chi;
     chi3 = chi2*chi;
     eta2 = eta*eta;
@@ -350,6 +354,10 @@ void CalculateSpinEOBHSACoeffs(REAL8 m1, REAL8 m2, REAL8 s1z, REAL8 s2z, SpinEOB
 //         coeffs->PdsKu2, coeffs->PdsKpn4, coeffs->PdsKup2, coeffs->PdsKp2pn2, coeffs->PdsKupn2, coeffs->PdsKu3);
     coeffs->D2 = 6.*eta;
     coeffs->D3 = 2.*(26.-3.*eta)*eta;
+    if (IS_DEBUG)
+    {
+        print_debug("eta = %.16e, chi = %.16e, KK = %.16e\n", eta, chi, KK);
+    }
     return;
 }
 
@@ -365,15 +373,19 @@ REAL8 EOBSAHamiltonian(REAL8 r, REAL8 prT, REAL8 pphi, SpinEOBHSACoeffs *coeffs,
     REAL8 deltaSigma0, deltaSigmaS, deltaSigmaK;
     REAL8 HNS, SStar, wr, BR, nur, sqQ, QTilde;
     REAL8 HTwr, HSOL, HSONL, HSS, HSSeff, HS, Heff, Hreal;
+    REAL8 pf = coeffs->sign * pphi;
     u2 = u*u;
     u3 = u2*u;
     u4 = u3*u;
     u5 = u4*u;
     deltaU0 = coeffs->invm1PlusEtaKK * (coeffs->invm1PlusEtaKK + 2.*u) + coeffs->a2 * u2;
     // logu = log2(u)*CST_INV_LOG2E;
-    logu = log(u);
-    const REAL8 logarg = coeffs->k1*u + coeffs->k2*u2 + coeffs->k3*u3 + coeffs->k4*u4
-                                                + coeffs->k5*u5 + coeffs->k5l*u5*logu;
+    // logu = log(u);
+    const REAL8 invlog_2e = 0.69314718055994530941723212145817656807550013436026;
+    logu = log2(u)*invlog_2e;
+    // const REAL8 logarg = coeffs->k1*u + coeffs->k2*u2 + coeffs->k3*u3 + coeffs->k4*u4
+    //                                             + coeffs->k5*u5 + coeffs->k5l*u5*logu;
+    const REAL8 logarg = u*(coeffs->k1 + u*(coeffs->k2 + u*(coeffs->k3 + u*(coeffs->k4 + u*(coeffs->k5 + coeffs->k5l*logu)))));
     // deltaULog = 1. + coeffs->eta*coeffs->k0 + coeffs->eta*log1p(fabs(1. + logarg) - 1.);
     deltaULog = 1. + coeffs->eta*coeffs->k0 + coeffs->eta*log(1. + logarg);
     deltaU = deltaU0 * deltaULog;
@@ -383,7 +395,7 @@ REAL8 EOBSAHamiltonian(REAL8 r, REAL8 prT, REAL8 pphi, SpinEOBHSACoeffs *coeffs,
         deltaU0 * coeffs->eta * (coeffs->k1 + 
             u*(2.*coeffs->k2 + 
             u*(3.*coeffs->k3 + 
-            u*(4.*coeffs->k4*u3 + 
+            u*(4.*coeffs->k4 + 
             u*5.*(coeffs->k5 + coeffs->k5l*logu))))) / (1.+logarg);
 
     deltaT = r2 * deltaU;
@@ -407,42 +419,55 @@ REAL8 EOBSAHamiltonian(REAL8 r, REAL8 prT, REAL8 pphi, SpinEOBHSACoeffs *coeffs,
     gammar = deltaR * u2;
     gammaphi = r2 * invLambda;
     pnBar2 = gammar * pr*pr;
-    pBar2 = pnBar2 + gammaphi * pphi*pphi;
+    pBar2 = pnBar2 + gammaphi * pf*pf;
     Xi = 1. + coeffs->PQ4 * prT * prT *prT *prT * u2 + pBar2;
-    HNS = pphi * beta + alpha * sqrt(Xi);
+    HNS = pf * beta + alpha * sqrt(Xi);
+    // if(IS_DEBUG){
+    // print_debug( "term 1 in Hns: %.16e\n",  coeffs->PQ4 * prT * prT *prT *prT * u2 );
+    // print_debug( "term 2 in Hns: %.16e\n", 0.0 );
+    // print_debug( "term 3 in Hns = %.16e\n", gammaphi * pf*pf );
+    // print_debug( "term 4 in Hns = %.16e\n", pnBar2 );
+    // print_debug( "term 5 in Hns = %.16e\n", 1./(alpha*alpha) );
+    // print_debug( "term 6 in Hns = %.16e\n", pf );}
     deltaSigma0 = coeffs->Pds0u * u + coeffs->Pds0p2 * pBar2 + coeffs->Pds0pn2 * pnBar2;
     deltaSigmaS = coeffs->PdsSu2 * u2 + coeffs->PdsSup2 * u*pBar2 + coeffs->PdsSpn4*pnBar2*pnBar2 + coeffs->PdsSp4*pBar2*pBar2 + 
         coeffs->PdsSupn2*u*pnBar2+coeffs->PdsSp2pn2*pBar2*pnBar2;
     deltaSigmaK = coeffs->PdsKu2*u2 + coeffs->PdsKup2*u*pBar2 + coeffs->PdsKpn4*pnBar2*pnBar2 + coeffs->PdsKp4*pBar2*pBar2 + 
         coeffs->PdsKupn2 * u*pnBar2 + coeffs->PdsKp2pn2*pBar2*pnBar2 + coeffs->PdsKu3 * u3;
-    SStar = coeffs->sigmaStar + deltaSigma0 + deltaSigmaS * coeffs->sigmaStar + deltaSigmaK * coeffs->sigmaKerr;
+    SStar = coeffs->sign*(coeffs->sigmaStar + deltaSigma0 + deltaSigmaS * coeffs->sigmaStar + deltaSigmaK * coeffs->sigmaKerr);
     wr = (-Lambda_r * wfd + Lambda * wfd_r) * invLambda*invLambda;
     BR = -sqrt(1./DD) + deltaT_r/(2.*B);
     nur = u + 0.5*w2*(-4.*r*deltaT + w2*deltaT_r)*invLambda/deltaT;
     sqQ = sqrt(1. + pBar2);
     QTilde = sqQ * (1. + sqQ);
     REAL8 alpha2 = alpha*alpha;
-    HTwr = 0.5 * CC * SStar * (r2 * alpha2*pphi*pphi + deltaT*(r2*QTilde - pr*pr*deltaR))*u3 / (B*QTilde*alpha);
-    HSOL = alpha2*u*(-B+r*alpha)*pphi*SStar/(deltaT*sqQ);
-    HSONL = alpha2*SStar*CC*pphi*(-BR*(1.+sqQ) + B*nur*(1.+2.*sqQ))*u/(deltaT*QTilde);
+    HTwr = 0.5 * CC * SStar * (r2 * alpha2*pf*pf + deltaT*(r2*QTilde - pr*pr*deltaR))*u3 / (B*QTilde*alpha);
+    HSOL = alpha2*u*(-B+r*alpha)*pf*SStar/(deltaT*sqQ);
+    HSONL = alpha2*SStar*CC*pf*(-BR*(1.+sqQ) + B*nur*(1.+2.*sqQ))*u/(deltaT*QTilde);
     HSS = -0.5*u3*SStar*SStar;
     HS = beta*SStar + wr*HTwr + HSOL + HSONL;
     HSSeff = coeffs->Peffss * u4;
     Heff = HNS + HS + HSS + HSSeff;
     Hreal = sqrt(1. + 2.*coeffs->eta*(Heff-1.));
 
-// print_debug("a = %.16e, eta = %.16e\n", coeffs->a, coeffs->eta);
-// print_debug("logarg = %.16e, deltaU0 = %.16e, deltaULog = %.16e\n", logarg, deltaU0, deltaULog);
-// print_debug("deltaU = %.16e, deltaU_u = %.16e\n", deltaU, deltaU_u);
-// print_debug("deltaT = %.16e, deltaT_r = %.16e\n", deltaT, deltaT_r);
-// print_debug("DD = %.16e, deltaR = %.16e\n", DD, deltaR);
-// print_debug("wfd = %.16e, wfd_r = %.16e\n", wfd, wfd_r);
-// print_debug("pr = %.16e, pnBar2 = %.16e, pBar2 = %.16e\n", pr, pnBar2, pBar2);
-// print_debug("alpha = %.16e, beta = %.16e, gammar = %.16e, gammaphi = %.16e\n", alpha, beta, gammar, gammaphi);
-// print_debug("deltasigma0 = %.16e, deltasigmaS = %.16e, deltasigmaK = %.16e\n", deltaSigma0, deltaSigmaS, deltaSigmaK);
-// print_debug("BR = %.16e, nur = %.16e, wr = %.16e, SStar = %.16e\n", BR, nur, wr, SStar);
-// print_debug("Hns = %.16e, HTwr = %.16e, HSOL = %.16e, HSONL = %.16e\n", HNS, HTwr, HSOL, HSONL);
-// print_debug("HeffSS = %.16e, HS = %.16e, Heff = %.16e\n", HSSeff, HS, Heff);
+if (IS_DEBUG)
+{
+    print_debug("u = %.16e, \n", u);
+    print_debug("a = %.16e, eta = %.16e\n", coeffs->a, coeffs->eta);
+    print_debug("logarg = %.16e, deltaU0 = %.16e, deltaULog = %.16e\n", logarg, deltaU0, deltaULog);
+    print_debug("deltaU = %.16e, deltaU_u = %.16e\n", deltaU, deltaU_u);
+    print_debug("deltaT = %.16e, deltaT_r = %.16e\n", deltaT, deltaT_r);
+    print_debug("DD = %.16e, deltaR = %.16e\n", DD, deltaR);
+    print_debug("wfd = %.16e, wfd_r = %.16e\n", wfd, wfd_r);
+    print_debug("pr = %.16e, pnBar2 = %.16e, pBar2 = %.16e\n", pr, pnBar2, pBar2);
+    print_debug("alpha = %.16e, beta = %.16e, gammar = %.16e, gammaphi = %.16e\n", alpha, beta, gammar, gammaphi);
+    print_debug("deltasigma0 = %.16e, deltasigmaS = %.16e, deltasigmaK = %.16e\n", deltaSigma0, deltaSigmaS, deltaSigmaK);
+    print_debug("BR = %.16e, nur = %.16e, wr = %.16e, SStar = %.16e\n", BR, nur, wr, SStar);
+    print_debug("Hns = %.16e, HTwr = %.16e, HSOL = %.16e, HSONL = %.16e\n", HNS, HTwr, HSOL, HSONL);
+    print_debug("HeffSS = %.16e, HS = %.16e, Heff = %.16e\n", HSSeff, HS, Heff);
+    print_debug("Hreal = %.16e\n", Hreal);
+
+}
     return Hreal;
 }
 
@@ -2328,13 +2353,15 @@ REAL8 XLALSimIMRSpinPrecEOBHamiltonian(
     /* Note that the tortoise prT appears only in the quartic term, explained in Eqs. 14 and 15 of Tarrachini et al. */
     Hns = sqrt((1. + ((prT*prT)*(prT*prT))*qq*u2 + ptheta2*invrho2 + pf*pf*rho2*invLambda*invxi2 + pr*pr*deltaR*invrho2)
                 * (rho2*deltaT) * invLambda) + pf*ww*invLambda;
-    // if(debugPK){
-    // XLAL_PRINT_INFO( "term 1 in Hns: %.16e\n",  prT*prT*prT*prT*qq*u2 );
-    // XLAL_PRINT_INFO( "term 2 in Hns: %.16e\n", ptheta2/rho2 );
-    // XLAL_PRINT_INFO( "term 3 in Hns = %.16e\n", pf*pf*rho2/(Lambda*xi2) );
-    // XLAL_PRINT_INFO( "term 4 in Hns = %.16e\n", pr*pr*deltaR/rho2 );
-    // XLAL_PRINT_INFO( "term 5 in Hns = %.16e\n", Lambda/(rho2*deltaT) );
-    // XLAL_PRINT_INFO( "term 6 in Hns = %.16e\n", pf*ww/Lambda );}
+    // if(IS_DEBUG){
+    // print_debug( "term 1 in Hns: %.16e\n",  prT*prT*prT*prT*qq*u2 );
+    // print_debug( "term 2 in Hns: %.16e\n", ptheta2/rho2 );
+    // print_debug( "term 3 in Hns = %.16e\n", pf*pf*rho2/(Lambda*xi2) );
+    // print_debug( "term 4 in Hns = %.16e\n", pr*pr*deltaR/rho2 );
+    // print_debug( "term 5 in Hns = %.16e\n", Lambda/(rho2*deltaT) );
+    // print_debug( "term 6 in Hns = %.16e\n", pf*ww/Lambda );
+    // print_debug( "term 6 in Hns = %.16e\n", pf );
+    // }
 
     /* Eqs. 5.30 - 5.33 of BB1 */
     B = sqrt(deltaT);

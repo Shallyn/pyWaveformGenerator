@@ -33,6 +33,17 @@ INT4 XLALSimIMREOBGenerateQNMFreqV2Prec(
   UINT            nmodes    /**<< The number of overtones that should be included (max 8) */
 );
 
+INT XLALSimIMREOBGenerateQNMFreqV2FromFinalPrec(
+  COMPLEX16Vector *modefreqs, /**<< OUTPUT, complex freqs of overtones in unit of Hz */
+  const REAL8      mass1,     /**<< The mass of the 1st component (in Solar masses) */
+  const REAL8      mass2,     /**<< The mass of the 2nd component (in Solar masses) */
+  const REAL8 	   finalMass, /**<< The mass of the final BH (scaled by original total mass) */
+  REAL8 	   finalSpin, /**<< The dimensionless spin of the final BH */
+  UINT            l,         /**<< The l value of the mode in question */
+  INT              m,         /**<< The m value of the mode in question */
+  UINT            nmodes     /**<< The number of overtones that should be included (max 8) */
+  );
+
 INT evolve(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
@@ -466,6 +477,72 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     return CEV_SUCCESS;
 }
 
+INT calculate_QNMFrequenciesFromFinal(REAL8 mFinal, REAL8 chiFinal,
+                        UINT modeL, UINT modeM, size_t nmodes,
+                        REAL8Vector **ret_FreqRVec, 
+                        REAL8Vector **ret_FreqIVec)
+{
+    COMPLEX16Vector modefreqVec;
+    COMPLEX16 modeFreq[nmodes];
+    modefreqVec.length = nmodes;
+    modefreqVec.data = modeFreq;
+    REAL8Vector *FreqRVec = CreateREAL8Vector(nmodes);
+    REAL8Vector *FreqIVec = CreateREAL8Vector(nmodes);
+    if (XLALSimIMREOBGenerateQNMFreqV2FromFinalPrec(&modefreqVec, 0.5, 0.5, mFinal, chiFinal,
+                                            modeL, modeM,
+                                            nmodes) == CEV_FAILURE) 
+    {
+        return CEV_FAILURE;
+    }
+    int i;
+    for (i=0; i<nmodes; i++)
+    {
+        FreqRVec->data[i] = creal(modeFreq[i]) * CST_MTSUN_SI;
+        FreqIVec->data[i] = cimag(modeFreq[i]) * CST_MTSUN_SI;
+    }
+    *ret_FreqRVec = FreqRVec;
+    *ret_FreqIVec = FreqIVec;
+    return CEV_SUCCESS;
+}
+
+INT calculate_QNMFrequencies(REAL8 m1, REAL8 m2, 
+                        REAL8 chi1x, REAL8 chi1y, REAL8 chi1z,
+                        REAL8 chi2x, REAL8 chi2y, REAL8 chi2z,
+                        UINT modeL, UINT modeM, size_t nmodes,
+                        REAL8Vector **ret_FreqRVec, 
+                        REAL8Vector **ret_FreqIVec)
+{
+    COMPLEX16Vector modefreqVec;
+    COMPLEX16 modeFreq[nmodes];
+    modefreqVec.length = nmodes;
+    modefreqVec.data = modeFreq;
+    REAL8Vector *FreqRVec = CreateREAL8Vector(nmodes);
+    REAL8Vector *FreqIVec = CreateREAL8Vector(nmodes);
+    REAL8 spin1[3] = {0};
+    REAL8 spin2[3] = {0};
+    spin1[0] = chi1x;
+    spin1[1] = chi1y;
+    spin1[2] = chi1z;
+    spin2[0] = chi2x;
+    spin2[1] = chi2y;
+    spin2[2] = chi2z;
+    if (XLALSimIMREOBGenerateQNMFreqV2Prec(&modefreqVec, m1, m2, spin1, spin2,
+                                            modeL, modeM,
+                                            nmodes) == CEV_FAILURE) 
+    {
+        return CEV_FAILURE;
+    }
+    int i;
+    for (i=0; i<nmodes; i++)
+    {
+        FreqRVec->data[i] = creal(modeFreq[i]) * CST_MTSUN_SI;
+        FreqIVec->data[i] = cimag(modeFreq[i]) * CST_MTSUN_SI;
+    }
+    *ret_FreqRVec = FreqRVec;
+    *ret_FreqIVec = FreqIVec;
+    return CEV_SUCCESS;
+}
+
 REAL8 calculate_QNMFrequency(REAL8 m1, REAL8 m2, 
                         REAL8 chi1x, REAL8 chi1y, REAL8 chi1z,
                         REAL8 chi2x, REAL8 chi2y, REAL8 chi2z,
@@ -490,7 +567,7 @@ REAL8 calculate_QNMFrequency(REAL8 m1, REAL8 m2,
                                             modeL, modeM,
                                             1) == CEV_FAILURE) 
     {
-        return CEV_FAILURE;
+        return -1.;
     }
     // if (deltaT > CST_PI / creal(modeFreq)) {
     //     PRINT_LOG_INFO(LOG_CRITICAL, "Ringdown frequency > Nyquist");

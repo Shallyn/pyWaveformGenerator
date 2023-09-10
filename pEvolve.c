@@ -105,25 +105,33 @@ dbg_sigKerr.data = dbg_sigKdata;
 dbg_sigStar.data = dbg_sigSdata;
 // memcpy(dbg_xdata, ICvalues->data, 3*sizeof(REAL8));
 // memcpy(dbg_pdata, ICvalues->data+3, 3*sizeof(REAL8));
-dbg_xdata[0] = 4.1659938868533658e1;
+// dbg_xdata[0] = 4.1659938868533658e1;
+dbg_xdata[0] = 2.2786576810580382e+01;
 dbg_xdata[1] = dbg_xdata[2] = 0.0;
 
-dbg_pdata[0] = -1e-2;
-dbg_pdata[1] = 1.5936732938778625e-1;
-dbg_pdata[2] = -2.6799608562176783e-12;
+// dbg_pdata[0] = -1e-2;
+// dbg_pdata[1] = 1.5936732938778625e-1;
+// dbg_pdata[2] = -2.6799608562176783e-12;
+dbg_pdata[0] = -2.0223298742475641e-04;
+dbg_pdata[1] = 2.2970285283699207e-01;
+dbg_pdata[2] = 0.0;
 // memcpy(dbg_s1data, ICvalues->data+6, 3*sizeof(REAL8));
 // memcpy(dbg_s2data, ICvalues->data+9, 3*sizeof(REAL8));
-dbg_s1data[0] = 0.0;
-dbg_s1data[1] = -1.3888888888888892e-01;
-dbg_s1data[2] = 6.2500000000000011e-01;
+// dbg_s1data[0] = 0.0;
+// dbg_s1data[1] = -1.3888888888888892e-01;
+// dbg_s1data[2] = 6.2500000000000011e-01;
+dbg_s1data[0] = dbg_s1data[1] = 0.0;
+dbg_s1data[2] = -5.2679500520291378e-01;
 
-dbg_s2data[0] = 2.7777777777777779e-03;
-dbg_s2data[1] = 0.0;
-dbg_s2data[2] = 2.2222222222222227e-02;
+// dbg_s2data[0] = 2.7777777777777779e-03;
+// dbg_s2data[1] = 0.0;
+// dbg_s2data[2] = 2.2222222222222227e-02;
+dbg_s2data[0] = dbg_s2data[1] = 0.0;
+dbg_s2data[2] = -3.0343392299687830e-02;
 
 REAL8 dbg_m1, dbg_m2, dbg_eta, dbg_a, dbg_S_con;
-dbg_m1 = 10.;
-dbg_m2 = 10.;
+dbg_m1 = 48.3871;
+dbg_m2 = 11.6129;
 dbg_eta = dbg_m1 * dbg_m2 / (dbg_m1 + dbg_m2) / (dbg_m1 + dbg_m2);
 EOBCalculateSigmaStar(&dbg_sigStar, dbg_m1, dbg_m2, &dbg_s1Vec, &dbg_s2Vec);
 EOBCalculateSigmaKerr(&dbg_sigKerr, &dbg_s1Vec, &dbg_s2Vec);
@@ -294,7 +302,7 @@ if(1) {failed = 1; goto QUIT;}
     REAL8 time_6M = seobdynamicsAdaS->tVec[index_6M];
     tStepBack = GET_MAX(tStepBack, seobdynamicsAdaS->tVec[retLenAdaS-1] - time_6M + 10*deltaT);
 #if 0
-    FILE *out = fopen( "debug_dynamics_newAdaS.dat","w");
+    FILE *out = fopen( "debug_dynamics_AdaS.dat","w");
     for (int ii=0; ii<retLenAdaS; ii++)
     {
         // t, x, y, z, px, py, pz
@@ -2734,6 +2742,60 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
             temp_r * (ICvalues->data[4] * cos(temp_phi) -
                     ICvalues->data[3] * sin(temp_phi)); // p_phi
     }
+#if 0
+DEBUG_START;
+REAL8Vector dbg_xVec, dbg_pVec, dbg_s1Vec, dbg_s2Vec, dbg_sigKerr, dbg_sigStar;
+REAL8 dbg_xdata[3], dbg_pdata[3], dbg_s1data[3], dbg_s2data[3], dbg_sigKdata[3], dbg_sigSdata[3];
+dbg_xVec.length = dbg_pVec.length = dbg_s1Vec.length = dbg_s2Vec.length = dbg_sigKerr.length = dbg_sigStar.length = 3;
+dbg_xVec.data = dbg_xdata;
+dbg_pVec.data = dbg_pdata;
+dbg_s1Vec.data = dbg_s1data;
+dbg_s2Vec.data = dbg_s2data;
+dbg_sigKerr.data = dbg_sigKdata;
+dbg_sigStar.data = dbg_sigSdata;
+// memcpy(dbg_xdata, ICvalues->data, 3*sizeof(REAL8));
+// memcpy(dbg_pdata, ICvalues->data+3, 3*sizeof(REAL8));
+// dbg_xdata[0] = 4.1659938868533658e1;
+dbg_xdata[0] = 2.2786576810580382e+01;
+dbg_xdata[1] = dbg_xdata[2] = 0.0;
+
+// dbg_pdata[0] = -1e-2;
+// dbg_pdata[1] = 1.5936732938778625e-1;
+// dbg_pdata[2] = -2.6799608562176783e-12;
+dbg_pdata[0] = -2.0223298742475641e-04;
+dbg_pdata[1] = 2.2970285283699207e-01;
+dbg_pdata[2] = 0.0;
+// memcpy(dbg_s1data, ICvalues->data+6, 3*sizeof(REAL8));
+// memcpy(dbg_s2data, ICvalues->data+9, 3*sizeof(REAL8));
+// dbg_s1data[0] = 0.0;
+// dbg_s1data[1] = -1.3888888888888892e-01;
+// dbg_s1data[2] = 6.2500000000000011e-01;
+dbg_s1data[0] = dbg_s1data[1] = 0.0;
+dbg_s1data[2] = -8.100000000000000533e-01 ;
+
+// dbg_s2data[0] = 2.7777777777777779e-03;
+// dbg_s2data[1] = 0.0;
+// dbg_s2data[2] = 2.2222222222222227e-02;
+dbg_s2data[0] = dbg_s2data[1] = 0.0;
+dbg_s2data[2] = -8.100000000000000533e-01 ;
+
+REAL8 dbg_m1, dbg_m2, dbg_eta, dbg_a, dbg_S_con;
+dbg_m1 = 48.3871;
+dbg_m2 = 11.6129;
+dbg_eta = dbg_m1 * dbg_m2 / (dbg_m1 + dbg_m2) / (dbg_m1 + dbg_m2);
+// EOBCalculateSigmaStar(&dbg_sigStar, dbg_m1, dbg_m2, &dbg_s1Vec, &dbg_s2Vec);
+// EOBCalculateSigmaKerr(&dbg_sigKerr, &dbg_s1Vec, &dbg_s2Vec);
+
+SpinEOBHSACoeffs dbg_seobCoeffs;
+memset(&dbg_seobCoeffs, 0, sizeof(dbg_seobCoeffs));
+
+CalculateSpinEOBHSACoeffs(dbg_m1, dbg_m2, dbg_s1data[2], dbg_s2data[2], &dbg_seobCoeffs);
+REAL8 dbg_invcsi;
+REAL8 dbg_Ham = EOBSAHamiltonian(dbg_xdata[0], dbg_pdata[0], dbg_pdata[1]*dbg_xdata[0], &dbg_seobCoeffs, &dbg_invcsi);
+DEBUG_END;
+if(1) {failed = 1; goto QUIT;}
+#endif
+
     /*
     *
     * 
@@ -2790,6 +2852,28 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
     UINT index_6M = FindClosestIndex(m1rVec, -6.0);
     REAL8 time_6M = seobdynamicsAdaS->tVec[index_6M];
     tStepBack = GET_MAX(tStepBack, seobdynamicsAdaS->tVec[retLenAdaS-1] - time_6M + 10*deltaT);
+#if 0
+    FILE *out = fopen( "debug_dynamics_AdaS.dat","w");
+    for (int ii=0; ii<retLenAdaS; ii++)
+    {
+        // t, x, y, z, px, py, pz
+    fprintf(out, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n",
+      seobdynamicsAdaS->tVec[ii],
+      seobdynamicsAdaS->posVecx[ii],
+      seobdynamicsAdaS->posVecy[ii],
+      seobdynamicsAdaS->posVecz[ii],
+      seobdynamicsAdaS->momVecx[ii],
+      seobdynamicsAdaS->momVecy[ii],
+      seobdynamicsAdaS->momVecz[ii],
+      seobdynamicsAdaS->s1Vecx[ii],
+      seobdynamicsAdaS->s1Vecy[ii],
+      seobdynamicsAdaS->s1Vecz[ii],
+      seobdynamicsAdaS->s2Vecx[ii],
+      seobdynamicsAdaS->s2Vecy[ii],
+      seobdynamicsAdaS->s2Vecz[ii]);
+    }
+    fclose(out);
+#endif
 
     /*
     *
