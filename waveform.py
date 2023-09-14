@@ -24,7 +24,7 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 2, **kwargs)
             > iota_rad inclination angle in rad
             > beta_rad represent the initial direction of major axis of the elliptical orbit, 
                 which is equivalent to the phiRef parameter in lalsim-inspiral
-            > Phi_rad the complex angle of h+ - ihx at the merge stage
+            > Phi_rad the complex angle of h+ - ihx at the merge stage (default unused other than you set use_coaphase=True)
         f_min: initial orbital frequency
         srate: the output sample rate
             Note. Lowering this value does not significantly improve computational speed, 

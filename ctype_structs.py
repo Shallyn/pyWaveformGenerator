@@ -756,7 +756,8 @@ class pyInputParams(ctypes.Structure):
                 ('ret_dyn', ctypes.c_int),
                 ('inEPS_REL', ctypes.c_double),
                 ('inEPS_ABS', ctypes.c_double),
-                ('is_coframe', ctypes.c_int))
+                ('is_coframe', ctypes.c_int),
+                ('use_coaphase', ctypes.c_int))
 
 
 class pyOutputStruct(ctypes.Structure):

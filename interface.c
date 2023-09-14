@@ -138,6 +138,7 @@ typedef struct {
     REAL8 inEPS_REL;
     REAL8 inEPS_ABS;
     INT is_coframe;
+    INT use_coaphase;
 }pyInputParams_t;
 
 typedef struct {
@@ -293,10 +294,10 @@ void DestroypyDynOutputStruct_t(pyDynOutputStruct_t *out)
     return;
 }
 
-void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec, pyOutputStruct_t **ret);
-void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBCoreOutputs *All_prec, pyOutputStruct_t **ret);
-void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *hLM, SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret);
-void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *PLM, pyOutputStruct_t **ret);
+void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec, pyOutputStruct_t **ret);
+void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBCoreOutputs *All_prec, pyOutputStruct_t **ret);
+void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *hLM, SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret);
+void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *PLM, pyOutputStruct_t **ret);
 
 void convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(SEOBPrecCoreOutputs *All_prec, pyDynOutputStruct_t **ret);
 void convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(SEOBCoreOutputs *All, pyDynOutputStruct_t **ret);
@@ -381,9 +382,9 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
         if (status == CEV_SUCCESS)
         {
             if (hparams.is_coframe)
-                convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(params->is_only22, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All_prec->tVec, All_prec->Plm, output);
+                convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All_prec->tVec, All_prec->Plm, output);
             else
-                convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All_prec, output);
+                convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All_prec, output);
             if (params->ret_dyn)
                 convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(All_prec, dynoutput);
         }
@@ -400,7 +401,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
             params->deltaT, params->inc, &hparams, All);
         if (status == CEV_SUCCESS)
         {
-            convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All, output);
+            convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All, output);
             if (params->ret_dyn)
                 convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(All, dynoutput);
         }
@@ -416,7 +417,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
         status = evolve_SA(params->m1, params->m2, params->s1z, params->s2z, params->ecc, params->f_min, params->deltaT, &hparams, &tVec, &hLM, params->is_noringdown, params->ret_dyn, &dyn_debug);
         if (status == CEV_SUCCESS)
         {
-            convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(params->is_only22, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, tVec, hLM, dyn_debug, output);
+            convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, tVec, hLM, dyn_debug, output);
             if (params->ret_dyn)
                 convert_SEOBSAdynamics_to_pyDynOutputStruct_t(dyn_debug, params->m1, params->m2, params->s1z, params->s2z, dynoutput);
         }
@@ -439,7 +440,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
                 &hparams, &hplus, &hcross, All);
             if (status == CEV_SUCCESS)
             {
-                convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All, output);
+                convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All, output);
                 if (params->ret_dyn)
                     convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(All, dynoutput);
             }
@@ -460,7 +461,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
                 &hparams, &hplus, &hcross, All);
             if (status == CEV_SUCCESS)
             {
-                convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All, output);
+                convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All, output);
                 if (params->ret_dyn)
                     convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(All, dynoutput);
             }
@@ -645,7 +646,7 @@ void convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(SEOBPrecCoreOutputs *All
     return;
 }
 
-void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec, pyOutputStruct_t **ret)
+void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec, pyOutputStruct_t **ret)
 {
     INT i;
     REAL8 mT, amp0;
@@ -752,8 +753,11 @@ void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, 
             }
         }
     }
-    INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
-    apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
+    if (use_coaphase)
+    {
+        INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
+        apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
+    }
     STRUCTFREE(amp22, REAL8Vector);
     *ret = output;
     return;
@@ -786,7 +790,7 @@ void convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(SEOBCoreOutputs *All, pyDynO
     return;
 }
 
-void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBCoreOutputs *All, pyOutputStruct_t **ret)
+void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBCoreOutputs *All, pyOutputStruct_t **ret)
 {
     INT i;
     REAL8 mT, amp0;
@@ -896,8 +900,11 @@ void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL
             }
         }
     }
-    INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
-    apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
+    if (use_coaphase)
+    {
+        INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
+        apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
+    }
     STRUCTFREE(amp22, REAL8Vector);
     *ret = output;
     return;
@@ -948,7 +955,7 @@ void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, RE
     return;
 }
 
-void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *PLM, pyOutputStruct_t **ret)
+void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *PLM, pyOutputStruct_t **ret)
 {
     INT i;
     REAL8 mT, amp0;
@@ -1069,14 +1076,17 @@ void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22,
             }
     //     }
     // }
-    INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
-    apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
+    if (use_coaphase)
+    {
+        INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
+        apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
+    }
     STRUCTFREE(amp22, REAL8Vector);
     *ret = output;
     return;
 }
 
-void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *hLM, SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret)
+void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *hLM, SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret)
 {
     INT i;
     REAL8 mT, amp0;
@@ -1252,8 +1262,11 @@ void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, REA
             }
     //     }
     // }
-    INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
-    apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
+    if (use_coaphase)
+    {
+        INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
+        apply_phic_on_hpc(output->timeM, output->hplus, output->hcross, ipeak22, phic);
+    }
     STRUCTFREE(amp22, REAL8Vector);
     *ret = output;
     return;
