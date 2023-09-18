@@ -361,6 +361,7 @@ class SEOBNRWaveformCaller(object):
         self.EPS_ABS = -1.
         self.is_coframe = 0 # only valid when prec_flag > 0
         self.use_coaphase = 0 # default
+        self.zeta = 0 # anomaly angle zeta in r = p / (1 + e cos(zeta))
 
     def set_params(self, **kwargs):
         self.__parse_params(**kwargs)
@@ -429,6 +430,9 @@ class SEOBNRWaveformCaller(object):
             self.is_coframe = 0 if kwargs['is_coframe'] == False else 1
         if 'use_coaphase' in kwargs:
             self.use_coaphase = 0 if kwargs['use_coaphase'] == False else 1
+        self.zeta = self.zeta if 'zeta' not in kwargs else kwargs['zeta']*np.pi/180
+        if 'zeta_rad' in kwargs:
+            self.zeta = kwargs['zeta_rad']
 
     def calculate_hcorrections(self, l:int, m:int, dyn:npDynamicData):
         hparams = pyHyperParams()
@@ -557,7 +561,8 @@ class SEOBNRWaveformCaller(object):
                       ctypes.c_double(self.EPS_REL),
                       ctypes.c_double(self.EPS_ABS),
                       ctypes.c_int(self.is_coframe),
-                      ctypes.c_int(self.use_coaphase)
+                      ctypes.c_int(self.use_coaphase),
+                      ctypes.c_double(self.zeta)
                       ]
         input_pms = pyInputParams(*value_list)
         ret_struct = ctypes.POINTER(pyOutputStruct)()

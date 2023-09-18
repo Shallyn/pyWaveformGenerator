@@ -57,5 +57,16 @@ INT EOBInitialConditionsSA_egw(REAL8Vector    *initConds,
                          const REAL8    spin2[],
                          SpinEOBParams  *params);
 
+INT EOBInitialConditionsSA_e_anomaly(REAL8Vector    *initConds,
+                         const REAL8    mass1,
+                         const REAL8    mass2,
+                         const REAL8    fMin,
+                         const REAL8    ecc,
+                         const REAL8    anomaly,
+                         const REAL8    inc,
+                         const REAL8    spin1[],
+                         const REAL8    spin2[],
+                         SpinEOBParams  *params);
+
 #endif
 

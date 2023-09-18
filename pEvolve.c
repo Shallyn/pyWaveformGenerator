@@ -33,7 +33,7 @@ static int XLALEOBHighestInitialFreq(
 INT evolve(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            INT is_only22,
            HyperParams *hparams, 
            REAL8TimeSeries **hPlusOut,
@@ -246,7 +246,15 @@ if(1) {failed = 1; goto QUIT;}
         memcpy(ICvalues->data+6, core->s1Vec->data, 3*sizeof(REAL8));
         memcpy(ICvalues->data+9, core->s2Vec->data, 3*sizeof(REAL8));
     } else {
-        status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+        if (ecc > 0.0 && get_egw_flag()) {
+            //status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
+            status = SEOBInitialConditions_e_anomaly(ICvalues, MfMin, ecc, zeta, core);
+            if (status != CEV_SUCCESS && ecc < 0.05)
+            {
+                status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+            }
+        } else 
+            status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
@@ -1199,7 +1207,7 @@ QUIT:
 INT evolve_conserv(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            HyperParams *hparams, 
            SEOBCoreOutputs *all)
 {
@@ -1575,7 +1583,7 @@ QUIT:
 INT evolve_adaptive(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            INT is_only22,
            HyperParams *hparams, 
            REAL8TimeSeries **hPlusOut,
@@ -2577,7 +2585,7 @@ QUIT:
 INT evolve_SA(REAL8 m1,  REAL8 m2, 
            REAL8 s1z, 
            REAL8 s2z,
-           REAL8 ecc, REAL8 f_min, REAL8 INdeltaT,
+           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT,
            HyperParams *hparams, 
            REAL8Vector **tRetVec,
            SphHarmListCAmpPhaseSequence **hlm,
@@ -2705,13 +2713,14 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
         memcpy(ICvalues->data+6, core->s1Vec->data, 3*sizeof(REAL8));
         memcpy(ICvalues->data+9, core->s2Vec->data, 3*sizeof(REAL8));
     } else {
-        if (ecc > 0.0 && get_egw_flag())
-            status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
+        if (ecc > 0.0 && get_egw_flag()) {
+            //status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
+            status = SEOBInitialConditions_e_anomaly(ICvalues, MfMin, ecc, zeta, core);
             if (status != CEV_SUCCESS && ecc < 0.05)
             {
                 status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
             }
-        else 
+        } else 
             status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     }

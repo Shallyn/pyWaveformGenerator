@@ -7595,7 +7595,7 @@ static int XLALEOBSpinPrecAlignedStopCondition_egw(
     REAL8 omega, r;
     SpinEOBParams *params = (SpinEOBParams *)funcParams;
 
-    if (values[1] > 3.*CST_PI) 
+    if (values[1] > 4.*CST_PI) 
     {
         return 1;
     }
@@ -7654,7 +7654,7 @@ INT SEOBIntegrateDynamics_egw(REAL8Array **dynamics,
         ada sampling) we always start at t=0
         */
         integrator = XLALAdaptiveRungeKutta4Init(
-            nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SA,
+            nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SAConserve,
             XLALEOBSpinPrecAlignedStopCondition_egw, EPS_ABS, EPS_REL);
     }
     else
@@ -7901,6 +7901,213 @@ QUIT:
     return CEV_SUCCESS;
 }
 
+void calculate_prDot_from_ezetapphi(REAL8 eta, REAL8 chi1, REAL8 chi2, 
+        REAL8 e, REAL8 sz, REAL8 cz, REAL8 pf,
+        REAL8 *ret_prT, REAL8 *ret_prDot)
+{
+    REAL8 prDot0, prDot2, prDot3, prDot4;
+    REAL8 dm = sqrt(1. - 4.*eta);
+    REAL8 eta2 = eta*eta;
+    //REAL8 cz = cos(zeta);
+    REAL8 eczp = 1. + e*cz;
+    REAL8 eczp2 = eczp*eczp;
+    REAL8 eczp3 = eczp2*eczp;
+    REAL8 e2 = e*e;
+    REAL8 e4 = e2*e2;
+    REAL8 pfm = 1./pf;
+    REAL8 pfm2 = pfm*pfm;
+    REAL8 pfm3 = pfm2*pfm;
+    REAL8 pfm4 = pfm2*pfm2;
+    REAL8 pfm5 = pfm4*pfm;
+    REAL8 pfm6 = pfm4*pfm2;
+    REAL8 pfm7 = pfm6*pfm;
+    REAL8 pfm8 = pfm7*pfm;
+    REAL8 chi12 = chi1*chi1, chi22 = chi2*chi2;
+    prDot0 = (-1 + eczp)*eczp2*pfm4;
+    prDot2 = -0.5*(eczp2*((-1 + eczp)*(-9 + 2*eczp - eta) + e2*(7 + eczp*(-5 + eta) - eta))*pfm6);
+    prDot3 = (eczp2*(e2*(2 - 3*eczp) + 3*(2 - 3*eczp + eczp2))*
+        (chi1*(2 + 2*dm - eta) - chi2*(-2 + 2*dm + eta))*pfm7)/2.;
+    prDot4 = (eczp2*(-259 - 298*e2 - 83*e4 + 423*eczp + 290*e2*eczp + 55*e4*eczp - 164*eczp2 - 
+        28*e2*eczp2 + 21*eta + 22*e2*eta + 21*e4*eta - 89*eczp*eta + 10*e2*eczp*eta - 
+        17*e4*eczp*eta + 116*eczp2*eta + 4*e2*eczp2*eta - 48*eczp3*eta + 
+        8*chi1*chi2*eta*(-((-1 + eczp)*(-(eczp*(-3 + eta)) + 6*eczp2*eta - 2*(3 + eta))) + 
+        e2*(-2 - 6*eta + eczp*(3 + 11*eta))) - 3*eta2 + 6*e2*eta2 - 3*e4*eta2 + 
+        3*eczp*eta2 - 6*e2*eczp*eta2 + 3*e4*eczp*eta2 - 
+        4*chi12*(dm*(-((-1 + eczp)*(4 - 2*eta - eczp*(1 + eta) + eczp2*(-3 + 6*eta))) + 
+        e2*(4 - 6*eta + eczp*(-7 + 11*eta))) + 
+        e2*(4 - 14*eta + eczp*(-7 + 25*eta - 11*eta2) + 6*eta2) + 
+        (-1 + eczp)*(-2*(2 - 5*eta + eta2) - eczp*(-1 + eta + eta2) + 
+        3*eczp2*(1 - 4*eta + 2*eta2))) + 
+        4*chi22*(dm*(-((-1 + eczp)*(4 - 2*eta - eczp*(1 + eta) + eczp2*(-3 + 6*eta))) + 
+        e2*(4 - 6*eta + eczp*(-7 + 11*eta))) - 
+        (-1 + eczp)*(-2*(2 - 5*eta + eta2) - eczp*(-1 + eta + eta2) + 
+        3*eczp2*(1 - 4*eta + 2*eta2)) + 
+        e2*(-4 + 14*eta - 6*eta2 + eczp*(7 - 25*eta + 11*eta2))))*pfm8)/8.;
+    REAL8 pr0, pr2, pr3, pr4;
+    pr0 = e*pfm;
+    pr2 = e*(1 + e2 - eczp)*pfm3;
+    pr3 = -0.5*(e*(1 + e2 - eczp)*(chi1*(2 + 2*dm - eta) - chi2*(-2 + 2*dm + eta))*pfm4);
+    pr4 = (e*(16 + chi12 + chi22 + chi12*dm - chi22*dm + 8*e4 - 4*eta - 2*chi12*eta + 
+        4*chi1*chi2*eta - 2*chi22*eta + 
+        2*eczp*(2*(-8 + eta) - 2*chi1*chi2*eta*(1 + eta) + 
+        chi12*(-1 + dm*(-1 + eta) + 3*eta - eta2) - 
+        chi22*(1 + dm*(-1 + eta) - 3*eta + eta2)) + 
+        2*eczp2*(-1 + chi22*(-1 + dm + 4*eta - 2*dm*eta - 2*eta2) - 4*chi1*chi2*eta2 - 
+        chi12*(1 + dm - 4*eta - 2*dm*eta + 2*eta2)) + 
+        e2*(32 + 3*chi22 - 3*chi22*dm - 8*eczp - 4*eta - 10*chi22*eta + 4*chi22*dm*eta + 
+        4*chi1*chi2*eta*(1 + 2*eta) + 4*chi22*eta2 + 
+        chi12*(3 + 3*dm - 10*eta - 4*dm*eta + 4*eta2)))*pfm5)/4.;
+    *ret_prT = sz*(pr0 + pr2 + pr3 + pr4);
+    *ret_prDot = prDot0 + prDot2 + prDot3 + prDot4;
+    return;
+}
+
+INT CalculateAOmegaFromrpphi(REAL8 r, REAL8 pphi, SpinEOBParams *core,
+    REAL8 *omegaOut)
+{
+    // print_debug( "Values r = %.16e, pphi = %.16e\n", r, pphi );
+    REAL8 EPS_REL = 1.0e-9;
+    REAL8 EPS_ABS = 1.0e-10;
+    INT retLenAdaS, failed = 0, status;
+    SEOBdynamics *seobdynamicsAdaS = NULL;
+    REAL8Array *dynamicsAdaS = NULL;
+    REAL8Vector *ICvalues = NULL;
+
+    gsl_spline *spline_omega = NULL, *spline_rDot = NULL;
+    gsl_interp_accel *acc_omega = NULL, *acc_rDot = NULL;
+    ICvalues = CreateREAL8Vector(14);
+
+    // Set initial Conditions
+    REAL8 xSph[3] = {r, 0., 0.};
+    REAL8 pSph[3] = {0, 0, pphi};
+    REAL8 xCart[3] = {0,0,0};
+    REAL8 pCart[3] = {0,0,0};
+    SphericalToCartesian(xCart, pCart, xSph, pSph);
+    memcpy( ICvalues->data, xCart, sizeof(xCart) );
+    memcpy( ICvalues->data+3, pCart, sizeof(pCart) );
+    memcpy( ICvalues->data+6, core->s1Vec->data, sizeof(pCart) );
+    memcpy( ICvalues->data+9, core->s2Vec->data, sizeof(pCart) );
+
+    REAL8 deltaT, deltaT_min;
+    REAL8 tthresh;
+    deltaT = 0.5;
+    deltaT_min = 8.0e-5;
+    status = SEOBIntegrateDynamics_egw(&dynamicsAdaS, &retLenAdaS, 
+        ICvalues, EPS_ABS, EPS_REL, deltaT, deltaT_min, 
+        0, 10., core, core->alignedSpins);
+    if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+
+    status = SEOBComputeExtendedSEOBdynamics_Conserve(&seobdynamicsAdaS, dynamicsAdaS, retLenAdaS, core);
+    if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+
+    REAL8 m1 = core->m1;
+    REAL8 m2 = core->m2;
+    REAL8 mtot = m1 + m2;
+    REAL8 phi0, tend;
+    REAL8Vector values, polarDynamics;
+    REAL8 valuesdata[14] = {0.};
+    REAL8 polarDynamicsdata[4] = {0.};
+    values.length = 14;
+    polarDynamics.length = 4;
+    values.data = valuesdata;
+    polarDynamics.data = polarDynamicsdata;
+    REAL8Vector *rDotVec = CreateREAL8Vector(retLenAdaS);
+    for (int i=0; i<retLenAdaS; i++)
+    {
+        rDotVec->data[i] = (seobdynamicsAdaS->posVecx[i]*seobdynamicsAdaS->velVecx[i] + 
+            seobdynamicsAdaS->posVecy[i]*seobdynamicsAdaS->velVecy[i] + 
+            seobdynamicsAdaS->posVecz[i]*seobdynamicsAdaS->velVecz[i])/seobdynamicsAdaS->polarrVec[i];
+    }
+    spline_omega = gsl_spline_alloc(gsl_interp_cspline, retLenAdaS);
+    acc_omega = gsl_interp_accel_alloc();
+    spline_rDot = gsl_spline_alloc(gsl_interp_cspline, retLenAdaS);
+    acc_rDot = gsl_interp_accel_alloc();
+    gsl_spline_init(spline_omega, seobdynamicsAdaS->tVec, seobdynamicsAdaS->omegaVec, retLenAdaS);
+    gsl_spline_init(spline_rDot, seobdynamicsAdaS->tVec, rDotVec->data, retLenAdaS);
+    tend = seobdynamicsAdaS->tVec[retLenAdaS-1] - seobdynamicsAdaS->tVec[0];
+    phi0 = seobdynamicsAdaS->polarphiVec[0];
+    REAL8 dt = 0.25, averaged_omega = 0.0;
+    INT maxlen = floor(tend / dt);
+    // char fout[STR_COMM_SIZE];
+    // strncpy(fout, "tmp_debug_ecc.dat", STR_COMM_SIZE);
+    // FILE *out = fopen(fout, "w");
+    for (int i = 0; i<retLenAdaS; i++)
+    {
+        // fprintf(out, "%.16e\t%.16e\t%.16e\n", i*dt, gsl_spline_eval(spline_rDot, i*dt, acc_rDot), gsl_spline_eval(spline_omega, i*dt, acc_omega));
+        // if (i>1 && gsl_spline_eval(spline_rDot, i*dt, acc_rDot) * gsl_spline_eval(spline_rDot, (i+1)*dt, acc_rDot) < 0)
+        // {
+        //     averaged_omega = (averaged_omega + gsl_spline_eval(spline_omega, i*dt, acc_omega)) / (i + 1);
+        //     break;
+        //     // print_debug("idx = %d, tsplit = %.16e, avg = %.16e\n", i, i*dt, averaged_omega);
+        // } else
+        //     averaged_omega += gsl_spline_eval(spline_omega, i*dt, acc_omega);
+    }
+    // fclose(out);
+    *omegaOut = 0.0;
+QUIT:
+    STRUCTFREE(dynamicsAdaS, REAL8Array);
+    STRUCTFREE(seobdynamicsAdaS, SEOBdynamics);
+    STRUCTFREE(ICvalues, REAL8Vector);
+    STRUCTFREE(rDotVec, REAL8Vector);
+    gsl_spline_free(spline_omega);
+    gsl_interp_accel_free(acc_omega);
+    gsl_spline_free(spline_rDot);
+    gsl_interp_accel_free(acc_rDot);
+    if (failed)
+        return CEV_FAILURE;
+    return CEV_SUCCESS;
+}
+
+INT SEOBInitialConditions_e_anomaly(REAL8Vector *ICvalues,
+                                    REAL8 MfMin,
+                                    REAL8 ecc,
+                                    REAL8 zeta,
+                                    SpinEOBParams *seobParams)
+{
+    PRINT_LOG_INFO(LOG_INFO, "Set initial conditions");
+    if (!seobParams)
+        return CEV_FAILURE;
+    INT j;
+    memset((ICvalues)->data, 0, ((ICvalues)->length) * sizeof(REAL8));
+    REAL8 eta = seobParams->eta;
+    REAL8 m1, m2, mTotal;
+    m1 = seobParams->m1;
+    m2 = seobParams->m2;
+    mTotal = m1 + m2;
+    REAL8 fMin = MfMin / (m1 + m2) / CST_MTSUN_SI;
+    REAL8 mSpin1data[3] = {0., 0., 0.};
+    REAL8 mSpin2data[3] = {0., 0., 0.};
+    if (seobParams->alignedSpins)
+    {
+        REAL8 chi1dotZ = seobParams->chi1;
+        REAL8 chi2dotZ = seobParams->chi2;
+        REAL8 chiS = SEOBCalculateChiS(chi1dotZ, chi2dotZ);
+        REAL8 chiA = SEOBCalculateChiA(chi1dotZ, chi2dotZ);
+        REAL8 tplspin = SEOBCalculatetplspin(m1, m2, eta, chi1dotZ, chi2dotZ);
+        if (XLALSimIMREOBCalcSpinFacWaveformCoefficients(seobParams->hCoeffs, seobParams, tplspin, chiS, chiA) != CEV_SUCCESS)
+            return CEV_FAILURE;
+        mSpin1data[2] = chi1dotZ * m1 * m1;
+        mSpin2data[2] = chi2dotZ * m2 * m2;
+        // print_debug("m1 = %g, m2 = %g, fMin = %g\n", m1, m2, fMin);
+        // print_debug("mSpin1data = (%g, %g, %g)\n", mSpin1data[0], mSpin1data[1], mSpin1data[2]);
+        // print_debug("mSpin2data = (%g, %g, %g)\n", mSpin2data[0], mSpin2data[1], mSpin2data[2]);
+        // if (EOBInitialConditionsSA_egw(ICvalues, m1, m2, fMin, ecc, 0, mSpin1data, mSpin2data, seobParams) != CEV_SUCCESS)
+        //     return CEV_FAILURE;
+        if (EOBInitialConditionsSA_e_anomaly(ICvalues, m1, m2, fMin, ecc, zeta, 0, mSpin1data, mSpin2data, seobParams) != CEV_SUCCESS)
+            return CEV_FAILURE;
+    }
+    else
+    {
+        for (j=0; j<3; j++)
+        {
+            mSpin1data[j] = seobParams->s1Vec->data[j] * mTotal * mTotal;
+            mSpin2data[j] = seobParams->s2Vec->data[j] * mTotal * mTotal;
+        }
+        if (EOBInitialConditionsPrec(ICvalues, m1, m2, fMin, ecc, 0, mSpin1data, mSpin2data, seobParams) != CEV_SUCCESS)
+            return CEV_FAILURE;
+    }
+    return CEV_SUCCESS;
+}
 
 INT SEOBInitialConditions_egw(REAL8Vector *ICvalues,
                             REAL8 MfMin,
@@ -8006,6 +8213,7 @@ typedef struct {
     HcapDerivParams *pms;
 }DiffHamParams;
 
+
 static double diffHamiltonianByrpm(const double x, /**<< Parameters requested by gsl root finder */
                        void *params        /**<< Spin EOB parameters */)
 {
@@ -8028,7 +8236,7 @@ static double diffHamiltonianByrpm(const double x, /**<< Parameters requested by
 
 INT find_SApphi_from_rpm(REAL8 rp, REAL8 rm, SpinEOBParams *core, REAL8 *pphi)
 {
-    print_debug("rp = %.16e, rm = %.16e\n", rp, rm);
+    // print_debug("rp = %.16e, rm = %.16e\n", rp, rm);
     DiffHamParams rootpms;
     HcapDerivParams hcdpms;
     hcdpms.params  = core;

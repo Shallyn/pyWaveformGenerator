@@ -22,6 +22,12 @@ REAL8 EOBHamiltonian(const REAL8 eta,
                      SpinEOBHCoeffs *coeffs);
 void CalculateSpinEOBHSACoeffs(REAL8 m1, REAL8 m2, REAL8 s1z, REAL8 s2z, SpinEOBHSACoeffs *coeffs);
 REAL8 EOBSAHamiltonian(REAL8 r, REAL8 prT, REAL8 pphi, SpinEOBHSACoeffs *coeffs, REAL8 *invcsi);
+int XLALSpinAlignedHcapDerivative_SAConserve(
+                  double t,          /**< UNUSED */
+                  const REAL8   values[],   /**< dynamical varables */
+                  REAL8         dvalues[],  /**< time derivative of dynamical variables */
+                  void         *funcParams  /**< EOB parameters */
+                  );
 
 INT EOBCalculateSpinEOBHamCoeffs(SpinEOBHCoeffs *coeffs,
                                  const REAL8 eta,

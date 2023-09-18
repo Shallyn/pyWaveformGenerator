@@ -3365,3 +3365,707 @@ INT EOBInitialConditionsSA_egw(REAL8Vector    *initConds,
     
     return CEV_SUCCESS;
 }
+
+static REAL8 diffHamiltonianBype(const REAL8 p,
+                                 const REAL8 e,
+                                 const REAL8 pphi,
+                                 SpinEOBParams *params)
+{
+    REAL8 Hp, Hm;
+    REAL8         cartValues[6];
+    memset( cartValues, 0, sizeof( cartValues ) );
+    HcapDerivParams hcdpms;
+    hcdpms.params  = params;
+    hcdpms.varyParam = 0;
+    hcdpms.values = cartValues;
+    REAL8 rp = p / (1. + e);
+    REAL8 rm = p / (1. - e);
+    cartValues[4] = pphi/rp; // pphi / r
+    cartValues[4] = pphi/rm; // pphi / r
+    Hp = GSLSpinAlignedHamiltonianWrapper_SA(rp, &hcdpms);
+    Hm = GSLSpinAlignedHamiltonianWrapper_SA(rm, &hcdpms);
+    return Hp - Hm;
+}
+
+typedef
+struct tagEAnomalyParams
+{
+    SpinEOBParams *params;     /**<< Spin EOB parameters -- physical, pre-computed, etc. */
+    REAL8          omega;      /**<< Orbital frequency */
+    REAL8          e0;
+}
+EAnomalyParams;
+
+INT CalculateAOmegaFromrpphi(REAL8 r, REAL8 pphi, SpinEOBParams *core,
+    REAL8 *omegaOut);
+
+static int
+XLALFindSphericalOrbitSAEAnomaly(const gsl_vector *x, /**<< Parameters requested by gsl root finder */
+                       void *params,        /**<< Spin EOB parameters */
+                       gsl_vector *f        /**<< Function values for the given parameters */
+)
+{
+    EAnomalyParams *rootParams = (EAnomalyParams *) params;
+    
+    REAL8 pp, pphi;
+    
+    /* Numerical derivative of Hamiltonian wrt given value */
+    REAL8 dHdx, dHdpy;
+    REAL8 dHdr, dHdpphi;
+    REAL8 e0, omega0;
+    /* Populate the appropriate values */
+    /* In the special theta=pi/2 phi=0 case, r is x */
+    pp  = gsl_vector_get( x, 0 );
+    pphi = gsl_vector_get( x, 1 );
+    e0 = rootParams->e0;
+    omega0 = rootParams->omega;
+    
+    REAL8 diffH = diffHamiltonianBype(pp, e0, pphi, rootParams->params);
+    REAL8 omegaAns, diffw = 0.0;
+    if (CalculateAOmegaFromrpphi(pp / (1. + e0), pphi, rootParams->params, &omegaAns) != CEV_SUCCESS)
+    {
+        diffw = -100;
+    } else 
+        diffw = omegaAns - omega0;
+    /* populate the function vector */
+    gsl_vector_set( f, 0, diffH);
+    gsl_vector_set( f, 1, diffw);
+    
+    //printf( "Current funcvals = %.16e %.16e %.16e\n", gsl_vector_get( f, 0 ), gsl_vector_get( f, 1 ),
+    //  gsl_vector_get( f, 2 )/*dHdpphi*/ );
+    
+    return CEV_SUCCESS;
+}
+
+int calc_rprpphi_from_e_anomaly(REAL8 e, REAL8 zeta, REAL8 omega, SpinEOBParams *params, REAL8 *r, REAL8 *pr, REAL8 *pphi)
+{
+    EAnomalyParams rootParams;
+    const gsl_multiroot_fsolver_type *T = gsl_multiroot_fsolver_hybrids;
+    gsl_multiroot_fsolver *rootSolver = NULL;
+
+    gsl_multiroot_function rootFunction;
+    gsl_vector *initValues  = NULL;
+    gsl_vector *finalValues = NULL;
+    int gslStatus;
+    const int maxIter = 100;
+
+    REAL8 v0    = GET_CBRT( omega );
+    rootParams.e0 = e;
+    rootParams.omega  = omega;
+    rootParams.params = params;
+    rootSolver = gsl_multiroot_fsolver_alloc( T, 2 );
+    if ( !rootSolver )
+    {
+        return CEV_FAILURE;
+    }
+    
+    initValues = gsl_vector_calloc( 2 );
+    if ( !initValues )
+    {
+        gsl_multiroot_fsolver_free( rootSolver );
+        return CEV_FAILURE;
+    }
+    REAL8 p0 = pow(omega, -2./3.);
+    gsl_vector_set( initValues, 0, p0 );
+    gsl_vector_set( initValues, 1, sqrt(p0) ); // py
+    rootFunction.f      = XLALFindSphericalOrbitSAEAnomaly;
+    rootFunction.n      = 2;
+    rootFunction.params = &rootParams;
+    gsl_multiroot_fsolver_set( rootSolver, &rootFunction, initValues );
+
+    int i = 0;
+    do
+    {
+        gslStatus = gsl_multiroot_fsolver_iterate( rootSolver );
+        if ( gslStatus != GSL_SUCCESS )
+        {
+            print_warning( "Error in GSL iteration function!\n" );
+            gsl_multiroot_fsolver_free( rootSolver );
+            gsl_vector_free( initValues );
+            return CEV_FAILURE;
+        }
+        gslStatus = gsl_multiroot_test_residual( rootSolver->f, 1.0e-10 );
+        i++;
+    }
+    while ( gslStatus == GSL_CONTINUE && i <= maxIter );
+
+    if ( i > maxIter && gslStatus != GSL_SUCCESS )
+    {
+        gsl_multiroot_fsolver_free( rootSolver );
+        gsl_vector_free( initValues );
+        return CEV_FAILURE;
+    }
+    finalValues = gsl_multiroot_fsolver_root( rootSolver );
+    REAL8 psol, Lsol;
+    psol = gsl_vector_get( finalValues, 0 );
+    Lsol = gsl_vector_get( finalValues, 1 );
+    gsl_multiroot_fsolver_free( rootSolver );
+    gsl_vector_free( initValues );
+
+    *r = psol / (1. - e);
+    *pr = 0.0;
+    *pphi = Lsol;
+    return CEV_SUCCESS;
+}
+
+
+
+
+typedef
+struct tagSEOBRootParamsV2
+{
+    REAL8          values[12]; /**<< Dynamical variables, x, y, z, px, py, pz, S1x, S1y, S1z, S2x, S2y and S2z */
+    SpinEOBParams *params;     /**<< Spin EOB parameters -- physical, pre-computed, etc. */
+    REAL8          omega;      /**<< Orbital frequency */
+    REAL8          e0;
+    REAL8          sz;
+    REAL8          cz;
+}
+SEOBRootParamsV2;
+
+void calculate_prDot_from_ezetapphi(REAL8 eta, REAL8 chi1, REAL8 chi2, 
+        REAL8 e, REAL8 sz, REAL8 cz, REAL8 pf,
+        REAL8 *ret_prT, REAL8 *ret_prDot);
+
+static int
+XLALFindSphericalOrbitSAWithAnomaly(const gsl_vector *x, /**<< Parameters requested by gsl root finder */
+                       void *params,        /**<< Spin EOB parameters */
+                       gsl_vector *f        /**<< Function values for the given parameters */
+)
+{
+    SEOBRootParamsV2 *rootParams = (SEOBRootParamsV2 *) params;
+    
+    REAL8 r, py;
+    REAL8 pphi, prT, prDot;
+
+    /* Numerical derivative of Hamiltonian wrt given value */
+    REAL8 dHdx, dHdpy;
+    REAL8 dHdr, dHdpphi;
+    REAL8 e0;
+    /* Populate the appropriate values */
+    /* In the special theta=pi/2 phi=0 case, r is x */
+    rootParams->values[0] = r  = gsl_vector_get( x, 0 );
+    rootParams->values[4] = py = gsl_vector_get( x, 1 );
+    e0 = rootParams->e0;
+    pphi   = r * py;
+    // print_debug( "Values r = %.16e, py = %.16e\n", r, py );
+    calculate_prDot_from_ezetapphi(rootParams->params->eta, rootParams->params->chi1, rootParams->params->chi2,
+        e0, rootParams->sz, rootParams->cz, pphi, &prT, &prDot);
+    
+    rootParams->values[3] = prT;
+    
+    /* dHdR */
+    dHdx = XLALSpinHcapNumDerivWRTParam( 0, rootParams->values, rootParams->params );
+    if ( IS_REAL8_FAIL_NAN( dHdx ) )
+    {
+        return CEV_FAILURE;
+    }
+    //printf( "dHdx = %.16e\n", dHdx );
+    
+    /* dHdPphi (I think we can use dHdPy in this coord system) */
+    /* TODO: Check this is okay */
+    dHdpy = XLALSpinHcapNumDerivWRTParam( 4, rootParams->values, rootParams->params );
+    if ( IS_REAL8_FAIL_NAN( dHdpy ) )
+    {
+        return CEV_FAILURE;
+    }
+        
+    /* Now convert to spherical polars */
+    dHdr      = dHdx - dHdpy * pphi / (r*r);
+    dHdpphi   = dHdpy / r;
+    
+    /* populate the function vector */
+    gsl_vector_set( f, 0, dHdr + prDot);
+    gsl_vector_set( f, 1, dHdpphi - rootParams->omega );
+    // print_debug( "pr, prDot = %.16e %.16e\n\n", prT, prDot);
+    // print_debug( "Current funcvals = %.16e %.16e\n", gsl_vector_get( f, 0 ), gsl_vector_get( f, 1 ));
+    //  gsl_vector_get( f, 2 )/*dHdpphi*/ );
+    
+    return CEV_SUCCESS;
+}
+
+int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams *params, REAL8 *r, REAL8 *pr, REAL8 *pphi)
+{
+    SEOBRootParamsV2 rootParams;
+    const gsl_multiroot_fsolver_type *T = gsl_multiroot_fsolver_hybrids;
+    gsl_multiroot_fsolver *rootSolver = NULL;
+
+    gsl_multiroot_function rootFunction;
+    gsl_vector *initValues  = NULL;
+    gsl_vector *finalValues = NULL;
+    int gslStatus;
+    const int maxIter = 100;
+
+    REAL8 v0    = GET_CBRT( omega );
+    rootParams.e0 = e;
+    rootParams.omega  = omega;
+    rootParams.sz = sin(anomaly);
+    rootParams.cz = cos(anomaly);
+    // print_debug("zeta sz, cz = %.16e, %.16e, %.16e\n", anomaly, rootParams.sz, rootParams.cz);
+    rootParams.params = params;
+    memset(rootParams.values, 0, sizeof(rootParams.values));
+    rootParams.values[0] = (1.-e) / (v0*v0);
+    rootParams.values[4] = pow(1.-e, 0.5) * v0;
+    for (int i=0; i<3; i++)
+    {
+        rootParams.values[i+6] = params->s1Vec->data[i]*params->m1*params->m1;
+        rootParams.values[i+9] = params->s2Vec->data[i]*params->m2*params->m2;
+    }
+    rootSolver = gsl_multiroot_fsolver_alloc( T, 2 );
+    if ( !rootSolver )
+    {
+        return CEV_FAILURE;
+    }
+    
+    initValues = gsl_vector_calloc( 2 );
+    if ( !initValues )
+    {
+        gsl_multiroot_fsolver_free( rootSolver );
+        return CEV_FAILURE;
+    }
+    gsl_vector_set( initValues, 0, rootParams.values[0] ); // r
+    gsl_vector_set( initValues, 1, rootParams.values[4] ); // py
+    rootFunction.f      = XLALFindSphericalOrbitSAWithAnomaly;
+    rootFunction.n      = 2;
+    rootFunction.params = &rootParams;
+    gsl_multiroot_fsolver_set( rootSolver, &rootFunction, initValues );
+
+    int i = 0;
+    do
+    {
+        gslStatus = gsl_multiroot_fsolver_iterate( rootSolver );
+        if ( gslStatus != GSL_SUCCESS )
+        {
+            print_warning( "Error in GSL iteration function!\n" );
+            gsl_multiroot_fsolver_free( rootSolver );
+            gsl_vector_free( initValues );
+            return CEV_FAILURE;
+        }
+        gslStatus = gsl_multiroot_test_residual( rootSolver->f, 1.0e-10 );
+        i++;
+    }
+    while ( gslStatus == GSL_CONTINUE && i <= maxIter );
+
+    if ( i > maxIter && gslStatus != GSL_SUCCESS )
+    {
+        gsl_multiroot_fsolver_free( rootSolver );
+        gsl_vector_free( initValues );
+        return CEV_FAILURE;
+    }
+    finalValues = gsl_multiroot_fsolver_root( rootSolver );
+    *r = gsl_vector_get( finalValues, 0 );
+    *pphi = gsl_vector_get( finalValues, 1 ) * gsl_vector_get( finalValues, 0 );
+    REAL8 prDot;
+    calculate_prDot_from_ezetapphi(params->eta, params->chi1, params->chi2,
+        e, rootParams.sz, rootParams.cz, *pphi, pr, &prDot);
+    gsl_multiroot_fsolver_free( rootSolver );
+    gsl_vector_free( initValues );
+    return CEV_SUCCESS;
+}
+
+/* For nonprecessing case */
+INT EOBInitialConditionsSA_e_anomaly(REAL8Vector    *initConds,
+                         const REAL8    mass1,
+                         const REAL8    mass2,
+                         const REAL8    fMin,
+                         const REAL8    ecc,
+                         const REAL8    anomaly,
+                         const REAL8    inc,
+                         const REAL8    spin1[],
+                         const REAL8    spin2[],
+                         SpinEOBParams  *params)
+{
+    if (!initConds)
+        return CEV_FAILURE;
+    static const int lMax = 8;
+    INT i;
+    int tmpTortoise;
+    /* non-zero eccentricity - Start frequency correction */
+    // REAL8 ecc = params->eccentricity;
+        
+    REAL8 mTotal;
+    REAL8 eta;
+    REAL8 omega, v0;   /* Initial velocity and angular frequency */
+    
+    REAL8 ham;      /* Hamiltonian */
+    
+    REAL8 LnHat[3]; /* Initial orientation of angular momentum */
+    REAL8 rHat[3];  /* Initial orientation of radial vector */
+    REAL8 vHat[3];  /* Initial orientation of velocity vector */
+    REAL8 Lhat[3];  /* Direction of relativistic ang mom */
+    REAL8 qHat[3];
+    REAL8 pHat[3];
+    
+    /* q and p vectors in Cartesian and spherical coords */
+    REAL8 qCart[3], pCart[3];
+    REAL8 qSph[3], pSph[3];
+    
+    /* We will need to manipulate the spin vectors */
+    /* We will use temporary vectors to do this */
+    REAL8 tmpS1[3];
+    REAL8 tmpS2[3];
+    REAL8 tmpS1Norm[3];
+    REAL8 tmpS2Norm[3];
+    
+    REAL8Vector qCartVec, pCartVec;
+    REAL8Vector s1Vec, s2Vec, s1VecNorm, s2VecNorm;
+    REAL8Vector sKerr, sStar;
+    REAL8       sKerrData[3], sStarData[3];
+    REAL8       a = 0.; //, chiS, chiA;
+    //REAL8       chi1, chi2;
+    
+    /* We will need a full values vector for calculating derivs of Hamiltonian */
+    REAL8 sphValues[12];
+    REAL8 cartValues[12];
+    
+    /* Matrices for rotating to the new basis set. */
+    /* It is more convenient to calculate the ICs in a simpler basis */
+    gsl_matrix *rotMatrix  = NULL;
+    gsl_matrix *invMatrix  = NULL;
+    gsl_matrix *rotMatrix2 = NULL;
+    gsl_matrix *invMatrix2 = NULL;
+    
+    /* Root finding stuff for finding the spherical orbit */
+    EgwRootParamsV2 rootParams;
+    const gsl_root_fsolver_type *T = gsl_root_fsolver_brent;
+    gsl_root_fsolver *rootSolver = gsl_root_fsolver_alloc (T);
+    gsl_function F;
+
+    int gslStatus;
+    const int maxIter = 100;
+    
+    memset( &rootParams, 0, sizeof( rootParams ) );
+    
+    mTotal = mass1 + mass2;
+    eta    = mass1 * mass2 / (mTotal * mTotal);
+    memcpy( tmpS1, spin1, sizeof(tmpS1) );
+    memcpy( tmpS2, spin2, sizeof(tmpS2) );
+    memcpy( tmpS1Norm, spin1, sizeof(tmpS1Norm) );
+    memcpy( tmpS2Norm, spin2, sizeof(tmpS2Norm) );
+    for ( i = 0; i < 3; i++ )
+    {
+        tmpS1Norm[i] /= mTotal * mTotal;
+        tmpS2Norm[i] /= mTotal * mTotal;
+    }
+    // eobVersion = params->seobCoeffs->eobVersion;
+    /* We compute the ICs for the non-tortoise p, and convert at the end */
+    tmpTortoise      = params->tortoise;
+    params->tortoise = 0;
+    
+    EOBNonQCCoeffs *nqcCoeffs = NULL;
+    nqcCoeffs = params->nqcCoeffs;
+    
+    /* STEP 1) Rotate to LNhat0 along z-axis and N0 along x-axis frame, where LNhat0 and N0 are initial normal to
+     *         orbital plane and initial orbital separation;
+     */
+    
+    /* Set the initial orbital ang mom direction. Taken from STPN code */
+    LnHat[0] = GET_SIN(inc);
+    LnHat[1] = 0.;
+    LnHat[2] = GET_COS(inc);
+    
+    /* Set the radial direction - need to take care to avoid singularity if L is along z axis */
+    if ( LnHat[2] > 0.9999 )
+    {
+        rHat[0] = 1.;
+        rHat[1] = rHat[2] = 0.;
+    }
+    else
+    {
+        REAL8 theta0 = GET_ATAN( - LnHat[2] / LnHat[0] ); /* theta0 is between 0 and Pi */
+        rHat[0] = GET_SIN( theta0 );
+        rHat[1] = 0;
+        rHat[2] = GET_COS( theta0 );
+    }
+    
+    /* Now we can complete the triad */
+    vHat[0] = CalculateCrossProduct( 0, LnHat, rHat );
+    vHat[1] = CalculateCrossProduct( 1, LnHat, rHat );
+    vHat[2] = CalculateCrossProduct( 2, LnHat, rHat );
+    
+    NormalizeVector( vHat );
+    
+    /* XXX Test code XXX */
+    /*for ( i = 0; i < 3; i++ )
+     {
+     printf ( " LnHat[%d] = %.16e, rHat[%d] = %.16e, vHat[%d] = %.16e\n", i, LnHat[i], i, rHat[i], i, vHat[i] );
+     }
+     
+     printf("\n\n" );
+     for ( i = 0; i < 3; i++ )
+     {
+     printf ( " s1[%d] = %.16e, s2[%d] = %.16e\n", i, tmpS1[i], i, tmpS2[i] );
+     }*/
+    
+    /* Allocate and compute the rotation matrices */
+    rotMatrix = gsl_matrix_alloc( 3, 3 );
+    invMatrix = gsl_matrix_alloc( 3, 3 );
+    if ( !rotMatrix || !invMatrix )
+    {
+        if ( rotMatrix ) gsl_matrix_free( rotMatrix );
+        if ( invMatrix ) gsl_matrix_free( invMatrix );
+        return CEV_FAILURE;
+    }
+    
+    if ( CalculateRotationMatrix( rotMatrix, invMatrix, rHat, vHat, LnHat ) == CEV_FAILURE )
+    {
+        gsl_matrix_free( rotMatrix );
+        gsl_matrix_free( invMatrix );
+        return CEV_FAILURE;
+    }
+    
+    /* Rotate the orbital vectors and spins */
+    ApplyRotationMatrix( rotMatrix, rHat );
+    ApplyRotationMatrix( rotMatrix, vHat );
+    ApplyRotationMatrix( rotMatrix, LnHat );
+    ApplyRotationMatrix( rotMatrix, tmpS1 );
+    ApplyRotationMatrix( rotMatrix, tmpS2 );
+    ApplyRotationMatrix( rotMatrix, tmpS1Norm );
+    ApplyRotationMatrix( rotMatrix, tmpS2Norm );
+    
+    /* XXX Test code XXX */
+    /*printf( "\nAfter applying rotation matrix:\n\n" );
+     for ( i = 0; i < 3; i++ )
+     {
+     printf ( " LnHat[%d] = %.16e, rHat[%d] = %.16e, vHat[%d] = %.16e\n", i, LnHat[i], i, rHat[i], i, vHat[i] );
+     }
+     
+     printf("\n\n" );
+     for ( i = 0; i < 3; i++ )
+     {
+     printf ( " s1[%d] = %.16e, s2[%d] = %.16e\n", i, tmpS1[i], i, tmpS2[i] );
+     }*/
+    
+    /* STEP 2) After rotation in STEP 1, in spherical coordinates, phi0 and theta0 are given directly in Eq. (4.7),
+     *         r0, pr0, ptheta0 and pphi0 are obtained by solving Eqs. (4.8) and (4.9) (using gsl_multiroot_fsolver).
+     *         At this step, we find initial conditions for a spherical orbit without radiation reaction.
+     */
+    // X.L.: here we solve equation (e22, omegaMinus)(rp, rm)
+    /* Calculate the initial velocity from the given initial frequency */
+    // initial orbital angular velocity
+    omega = CST_PI * mTotal * CST_MTSUN_SI * fMin;
+    memset( qCart, 0, sizeof(qCart) );
+    memset( pCart, 0, sizeof(pCart) );
+    // calc_rpphi_from_e(root, omega, params, &(qCart[0]), &(pCart[1]));
+    calc_rpphi_from_eanomaly(ecc, anomaly, omega, params, &(qCart[0]), &(pCart[0]), &(pCart[1]));
+    // qCart[0] = gsl_vector_get( finalValues, 0 );
+    // pCart[1] = gsl_vector_get( finalValues, 1 );
+    pCart[1] /= qCart[0];
+    /* Free the GSL root finder, since we're done with it */
+    gsl_root_fsolver_free( rootSolver );
+    
+    /* STEP 3) Rotate to L0 along z-axis and N0 along x-axis frame, where L0 is the initial orbital angular momentum
+     *         and L0 is calculated using initial position and linear momentum obtained in STEP 2.
+     */
+    
+    /* Now we can calculate the relativistic L and rotate to a new basis */
+    memcpy( qHat, qCart, sizeof(qCart) );
+    memcpy( pHat, pCart, sizeof(pCart) );
+    
+    NormalizeVector( qHat );
+    NormalizeVector( pHat );
+    
+    Lhat[0] = CalculateCrossProduct( 0, qHat, pHat );
+    Lhat[1] = CalculateCrossProduct( 1, qHat, pHat );
+    Lhat[2] = CalculateCrossProduct( 2, qHat, pHat );
+    
+    NormalizeVector( Lhat );
+    
+    rotMatrix2 = gsl_matrix_alloc( 3, 3 );
+    invMatrix2 = gsl_matrix_alloc( 3, 3 );
+    
+    if ( CalculateRotationMatrix( rotMatrix2, invMatrix2, qHat, pHat, Lhat ) == CEV_FAILURE )
+    {
+        gsl_matrix_free( rotMatrix );
+        gsl_matrix_free( invMatrix );
+        return CEV_FAILURE;
+    }
+    
+    ApplyRotationMatrix( rotMatrix2, rHat );
+    ApplyRotationMatrix( rotMatrix2, vHat );
+    ApplyRotationMatrix( rotMatrix2, LnHat );
+    ApplyRotationMatrix( rotMatrix2, tmpS1 );
+    ApplyRotationMatrix( rotMatrix2, tmpS2 );
+    ApplyRotationMatrix( rotMatrix2, tmpS1Norm );
+    ApplyRotationMatrix( rotMatrix2, tmpS2Norm );
+    ApplyRotationMatrix( rotMatrix2, qCart );
+    ApplyRotationMatrix( rotMatrix2, pCart );
+    
+    /* STEP 4) In the L0-N0 frame, we calculate (dE/dr)|sph using Eq. (4.14), then initial dr/dt using Eq. (4.10),
+     *         and finally pr0 using Eq. (4.15).
+     */
+    
+    /* Now we can calculate the flux. Change to spherical co-ords */
+    CartesianToSpherical( qSph, pSph, qCart, pCart );
+    memcpy( sphValues, qSph, sizeof( qSph ) );
+    memcpy( sphValues+3, pSph, sizeof( pSph ) );
+    memcpy( sphValues+6, tmpS1, sizeof(tmpS1) );
+    memcpy( sphValues+9, tmpS2, sizeof(tmpS2) );
+    
+    memcpy( cartValues, qCart, sizeof(qCart) );
+    memcpy( cartValues+3, pCart, sizeof(pCart) );
+    memcpy( cartValues+6, tmpS1, sizeof(tmpS1) );
+    memcpy( cartValues+9, tmpS2, sizeof(tmpS2) );
+    
+    REAL8 dHdpphi, d2Hdr2, d2Hdrdpphi;
+    REAL8 rDot, dHdpr, flux, dEdr;
+    
+    d2Hdr2 = XLALCalculateSphHamiltonianDeriv2( 0, 0, sphValues, params );
+    d2Hdrdpphi = XLALCalculateSphHamiltonianDeriv2( 0, 5, sphValues, params );
+    dHdpphi = XLALSpinHcapNumDerivWRTParam( 4, cartValues, params ) / sphValues[0];
+    dEdr  = - dHdpphi * d2Hdr2 / d2Hdrdpphi;
+        
+    if ( d2Hdr2 != 0.0 && ecc==0.0 )
+    {
+        /* We will need to calculate the Hamiltonian to get the flux */
+        s1Vec.length = s2Vec.length = s1VecNorm.length = s2VecNorm.length = sKerr.length = sStar.length = 3;
+        s1Vec.data = tmpS1;
+        s2Vec.data = tmpS2;
+        s1VecNorm.data = tmpS1Norm;
+        s2VecNorm.data = tmpS2Norm;
+        sKerr.data = sKerrData;
+        sStar.data = sStarData;
+        
+        qCartVec.length = pCartVec.length = 3;
+        qCartVec.data   = qCart;
+        pCartVec.data   = pCart;
+        
+        //chi1 = tmpS1[0]*LnHat[0] + tmpS1[1]*LnHat[1] + tmpS1[2]*LnHat[2];
+        //chi2 = tmpS2[0]*LnHat[0] + tmpS2[1]*LnHat[1] + tmpS2[2]*LnHat[2];
+        
+        // print_debug( "m1 = %g, m2 = %g\n", mass1, mass2 );
+        // print_debug( "eta = %g\n", eta);
+        // print_debug( "qCartVec = (%g, %g, %g)\n", qCart[0], qCart[1], qCart[2]);
+        // print_debug( "pCartVec = (%g, %g, %g)\n", pCart[0], pCart[1], pCart[2]);
+        // print_debug( "s1Vec = (%g, %g, %g)\n", tmpS1[0], tmpS1[1], tmpS1[2]);
+        // print_debug( "s2Vec = (%g, %g, %g)\n", tmpS2[0], tmpS2[1], tmpS2[2]);
+        
+        //chiS = 0.5 * ( chi1 / (mass1*mass1) + chi2 / (mass2*mass2) );
+        //chiA = 0.5 * ( chi1 / (mass1*mass1) - chi2 / (mass2*mass2) );
+        
+        XLALSimIMRSpinEOBCalculateSigmaStar( &sKerr, mass1, mass2, &s1Vec, &s2Vec );
+        XLALSimIMRSpinEOBCalculateSigmaKerr( &sStar, mass1, mass2, &s1Vec, &s2Vec );
+        // print_debug( "sigStar = (%g, %g, %g)\n", sStarData[0], sStarData[1], sStarData[2]);
+        // print_debug( "sigKerr = (%g, %g, %g)\n", sStarData[0], sStarData[1], sStarData[2]);
+
+        /* The a in the flux has been set to zero, but not in the Hamiltonian */
+        a = sqrt(sKerr.data[0]*sKerr.data[0] + sKerr.data[1]*sKerr.data[1] + sKerr.data[2]*sKerr.data[2]);
+        //XLALSimIMREOBCalcSpinFacWaveformCoefficients( params->eobParams->hCoeffs, mass1, mass2, eta, /*a*/0.0, chiS, chiA );
+        //XLALSimIMRCalculateSpinEOBHCoeffs( params->seobCoeffs, eta, a );
+        ham = EOBHamiltonian( eta, &qCartVec, &pCartVec, &s1VecNorm, &s2VecNorm, &sKerr, &sStar, params->tortoise, params->seobCoeffs );
+        // print_debug( "hamiltonian at this point is %.16e\n", ham );
+        
+        /* And now, finally, the flux */
+        REAL8Vector polarDynamics;
+        REAL8       polarData[4];
+        REAL8Vector cartDynamics;
+        REAL8       cartData[6];
+        
+        polarDynamics.length = 4;
+        polarDynamics.data = polarData;
+        cartDynamics.length = 6;
+        cartDynamics.data = cartData;
+        
+        polarData[0] = qSph[0];
+        polarData[1] = 0.;
+        polarData[2] = pSph[0];
+        polarData[3] = pSph[2];
+        memcpy(cartData, qCart, sizeof(qCart));
+        memcpy(cartData+3, pCart, sizeof(pCart));
+        // print_debug("polarData = (%g, %g, %g, %g)\n", 
+        //     polarData[0], polarData[1], polarData[2], polarData[3]);
+        // print_debug("ham = %g\n", ham);
+        REAL8 tmpdvalues[4] = {0.,omega,0.,0.};
+        flux  = XLALInspiralSpinFactorizedFlux( &polarDynamics, &cartDynamics, nqcCoeffs, omega, 0, qSph[0]*omega, params, ham, lMax);
+        // flux  = InspiralSpinFactorizedFlux_elip( &polarDynamics, polarData, tmpdvalues, nqcCoeffs, omega, params, ham, lMax, eobVersion );
+        flux  = flux / eta;
+        if (ecc != 0.0)
+            rDot = 0.0;
+        else
+            rDot  = - flux / dEdr;
+        // print_debug("flux = %g, dEdr = %g, rDot = %g\n", flux, dEdr, rDot);
+        /* We now need dHdpr - we take it that it is safely linear up to a pr of 1.0e-3 */
+        cartValues[3] = 1.0e-3;
+        dHdpr = XLALSpinHcapNumDerivWRTParam( 3, cartValues, params );
+        /*printf( "Ingredients going into prDot:\n" );
+         printf( "flux = %.16e, dEdr = %.16e, dHdpr = %.16e\n", flux, dEdr, dHdpr );*/
+        
+        /* We can now calculate what pr should be taking into account the flux */
+        pSph[0] = rDot / (dHdpr / cartValues[3] );
+    }
+    else
+    {
+        /* Since d2Hdr2 has evaluated to zero, we cannot do the above. Just set pr to zero */
+        //printf( "d2Hdr2 is zero!\n" );
+        pSph[0] = 0;
+    }
+    
+    /* Now we are done - convert back to cartesian coordinates ) */
+    SphericalToCartesian( qCart, pCart, qSph, pSph );
+    PRINT_LOG_INFO(LOG_DEBUG, "Sph initial condition : r = (%e,%e,%e), p = (%e,%e,%e)", qSph[0], qSph[1], qSph[2], pSph[0], pSph[1], pSph[2]);
+    /* STEP 5) Rotate back to the original inertial frame by inverting the rotation of STEP 3 and then
+     *         inverting the rotation of STEP 1.
+     */
+    
+    /* Undo rotations to get back to the original basis */
+    /* Second rotation */
+    ApplyRotationMatrix( invMatrix2, rHat );
+    ApplyRotationMatrix( invMatrix2, vHat );
+    ApplyRotationMatrix( invMatrix2, LnHat );
+    ApplyRotationMatrix( invMatrix2, tmpS1 );
+    ApplyRotationMatrix( invMatrix2, tmpS2 );
+    ApplyRotationMatrix( invMatrix2, tmpS1Norm );
+    ApplyRotationMatrix( invMatrix2, tmpS2Norm );
+    ApplyRotationMatrix( invMatrix2, qCart );
+    ApplyRotationMatrix( invMatrix2, pCart );
+    
+    /* First rotation */
+    ApplyRotationMatrix( invMatrix, rHat );
+    ApplyRotationMatrix( invMatrix, vHat );
+    ApplyRotationMatrix( invMatrix, LnHat );
+    ApplyRotationMatrix( invMatrix, tmpS1 );
+    ApplyRotationMatrix( invMatrix, tmpS2 );
+    ApplyRotationMatrix( invMatrix, tmpS1Norm );
+    ApplyRotationMatrix( invMatrix, tmpS2Norm );
+    ApplyRotationMatrix( invMatrix, qCart );
+    ApplyRotationMatrix( invMatrix, pCart );
+    
+
+    /* If required, apply the tortoise transform */
+    if ( tmpTortoise )
+    {
+        REAL8 r = sqrt(qCart[0]*qCart[0] + qCart[1]*qCart[1] + qCart[2]*qCart[2] );
+        REAL8 deltaR = XLALSimIMRSpinEOBHamiltonianDeltaR( params->seobCoeffs, r, eta, a );
+        REAL8 deltaT = XLALSimIMRSpinEOBHamiltonianDeltaT( params->seobCoeffs, r, eta, a );
+        REAL8 csi    = sqrt( deltaT * deltaR )/(r*r + a*a);
+        
+        REAL8 pr = (qCart[0]*pCart[0] + qCart[1]*pCart[1] + qCart[2]*pCart[2])/r;
+        params->tortoise = tmpTortoise;
+        
+        //printf( "Applying the tortoise to p (csi = %.26e)\n", csi );
+        
+        for ( i = 0; i < 3; i++ )
+        {
+            pCart[i] = pCart[i] + qCart[i] * pr * (csi - 1.) / r;
+        }
+    }
+
+    /* Now copy the initial conditions back to the return vector */
+    memcpy( initConds->data, qCart, sizeof(qCart) );
+    memcpy( initConds->data+3, pCart, sizeof(pCart) );
+    memcpy( initConds->data+6, tmpS1Norm, sizeof(tmpS1Norm) );
+    memcpy( initConds->data+9, tmpS2Norm, sizeof(tmpS2Norm) );
+    
+    gsl_matrix_free(rotMatrix2);
+    gsl_matrix_free(invMatrix2);
+    
+    gsl_matrix_free(rotMatrix);
+    gsl_matrix_free(invMatrix);
+    
+    //printf( "THE FINAL INITIAL CONDITIONS:\n");
+    /*printf( " %.16e %.16e %.16e\n%.16e %.16e %.16e\n%.16e %.16e %.16e\n%.16e %.16e %.16e\n", initConds->data[0], initConds->data[1], initConds->data[2],
+     initConds->data[3], initConds->data[4], initConds->data[5], initConds->data[6], initConds->data[7], initConds->data[8],
+     initConds->data[9], initConds->data[10], initConds->data[11] );*/
+    
+    return CEV_SUCCESS;
+}

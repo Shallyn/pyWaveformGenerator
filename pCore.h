@@ -45,6 +45,15 @@ INT SEOBInitialConditions_Conserve(REAL8Vector *ICvalues,
                           REAL8 ecc,
                           SpinEOBParams *seobParams);
 
+INT SEOBInitialConditions_e_anomaly(REAL8Vector *ICvalues,
+                                    REAL8 MfMin,
+                                    REAL8 ecc,
+                                    REAL8 anomaly,
+                                    SpinEOBParams *seobParams);
+
+INT CalculateAOmegaFromrpphi(REAL8 r, REAL8 pphi, SpinEOBParams *core,
+    REAL8 *omegaOut);
+
 REAL8 SEOBCalculatetplspin(REAL8 m1, REAL8 m2, REAL8 eta, REAL8 chi1dotZ, REAL8 chi2dotZ);
 REAL8 FindClosestValueInIncreasingVector(
     REAL8Vector *vec, /**<< Input: monotonically increasing vector */

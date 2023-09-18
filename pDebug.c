@@ -100,14 +100,70 @@ QUIT:
     return CEV_SUCCESS;
 }
 
+int calc_rprpphi_from_e_anomaly(REAL8 e, REAL8 zeta, REAL8 omega, SpinEOBParams *params, REAL8 *r, REAL8 *pr, REAL8 *pphi);
+
+static INT debug_InitialCondition_anomaly(REAL8 m1,  REAL8 m2, 
+        REAL8 s1x, REAL8 s1y, REAL8 s1z, 
+        REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
+        REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams)
+{
+    PRINT_LOG_INFO(LOG_INFO, "DEBUG mode 2: test e-anomaly initial conditions");
+    register INT i;
+    INT failed = 0, this_step = 0, status = CEV_FAILURE;
+    SpinEOBParams *core = NULL;
+    REAL8Vector *ICvalues = NULL;
+    REAL8Array *dynamicsAdaS = NULL;
+    SEOBdynamics *seobdynamicsAdaS = NULL;
+
+    REAL8 mTotal = m1 + m2;
+    REAL8 mTScaled = mTotal * CST_MTSUN_SI;
+    REAL8 EPS_ALIGN = 1.0e-4;
+    REAL8 deltaT = INdeltaT / mTScaled;
+    REAL8 tStepBack;
+
+    if (m1 < 0 || m2 < 0) {failed = 1; goto QUIT;}
+    if (m2 > m1)
+        SWAP(m1, m2);
+
+    core = CreateSpinEOBParams(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, ecc, hparams);
+    if (!core) {failed = 1; goto QUIT;}
+    tStepBack = GET_MAX(tStepBack, core->hParams->tStepBack);
+
+    ICvalues = CreateREAL8Vector(14);
+    REAL8 MfMin = mTScaled * f_min;
+
+    status = SEOBInitialConditions_e_anomaly(ICvalues, MfMin, ecc, zeta, core);
+    PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
+    PRINT_LOG_INFO(LOG_DEBUG, "(x,y,z) = (%.16e %.16e %.16e)", 
+            ICvalues->data[0], ICvalues->data[1], ICvalues->data[2]);
+    PRINT_LOG_INFO(LOG_DEBUG, "(px,py,pz) = (%.16e %.16e %.16e)",
+            ICvalues->data[3], ICvalues->data[4], ICvalues->data[5]);
+    PRINT_LOG_INFO(LOG_DEBUG, "(S1x,S1y,S1z) = (%.16e %.16e %.16e)",
+            ICvalues->data[6], ICvalues->data[7], ICvalues->data[8]);
+    PRINT_LOG_INFO(LOG_DEBUG, "(S2x,S2y,S2z) = (%.16e %.16e %.16e)",
+            ICvalues->data[9], ICvalues->data[10], ICvalues->data[11]);
+    PRINT_LOG_INFO(LOG_DEBUG, "MfMin = %f, deltaT = %f\n", MfMin, deltaT);
+    PRINT_LOG_INFO(LOG_DEBUG, "e0 = %f\n", ecc);
+    
+QUIT:
+    STRUCTFREE(core, SpinEOBParams);
+    STRUCTFREE(ICvalues, REAL8Vector);
+    STRUCTFREE(dynamicsAdaS, REAL8Array);
+    STRUCTFREE(seobdynamicsAdaS, SEOBdynamics);
+    return CEV_SUCCESS;
+}
+
 INT choose_debug(INT debug_id,
     REAL8 m1,  REAL8 m2, 
     REAL8 s1x, REAL8 s1y, REAL8 s1z, 
     REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-    REAL8 ecc, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams)
+    REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams)
 {
     switch(debug_id)
     {
+        case 2:
+            debug_InitialCondition_anomaly(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, phi0, distance, ecc, zeta, f_min, INdeltaT, inc, hparams);
+            break;
         case 1:
         default:
             debug_InitialCondition_egw(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, phi0, distance, ecc, f_min, INdeltaT, inc, hparams);

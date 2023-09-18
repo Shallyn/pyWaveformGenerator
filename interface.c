@@ -47,7 +47,7 @@ INT XLALSimIMREOBGenerateQNMFreqV2FromFinalPrec(
 INT evolve(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            INT is_only22,
            HyperParams *hparams, 
            REAL8TimeSeries **hPlusOut,
@@ -57,7 +57,7 @@ INT evolve(REAL8 m1,  REAL8 m2,
 INT evolve_adaptive(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            INT is_only22,
            HyperParams *hparams, 
            REAL8TimeSeries **hPlusOut,
@@ -67,14 +67,14 @@ INT evolve_adaptive(REAL8 m1,  REAL8 m2,
 INT evolve_conserv(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            HyperParams *hparams, 
            SEOBCoreOutputs *all);
 
 INT evolve_SA(REAL8 m1,  REAL8 m2, 
            REAL8 s1z, 
            REAL8 s2z,
-           REAL8 ecc, REAL8 f_min, REAL8 INdeltaT,
+           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT,
            HyperParams *hparams, 
            REAL8Vector **tRetVec,
            SphHarmListCAmpPhaseSequence **hlm,
@@ -91,7 +91,7 @@ INT choose_debug(INT debug_id,
     REAL8 m1,  REAL8 m2, 
     REAL8 s1x, REAL8 s1y, REAL8 s1z, 
     REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-    REAL8 ecc, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams);
+    REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams);
 
 typedef struct {
     INT use_geom;
@@ -139,6 +139,7 @@ typedef struct {
     REAL8 inEPS_ABS;
     INT is_coframe;
     INT use_coaphase;
+    REAL8 zeta;
 }pyInputParams_t;
 
 typedef struct {
@@ -352,8 +353,9 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     }
     LOG_SetPrintDebugLogFlag(ctpms.level);
     LOG_Init(ctpms.flog, 40960);
-    PRINT_LOG_INFO(LOG_DEBUG, "params: m1, m2 = (%g, %g)\n\tchi1Vec = (%g, %g, %g), chi2Vec = (%g, %g, %g)\n\teccentricity = %g, deltaT = %g,\n\tf-min=%g, inclination=%g, phiRef=%g\n", 
-        params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x, params->s2y, params->s2z, params->ecc, params->deltaT, params->f_min, params->inc * 180/CST_PI, params->beta*180/CST_PI);
+    PRINT_LOG_INFO(LOG_DEBUG, "params: m1, m2 = (%g, %g)\n\tchi1Vec = (%g, %g, %g), chi2Vec = (%g, %g, %g)\n\teccentricity = %g, deltaT = %g,\n\tf-min=%g, inclination=%g, phiRef=%g, zeta=%g\n", 
+        params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x, params->s2y, params->s2z, params->ecc, params->deltaT, params->f_min, params->inc * 180/CST_PI, params->beta*180/CST_PI,
+        params->zeta*180/CST_PI);
     // print_debug("params: m1, m2 = (%g, %g)\n\tchi1Vec = (%g, %g, %g), chi2Vec = (%g, %g, %g)\n\teccentricity = %g, deltaT = %g,\n\tf-min=%g, inclination=%g, phiRef=%g\n", 
     //     params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x, params->s2y, params->s2z, params->ecc, params->deltaT, params->f_min, params->inc * 180/CST_PI, params->phiRef*180/CST_PI);
     // return 0;
@@ -362,10 +364,10 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
         choose_debug(params->debug_id, params->m1, params->m2,
             params->s1x, params->s1y, params->s1z,
             params->s2x, params->s2y, params->s2z,
-            params->beta, params->distance, params->ecc, 
+            params->beta, params->distance, params->ecc, params->zeta,
             params->f_min, params->deltaT, params->inc,
             &hparams);
-        return CEV_SUCCESS;
+        return CEV_FAILURE;
     }
     // call waveform generator
     INT status, is_failed;
@@ -397,7 +399,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
         status = evolve_conserv(params->m1, params->m2, 
             params->s1x, params->s1y, params->s1z, 
             params->s2x, params->s2y, params->s2z, 
-            params->beta, params->distance, params->ecc, params->f_min,
+            params->beta, params->distance, params->ecc, params->zeta, params->f_min,
             params->deltaT, params->inc, &hparams, All);
         if (status == CEV_SUCCESS)
         {
@@ -414,7 +416,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
         REAL8Vector *tVec = NULL;
         SphHarmListCAmpPhaseSequence *hLM = NULL;
         SEOBSAdynamics *dyn_debug = NULL;
-        status = evolve_SA(params->m1, params->m2, params->s1z, params->s2z, params->ecc, params->f_min, params->deltaT, &hparams, &tVec, &hLM, params->is_noringdown, params->ret_dyn, &dyn_debug);
+        status = evolve_SA(params->m1, params->m2, params->s1z, params->s2z, params->ecc, params->zeta, params->f_min, params->deltaT, &hparams, &tVec, &hLM, params->is_noringdown, params->ret_dyn, &dyn_debug);
         if (status == CEV_SUCCESS)
         {
             convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, tVec, hLM, dyn_debug, output);
@@ -435,7 +437,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
             status = evolve(params->m1, params->m2, 
                 params->s1x, params->s1y, params->s1z, 
                 params->s2x, params->s2y, params->s2z, 
-                params->beta, params->distance, params->ecc, params->f_min, 
+                params->beta, params->distance, params->ecc, params->zeta, params->f_min, 
                 params->deltaT, params->inc, params->is_only22,
                 &hparams, &hplus, &hcross, All);
             if (status == CEV_SUCCESS)
@@ -456,7 +458,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
             status = evolve_adaptive(params->m1, params->m2, 
                 params->s1x, params->s1y, params->s1z, 
                 params->s2x, params->s2y, params->s2z, 
-                params->beta, params->distance, params->ecc, params->f_min, 
+                params->beta, params->distance, params->ecc, params->zeta, params->f_min, 
                 params->deltaT, params->inc, params->is_only22,
                 &hparams, &hplus, &hcross, All);
             if (status == CEV_SUCCESS)

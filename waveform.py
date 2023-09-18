@@ -16,11 +16,13 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 2, **kwargs)
         Calculate EOB waveform
         INPUT
         params: a list of BBH parameters, 
-            (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, e0, dL, iota_rad, beta_rad, Phi_rad)
+            (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, e0, dL, zeta_rad, iota_rad, beta_rad, Phi_rad)
             > m1, m2: component mass of BH in solar mass,
             > s1x, s1y, s1z, s2x, s2y, s2z: dimentionless spin vector chi of BH, the norm of these vectors should less than 1
             > e0 initial eccentricity at given orbital frequency f_min
             > dL luminosity distance in Mpc
+            > zeta_rad relativistic anomaly zeta in r = p / (1 + e cos(zeta)),
+                you need to set egw_flag=1 to turn on it.
             > iota_rad inclination angle in rad
             > beta_rad represent the initial direction of major axis of the elliptical orbit, 
                 which is equivalent to the phiRef parameter in lalsim-inspiral
@@ -62,12 +64,12 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 2, **kwargs)
             > dynamics.omega: the angular velocity of the orbit (ndarray)
             > dynamics.Hreal: the EOB Hamiltonian of the orbit (ndarray)
     '''
-    m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, e0, dL, iota_rad, beta_rad, Phi_rad = params
+    m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, e0, dL, zeta_rad, iota_rad, beta_rad, Phi_rad = params
     ge = SEOBNRWaveformCaller()
     ge.set_params(m1 = m1, m2 = m2, 
                   s1x = s1x, s1y = s1y, s1z = s1z,
                   s2x = s2x, s2y = s2y, s2z = s2z, srate=srate,
-                  ecc = e0, distance = dL, code_version=code_version,
+                  ecc = e0, distance = dL, code_version=code_version, zeta_rad = zeta_rad,
                   inc_rad = iota_rad, beta_rad = beta_rad, phiRef_rad = Phi_rad, f_min = f_min, ret_dyn = True, **kwargs)
     waveform, dynamics = ge.run()
     if waveform is None:
