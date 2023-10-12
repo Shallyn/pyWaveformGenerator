@@ -432,6 +432,8 @@ int SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
 
     SphHarmTimeSeries **hJlm, /**<< Output: hJlm time series, will contain
                                  complex values on fixed sampling */
+    SphHarmListCAmpPhaseSequence
+        **listhClm,         /**<< Output: list of C-frame modes hClm */
     INT modes[][2],          /**<< Input: array of modes (l,m) */
     UINT nmodes,             /**<< Input: number of modes (l,m) */
     INT modes_lmax,          /**<< Input: maximum value of l in modes (l,m) */

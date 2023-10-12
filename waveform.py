@@ -11,7 +11,7 @@ from . import SEOBNRWaveformCaller
 from .psd import GWDetector
 from .pyUtils import rTimeSeries
 
-def calculate_waveform(params, f_min, srate = 16384, code_version = 2, **kwargs):
+def calculate_waveform(params, f_min, srate = 16384, code_version = 1, **kwargs):
     '''
         Calculate EOB waveform
         INPUT
@@ -27,9 +27,13 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 2, **kwargs)
             > beta_rad represent the initial direction of major axis of the elliptical orbit, 
                 which is equivalent to the phiRef parameter in lalsim-inspiral
             > Phi_rad the complex angle of h+ - ihx at the merge stage (default unused other than you set use_coaphase=True)
+        NOTE: If you want to generate waveform that both containing eccentricity (e0 != 0) and spin precession (sx !=0 or sy != 0),
+              you need to set prec_flag=3 (see arxiv:2310.04552). 
+              However, in this case the initial conditions are limited to the periapsis of the equatorial plane,
+              which means that zeta_rad is not supported (and also egw_flag=1 doesn't work in this case). 
         f_min: initial orbital frequency
         srate: the output sample rate
-            Note. Lowering this value does not significantly improve computational speed, 
+            NOTE: Lowering this value does not significantly improve computational speed, 
                 as the time consuming part of the code is the numerical solution of the dynamic system, 
                 where adaptive stepping is used. 
                 If you want to sacrifice accuracy to improve calculation speed, 
@@ -39,7 +43,7 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 2, **kwargs)
                         (sometimes you may need to add an extra argument is_constp=True)
                       if you set code_version=1, this code will use another eccentricity definition
         
-        OUTPUT
+        OUTPUT:
         waveform: a collection of polarizations and GW spherical modes, see more details in __init__.py
             > waveform.timeM: the time in M (ndarray)
             > waveform.time: the time in s (ndarray)

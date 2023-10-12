@@ -14,6 +14,10 @@
 #include "myLog.h"
 
 #define EFOLDS 150
+INT SEOBConvertInitConditionFromGeneralToV1(REAL8Vector *ICvalues,
+    SpinEOBParams *params, 
+    REAL8 *ret_omega0,
+    REAL8 *ret_e0);
 
 REAL8 NQCWindow(REAL8 t, REAL8 t0, REAL8 W);
 static int XLALEOBHighestInitialFreq(
@@ -60,6 +64,7 @@ INT evolve(REAL8 m1,  REAL8 m2,
     SphHarmListCAmpPhaseSequence *listhPlm_HiS = NULL;
     SphHarmListCAmpPhaseSequence *listhPlm_HiSRDpatch = NULL;
     SphHarmListCAmpPhaseSequence *listhPlm_AdaS = NULL;
+    SphHarmListCAmpPhaseSequence *listhClm = NULL;
     SEOBdynamics *seobdynamicsAdaS = NULL;
     SEOBdynamics *seobdynamicsHiS = NULL;
     
@@ -922,7 +927,7 @@ HISR:
     /* Rotate waveform from P-frame to J-frame */
     // flagSymmetrizehPlminusm = 1
     status = SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
-        &hJlm, modes, nmodes, modes_lmax, deltaT, retLenTS, tVecPmodes,
+        &hJlm, &listhClm, modes, nmodes, modes_lmax, deltaT, retLenTS, tVecPmodes,
         listhPlm, alphaJ2P, betaJ2P, gammaJ2P);
     if ( status == CEV_FAILURE) 
     {
@@ -1608,6 +1613,7 @@ INT evolve_adaptive(REAL8 m1,  REAL8 m2,
     SphHarmListCAmpPhaseSequence *listhPlm_HiS = NULL;
     SphHarmListCAmpPhaseSequence *listhPlm_HiSRDpatch = NULL;
     SphHarmListCAmpPhaseSequence *listhPlm_AdaS = NULL;
+    SphHarmListCAmpPhaseSequence *listhClm = NULL;
     SEOBdynamics *seobdynamicsAdaS = NULL;
     SEOBdynamics *seobdynamicsHiS = NULL;
     
@@ -2305,7 +2311,7 @@ HISR:
     /* Rotate waveform from P-frame to J-frame */
     // flagSymmetrizehPlminusm = 1
     status = SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
-        &hJlm, modes, nmodes, modes_lmax, deltaT, retLenTS, tVecPmodes,
+        &hJlm, &listhClm, modes, nmodes, modes_lmax, deltaT, retLenTS, tVecPmodes,
         listhPlm, alphaJ2P, betaJ2P, gammaJ2P);
     if ( status == CEV_FAILURE) 
     {
@@ -2751,6 +2757,14 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
             temp_r * (ICvalues->data[4] * cos(temp_phi) -
                     ICvalues->data[3] * sin(temp_phi)); // p_phi
     }
+#if 0
+    {
+        REAL8 tmp_omega0, tmp_e0;
+        status = SEOBConvertInitConditionFromGeneralToV1(ICvalues, core, &tmp_omega0, &tmp_e0);
+        print_debug("omega0, e0 = %.16e, %.16e\n", tmp_omega0, tmp_e0);
+    }
+#endif
+
 #if 0
 DEBUG_START;
 REAL8Vector dbg_xVec, dbg_pVec, dbg_s1Vec, dbg_s2Vec, dbg_sigKerr, dbg_sigStar;
@@ -3693,6 +3707,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     SphHarmListCAmpPhaseSequence *listhPlm_HiS = NULL;
     SphHarmListCAmpPhaseSequence *listhPlm_HiSRDpatch = NULL;
     SphHarmListCAmpPhaseSequence *listhPlm_AdaS = NULL;
+    SphHarmListCAmpPhaseSequence *listhClm = NULL;
     SEOBPrecdynamics *seobdynamicsAdaS = NULL;
     SEOBPrecdynamics *seobdynamicsHiS = NULL;
     
@@ -3818,6 +3833,14 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     core->J0Vec->data[0] += L0Vec[0];
     core->J0Vec->data[1] += L0Vec[1];
     core->J0Vec->data[2] += L0Vec[2];
+#if 0
+    // here we convert general Initial Condition to V1
+    {
+        REAL8 tmp_omega0, tmp_e0;
+        status = SEOBConvertInitConditionFromGeneralToV1(ICvalues, core, &tmp_omega0, &tmp_e0);
+        print_debug("omega0, e0 = %.16e, %.16e\n", tmp_omega0, tmp_e0);
+    }
+#endif
     // print_debug("g_ulPrintDebugLogFlag = %zu", g_ulPrintDebugLogFlag);
     // if (1) {failed = 1; goto QUIT;}
 
@@ -4230,7 +4253,7 @@ HISR:
     /* Rotate waveform from P-frame to J-frame */
     // flagSymmetrizehPlminusm = 1
     status = SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
-        &hJlm, modes, nmodes, modes_lmax, deltaT, retLenTS, tVecPmodes,
+        &hJlm, &listhClm, modes, nmodes, modes_lmax, deltaT, retLenTS, tVecPmodes,
         listhPlm, alphaJ2P, betaJ2P, gammaJ2P);
     if ( status == CEV_FAILURE )
     {
@@ -4268,7 +4291,7 @@ HISR:
     all->dyn = seobdynamicsAdaSHiS;
     all->hLM = hIlm;
     all->tVec = tVecPmodes;
-    all->Plm = listhPlm;
+    all->Plm = listhClm;
 
 QUIT:
 
@@ -4300,7 +4323,7 @@ QUIT:
     STRUCTFREE(listhPlm_AdaS, SphHarmListCAmpPhaseSequence);
 
     // STRUCTFREE(tVecPmodes, REAL8Vector);
-    // STRUCTFREE(listhPlm, SphHarmListCAmpPhaseSequence);
+    STRUCTFREE(listhPlm, SphHarmListCAmpPhaseSequence);
     // STRUCTFREE(seobdynamicsAdaSHiS, SEOBPrecdynamics);
 
     STRUCTFREE(alphaJ2P, REAL8Vector);

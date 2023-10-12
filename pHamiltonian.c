@@ -354,10 +354,6 @@ void CalculateSpinEOBHSACoeffs(REAL8 m1, REAL8 m2, REAL8 s1z, REAL8 s2z, SpinEOB
 //         coeffs->PdsKu2, coeffs->PdsKpn4, coeffs->PdsKup2, coeffs->PdsKp2pn2, coeffs->PdsKupn2, coeffs->PdsKu3);
     coeffs->D2 = 6.*eta;
     coeffs->D3 = 2.*(26.-3.*eta)*eta;
-    if (IS_DEBUG)
-    {
-        print_debug("eta = %.16e, chi = %.16e, KK = %.16e\n", eta, chi, KK);
-    }
     return;
 }
 
@@ -450,24 +446,24 @@ REAL8 EOBSAHamiltonian(REAL8 r, REAL8 prT, REAL8 pphi, SpinEOBHSACoeffs *coeffs,
     Heff = HNS + HS + HSS + HSSeff;
     Hreal = sqrt(1. + 2.*coeffs->eta*(Heff-1.));
 
-if (IS_DEBUG)
-{
-    print_debug("u = %.16e, \n", u);
-    print_debug("a = %.16e, eta = %.16e\n", coeffs->a, coeffs->eta);
-    print_debug("logarg = %.16e, deltaU0 = %.16e, deltaULog = %.16e\n", logarg, deltaU0, deltaULog);
-    print_debug("deltaU = %.16e, deltaU_u = %.16e\n", deltaU, deltaU_u);
-    print_debug("deltaT = %.16e, deltaT_r = %.16e\n", deltaT, deltaT_r);
-    print_debug("DD = %.16e, deltaR = %.16e\n", DD, deltaR);
-    print_debug("wfd = %.16e, wfd_r = %.16e\n", wfd, wfd_r);
-    print_debug("pr = %.16e, pnBar2 = %.16e, pBar2 = %.16e\n", pr, pnBar2, pBar2);
-    print_debug("alpha = %.16e, beta = %.16e, gammar = %.16e, gammaphi = %.16e\n", alpha, beta, gammar, gammaphi);
-    print_debug("deltasigma0 = %.16e, deltasigmaS = %.16e, deltasigmaK = %.16e\n", deltaSigma0, deltaSigmaS, deltaSigmaK);
-    print_debug("BR = %.16e, nur = %.16e, wr = %.16e, SStar = %.16e\n", BR, nur, wr, SStar);
-    print_debug("Hns = %.16e, HTwr = %.16e, HSOL = %.16e, HSONL = %.16e\n", HNS, HTwr, HSOL, HSONL);
-    print_debug("HeffSS = %.16e, HS = %.16e, Heff = %.16e\n", HSSeff, HS, Heff);
-    print_debug("Hreal = %.16e\n", Hreal);
+// if (IS_DEBUG)
+// {
+//     print_debug("u = %.16e, \n", u);
+//     print_debug("a = %.16e, eta = %.16e\n", coeffs->a, coeffs->eta);
+//     print_debug("logarg = %.16e, deltaU0 = %.16e, deltaULog = %.16e\n", logarg, deltaU0, deltaULog);
+//     print_debug("deltaU = %.16e, deltaU_u = %.16e\n", deltaU, deltaU_u);
+//     print_debug("deltaT = %.16e, deltaT_r = %.16e\n", deltaT, deltaT_r);
+//     print_debug("DD = %.16e, deltaR = %.16e\n", DD, deltaR);
+//     print_debug("wfd = %.16e, wfd_r = %.16e\n", wfd, wfd_r);
+//     print_debug("pr = %.16e, pnBar2 = %.16e, pBar2 = %.16e\n", pr, pnBar2, pBar2);
+//     print_debug("alpha = %.16e, beta = %.16e, gammar = %.16e, gammaphi = %.16e\n", alpha, beta, gammar, gammaphi);
+//     print_debug("deltasigma0 = %.16e, deltasigmaS = %.16e, deltasigmaK = %.16e\n", deltaSigma0, deltaSigmaS, deltaSigmaK);
+//     print_debug("BR = %.16e, nur = %.16e, wr = %.16e, SStar = %.16e\n", BR, nur, wr, SStar);
+//     print_debug("Hns = %.16e, HTwr = %.16e, HSOL = %.16e, HSONL = %.16e\n", HNS, HTwr, HSOL, HSONL);
+//     print_debug("HeffSS = %.16e, HS = %.16e, Heff = %.16e\n", HSSeff, HS, Heff);
+//     print_debug("Hreal = %.16e\n", Hreal);
 
-}
+// }
     return Hreal;
 }
 
@@ -878,8 +874,6 @@ REAL8 EOBHamiltonian(const REAL8 eta,
        s1Vec->data[2] * s1Vec->data[2] + s2Vec->data[0] * s2Vec->data[0] +
        s2Vec->data[1] * s2Vec->data[1] + s2Vec->data[2] * s2Vec->data[2]);
     H += Hess;
-    //printf( "Hns = %.16e, Hs = %.16e, Hss = %.16e\n", Hns, Hs, Hss );
-    //printf( "H = %.16e\n", H );
     /* Real Hamiltonian given by Eq. 2, ignoring the constant -1. */
     Hreal = GET_SQRT (1. + 2. * eta * (H - 1.));
     return Hreal;

@@ -6264,6 +6264,8 @@ int SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
 
     SphHarmTimeSeries **hJlm, /**<< Output: hJlm time series, will contain
                                  complex values on fixed sampling */
+    SphHarmListCAmpPhaseSequence
+        **listhClm,         /**<< Output: list of C-frame modes hClm */
     INT modes[][2],          /**<< Input: array of modes (l,m) */
     UINT nmodes,             /**<< Input: number of modes (l,m) */
     INT modes_lmax,          /**<< Input: maximum value of l in modes (l,m) */
@@ -6546,15 +6548,16 @@ int SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
             }
         }
     }
+    *listhClm = listhPlm_TS;
 #if 0
     {
         CAmpPhaseSequence *h22 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 2, 2)->campphase;
-        CAmpPhaseSequence *h21 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 2, 1)->campphase;
-        CAmpPhaseSequence *h33 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 3, 3)->campphase;
-        CAmpPhaseSequence *h44 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 4, 4)->campphase;
-        CAmpPhaseSequence *h55 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 5, 5)->campphase;
+        // CAmpPhaseSequence *h21 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 2, 1)->campphase;
+        // CAmpPhaseSequence *h33 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 3, 3)->campphase;
+        // CAmpPhaseSequence *h44 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 4, 4)->campphase;
+        // CAmpPhaseSequence *h55 = SphHarmListCAmpPhaseSequence_GetMode(listhPlm_TS, 5, 5)->campphase;
         char fout[STR_COMM_SIZE];
-        strncpy(fout, "tmp_debug_ecc.dat", STR_COMM_SIZE);
+        strncpy(fout, "tmp_debug_eccX.dat", STR_COMM_SIZE);
         FILE *out = fopen(fout, "w");
         for (i = 0; i < retLenTS; i++)
         {
@@ -6568,7 +6571,7 @@ int SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
 #endif
 QUIT:
     /* Cleanup */
-    STRUCTFREE(listhPlm_TS, SphHarmListCAmpPhaseSequence);
+    // STRUCTFREE(listhPlm_TS, SphHarmListCAmpPhaseSequence);
     gsl_spline_free(spline_camp_real);
     gsl_spline_free(spline_camp_imag);
     gsl_spline_free(spline_phase);
@@ -8523,6 +8526,45 @@ QUIT:
     gsl_interp_accel_free(acc);
     if (failed)
         return CEV_FAILURE;
+    return CEV_SUCCESS;
+}
+
+INT SEOBConvertInitConditionFromGeneralToV1(REAL8Vector *ICvalues,
+    SpinEOBParams *params, 
+    REAL8 *ret_omega0,
+    REAL8 *ret_e0)
+{
+    int i;
+    REAL8 values[12];
+    memcpy(values, ICvalues->data, 12*sizeof(REAL8));
+    REAL8		mTotal = params->m1 + params->m2;
+    REAL8		py , pz, r, ptheta, pphi;
+
+    /* Numerical derivative of Hamiltonian wrt given value */
+    REAL8		dHdx, dHdpy, dHdpz;
+    REAL8		dHdr, dHdptheta, dHdpphi;
+    r = values[0];
+    py = values[4];
+    pz = values[5];
+    ptheta = -r * pz;
+    pphi = r * py;
+    for ( i = 0; i < 3; i++) 
+    {
+        values[i + 6] /= mTotal * mTotal;
+        values[i + 9] /= mTotal * mTotal;
+    }
+    dHdx = XLALSpinPrecHcapNumDerivWRTParam(0,
+                        values, params);
+    dHdpy = XLALSpinPrecHcapNumDerivWRTParam(4,
+                            values, params);
+    dHdpz = XLALSpinPrecHcapNumDerivWRTParam(5,
+                            values, params);
+    dHdr      = dHdx - dHdpy * pphi / (r * r) + dHdpz * ptheta / (r * r);
+    dHdptheta = -dHdpz / r;
+    dHdpphi   = dHdpy / r;
+
+    *ret_omega0 = dHdpphi;
+    *ret_e0 = -dHdr*r*r;
     return CEV_SUCCESS;
 }
 

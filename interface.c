@@ -968,27 +968,27 @@ void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22,
     CAmpPhaseSequence *h33 = SphHarmListCAmpPhaseSequence_GetMode(PLM, 3, 3)->campphase;
     CAmpPhaseSequence *h44 = SphHarmListCAmpPhaseSequence_GetMode(PLM, 4, 4)->campphase;
     CAmpPhaseSequence *h55 = SphHarmListCAmpPhaseSequence_GetMode(PLM, 5, 5)->campphase;
-    // REAL8Vector *tVec = h22->xdata;
-    INT length = tVec->length;
+    REAL8Vector *xVec = h22->xdata;
+    INT length = xVec->length;
     pyOutputStruct_t *output = CreatePyOutputStruct_t(length);
     REAL8Vector *amp22 = CreateREAL8Vector(length);
     for(i=0;i<length;i++)
     {
-        output->timeM->data[i] = tVec->data[i];
+        output->timeM->data[i] = xVec->data[i];
         output->time->data[i] = output->timeM->data[i] * mT;
-        output->h22_real->data[i] = h22->camp_real->data[i]*cos(h22->phase->data[i]);
-        output->h22_imag->data[i] = h22->camp_real->data[i]*sin(h22->phase->data[i]);
-        output->h21_real->data[i] = h21->camp_real->data[i]*cos(h21->phase->data[i]);
-        output->h21_imag->data[i] = h21->camp_real->data[i]*sin(h21->phase->data[i]);
-        output->h33_real->data[i] = h33->camp_real->data[i]*cos(h33->phase->data[i]);
-        output->h33_imag->data[i] = h33->camp_real->data[i]*sin(h33->phase->data[i]);
-        output->h44_real->data[i] = h44->camp_real->data[i]*cos(h44->phase->data[i]);
-        output->h44_imag->data[i] = h44->camp_real->data[i]*sin(h44->phase->data[i]);
-        output->h55_real->data[i] = h55->camp_real->data[i]*cos(h55->phase->data[i]);
-        output->h55_imag->data[i] = h55->camp_real->data[i]*sin(h55->phase->data[i]);
+        output->h22_real->data[i] = h22->camp_real->data[i];
+        output->h22_imag->data[i] = h22->camp_imag->data[i];
+        output->h21_real->data[i] = h21->camp_real->data[i];
+        output->h21_imag->data[i] = h21->camp_imag->data[i];
+        output->h33_real->data[i] = h33->camp_real->data[i];
+        output->h33_imag->data[i] = h33->camp_imag->data[i];
+        output->h44_real->data[i] = h44->camp_real->data[i];
+        output->h44_imag->data[i] = h44->camp_imag->data[i];
+        output->h55_real->data[i] = h55->camp_real->data[i];
+        output->h55_imag->data[i] = h55->camp_imag->data[i];
         output->hplus->data[i] = 0.0;
         output->hcross->data[i] = 0.0;
-        amp22->data[i] = h22->camp_real->data[i];
+        amp22->data[i] = cabs(h22->camp_real->data[i] + I*h22->camp_imag->data[i]);
     }
 
     INT l, m;
