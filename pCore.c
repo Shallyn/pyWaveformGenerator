@@ -7904,6 +7904,35 @@ QUIT:
     return CEV_SUCCESS;
 }
 
+REAL8 calculate_rDot_from_pr(REAL8 eta, REAL8 chi1, REAL8 chi2, REAL8 r, REAL8 prT, REAL8 pf)
+{
+    REAL8 eta2, chi12, chi22;
+    eta2 = eta*eta;
+    chi12 = chi1*chi1;
+    chi22 = chi2*chi2;
+    REAL8 chi1Pluschi2Sq;
+    chi1Pluschi2Sq = chi12 + chi22 + 2.*chi1*chi2;
+    REAL8 dm;
+    dm = sqrt(1. - 4.*eta);
+    REAL8 r2, r4, prT2, prT4, pf2, pf4;
+    r2 = r*r;
+    r4 = r2*r2;
+    prT2 = prT*prT;
+    prT4 = prT2*prT2;
+    pf2 = pf*pf;
+    pf4 = pf2*pf2;
+    REAL8 pr_0, pr_2, pr_4;
+    pr_0 = prT;
+    pr_2 = -0.5*(prT*((1 + eta)*pf2 + r*(2 - 2*eta + (1 + eta)*prT2*r)))/r2;
+    pr_4 = (prT*(3*(1 + eta + eta2)*pf4 + 2*pf2*r*
+        (2 + 2*eta - 6*eta2 + 3*(1 + eta + eta2)*prT2*r) + 
+        r2*(4*(-1 - chi22*(-1 + dm) + chi12*(1 + dm) + 
+        (5 + 2*chi22*(-2 + dm) - 2*chi12*(2 + dm))*eta + 
+        (3 + 2*chi1Pluschi2Sq)*eta2) - 4*(1 + eta + 3*eta2)*prT2*r + 
+        3*(1 + eta + eta2)*prT4*r2)))/(8.*r4);
+    return pr_0 + pr_2 + pr_4;
+}
+
 void calculate_prDot_from_ezetapphi(REAL8 eta, REAL8 chi1, REAL8 chi2, 
         REAL8 e, REAL8 sz, REAL8 cz, REAL8 pf,
         REAL8 *ret_prT, REAL8 *ret_prDot)
