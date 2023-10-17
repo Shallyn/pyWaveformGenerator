@@ -4098,7 +4098,8 @@ INT EOBInitialConditionsSA_e_anomaly(REAL8Vector    *initConds,
     memcpy( cartValues+3, pCart, sizeof(pCart) );
     memcpy( cartValues+6, tmpS1, sizeof(tmpS1) );
     memcpy( cartValues+9, tmpS2, sizeof(tmpS2) );
-    
+
+#if 0
     REAL8 dHdpphi, d2Hdr2, d2Hdrdpphi;
     REAL8 rDot, dHdpr, flux, dEdr;
     
@@ -4191,7 +4192,7 @@ INT EOBInitialConditionsSA_e_anomaly(REAL8Vector    *initConds,
         //printf( "d2Hdr2 is zero!\n" );
         pSph[0] = 0;
     }
-    
+#endif
     /* Now we are done - convert back to cartesian coordinates ) */
     SphericalToCartesian( qCart, pCart, qSph, pSph );
     PRINT_LOG_INFO(LOG_DEBUG, "Sph initial condition : r = (%e,%e,%e), p = (%e,%e,%e)", qSph[0], qSph[1], qSph[2], pSph[0], pSph[1], pSph[2]);
@@ -4224,23 +4225,23 @@ INT EOBInitialConditionsSA_e_anomaly(REAL8Vector    *initConds,
     
 
     /* If required, apply the tortoise transform */
-    if ( tmpTortoise )
-    {
-        REAL8 r = sqrt(qCart[0]*qCart[0] + qCart[1]*qCart[1] + qCart[2]*qCart[2] );
-        REAL8 deltaR = XLALSimIMRSpinEOBHamiltonianDeltaR( params->seobCoeffs, r, eta, a );
-        REAL8 deltaT = XLALSimIMRSpinEOBHamiltonianDeltaT( params->seobCoeffs, r, eta, a );
-        REAL8 csi    = sqrt( deltaT * deltaR )/(r*r + a*a);
+    // if ( tmpTortoise )
+    // {
+    //     REAL8 r = sqrt(qCart[0]*qCart[0] + qCart[1]*qCart[1] + qCart[2]*qCart[2] );
+    //     REAL8 deltaR = XLALSimIMRSpinEOBHamiltonianDeltaR( params->seobCoeffs, r, eta, a );
+    //     REAL8 deltaT = XLALSimIMRSpinEOBHamiltonianDeltaT( params->seobCoeffs, r, eta, a );
+    //     REAL8 csi    = sqrt( deltaT * deltaR )/(r*r + a*a);
         
-        REAL8 pr = (qCart[0]*pCart[0] + qCart[1]*pCart[1] + qCart[2]*pCart[2])/r;
-        params->tortoise = tmpTortoise;
+    //     REAL8 pr = (qCart[0]*pCart[0] + qCart[1]*pCart[1] + qCart[2]*pCart[2])/r;
+    //     params->tortoise = tmpTortoise;
         
-        //printf( "Applying the tortoise to p (csi = %.26e)\n", csi );
+    //     //printf( "Applying the tortoise to p (csi = %.26e)\n", csi );
         
-        for ( i = 0; i < 3; i++ )
-        {
-            pCart[i] = pCart[i] + qCart[i] * pr * (csi - 1.) / r;
-        }
-    }
+    //     for ( i = 0; i < 3; i++ )
+    //     {
+    //         pCart[i] = pCart[i] + qCart[i] * pr * (csi - 1.) / r;
+    //     }
+    // }
 
     /* Now copy the initial conditions back to the return vector */
     memcpy( initConds->data, qCart, sizeof(qCart) );
