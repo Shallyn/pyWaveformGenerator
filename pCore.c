@@ -8094,6 +8094,7 @@ INT SEOBInitialConditions_e_anomaly(REAL8Vector *ICvalues,
                                     REAL8 MfMin,
                                     REAL8 ecc,
                                     REAL8 zeta,
+                                    REAL8 xi,
                                     SpinEOBParams *seobParams)
 {
     PRINT_LOG_INFO(LOG_INFO, "Set initial conditions");
@@ -8135,6 +8136,8 @@ INT SEOBInitialConditions_e_anomaly(REAL8Vector *ICvalues,
             mSpin1data[j] = seobParams->s1Vec->data[j] * mTotal * mTotal;
             mSpin2data[j] = seobParams->s2Vec->data[j] * mTotal * mTotal;
         }
+        // if (EOBInitialConditionsPrec_e_anomaly(ICvalues, m1, m2, fMin, ecc, zeta, xi, 0, mSpin1data, mSpin2data, seobParams) != CEV_SUCCESS)
+        //     return CEV_FAILURE;
         if (EOBInitialConditionsPrec(ICvalues, m1, m2, fMin, ecc, 0, mSpin1data, mSpin2data, seobParams) != CEV_SUCCESS)
             return CEV_FAILURE;
     }

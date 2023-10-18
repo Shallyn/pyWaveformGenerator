@@ -47,7 +47,7 @@ INT XLALSimIMREOBGenerateQNMFreqV2FromFinalPrec(
 INT evolve(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            INT is_only22,
            HyperParams *hparams, 
            REAL8TimeSeries **hPlusOut,
@@ -57,7 +57,7 @@ INT evolve(REAL8 m1,  REAL8 m2,
 INT evolve_adaptive(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            INT is_only22,
            HyperParams *hparams, 
            REAL8TimeSeries **hPlusOut,
@@ -67,7 +67,7 @@ INT evolve_adaptive(REAL8 m1,  REAL8 m2,
 INT evolve_conserv(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            HyperParams *hparams, 
            SEOBCoreOutputs *all);
 
@@ -83,7 +83,7 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
 INT evolve_prec(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
            HyperParams *hparams, 
            SEOBPrecCoreOutputs *all);
 
@@ -91,7 +91,7 @@ INT choose_debug(INT debug_id,
     REAL8 m1,  REAL8 m2, 
     REAL8 s1x, REAL8 s1y, REAL8 s1z, 
     REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-    REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams);
+    REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams);
 
 typedef struct {
     INT use_geom;
@@ -140,6 +140,7 @@ typedef struct {
     INT is_coframe;
     INT use_coaphase;
     REAL8 zeta;
+    REAL8 xi;
 }pyInputParams_t;
 
 typedef struct {
@@ -364,7 +365,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
         choose_debug(params->debug_id, params->m1, params->m2,
             params->s1x, params->s1y, params->s1z,
             params->s2x, params->s2y, params->s2z,
-            params->beta, params->distance, params->ecc, params->zeta,
+            params->beta, params->distance, params->ecc, params->zeta, params->xi,
             params->f_min, params->deltaT, params->inc,
             &hparams);
         return CEV_FAILURE;
@@ -379,7 +380,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
         status = evolve_prec(params->m1, params->m2, 
             params->s1x, params->s1y, params->s1z, 
             params->s2x, params->s2y, params->s2z, 
-            params->beta, params->distance, params->ecc, params->f_min,
+            params->beta, params->distance, params->ecc, params->zeta, params->xi, params->f_min,
             params->deltaT, params->inc, &hparams, All_prec);
         if (status == CEV_SUCCESS)
         {
@@ -399,7 +400,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
         status = evolve_conserv(params->m1, params->m2, 
             params->s1x, params->s1y, params->s1z, 
             params->s2x, params->s2y, params->s2z, 
-            params->beta, params->distance, params->ecc, params->zeta, params->f_min,
+            params->beta, params->distance, params->ecc, params->zeta, params->xi, params->f_min,
             params->deltaT, params->inc, &hparams, All);
         if (status == CEV_SUCCESS)
         {
@@ -437,7 +438,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
             status = evolve(params->m1, params->m2, 
                 params->s1x, params->s1y, params->s1z, 
                 params->s2x, params->s2y, params->s2z, 
-                params->beta, params->distance, params->ecc, params->zeta, params->f_min, 
+                params->beta, params->distance, params->ecc, params->zeta, params->xi, params->f_min, 
                 params->deltaT, params->inc, params->is_only22,
                 &hparams, &hplus, &hcross, All);
             if (status == CEV_SUCCESS)
@@ -458,7 +459,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
             status = evolve_adaptive(params->m1, params->m2, 
                 params->s1x, params->s1y, params->s1z, 
                 params->s2x, params->s2y, params->s2z, 
-                params->beta, params->distance, params->ecc, params->zeta, params->f_min, 
+                params->beta, params->distance, params->ecc, params->zeta, params->xi, params->f_min, 
                 params->deltaT, params->inc, params->is_only22,
                 &hparams, &hplus, &hcross, All);
             if (status == CEV_SUCCESS)

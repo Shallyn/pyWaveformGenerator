@@ -48,7 +48,8 @@ INT SEOBInitialConditions_Conserve(REAL8Vector *ICvalues,
 INT SEOBInitialConditions_e_anomaly(REAL8Vector *ICvalues,
                                     REAL8 MfMin,
                                     REAL8 ecc,
-                                    REAL8 anomaly,
+                                    REAL8 zeta,
+                                    REAL8 xi,
                                     SpinEOBParams *seobParams);
 
 INT CalculateAOmegaFromrpphi(REAL8 r, REAL8 pphi, SpinEOBParams *core,

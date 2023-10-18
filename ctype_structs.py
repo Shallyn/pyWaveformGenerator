@@ -758,7 +758,8 @@ class pyInputParams(ctypes.Structure):
                 ('inEPS_ABS', ctypes.c_double),
                 ('is_coframe', ctypes.c_int),
                 ('use_coaphase', ctypes.c_int),
-                ('zeta', ctypes.c_double))
+                ('zeta', ctypes.c_double),
+                ('xi', ctypes.c_double))
 
 
 class pyOutputStruct(ctypes.Structure):

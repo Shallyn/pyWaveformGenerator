@@ -105,7 +105,7 @@ int calc_rprpphi_from_e_anomaly(REAL8 e, REAL8 zeta, REAL8 omega, SpinEOBParams 
 static INT debug_InitialCondition_anomaly(REAL8 m1,  REAL8 m2, 
         REAL8 s1x, REAL8 s1y, REAL8 s1z, 
         REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-        REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams)
+        REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams)
 {
     PRINT_LOG_INFO(LOG_INFO, "DEBUG mode 2: test e-anomaly initial conditions");
     register INT i;
@@ -132,7 +132,7 @@ static INT debug_InitialCondition_anomaly(REAL8 m1,  REAL8 m2,
     ICvalues = CreateREAL8Vector(14);
     REAL8 MfMin = mTScaled * f_min;
 
-    status = SEOBInitialConditions_e_anomaly(ICvalues, MfMin, ecc, zeta, core);
+    status = SEOBInitialConditions_e_anomaly(ICvalues, MfMin, ecc, xi, zeta, core);
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
     PRINT_LOG_INFO(LOG_DEBUG, "(x,y,z) = (%.16e %.16e %.16e)", 
             ICvalues->data[0], ICvalues->data[1], ICvalues->data[2]);
@@ -157,12 +157,12 @@ INT choose_debug(INT debug_id,
     REAL8 m1,  REAL8 m2, 
     REAL8 s1x, REAL8 s1y, REAL8 s1z, 
     REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-    REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams)
+    REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams)
 {
     switch(debug_id)
     {
         case 2:
-            debug_InitialCondition_anomaly(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, phi0, distance, ecc, zeta, f_min, INdeltaT, inc, hparams);
+            debug_InitialCondition_anomaly(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, phi0, distance, ecc, zeta, xi, f_min, INdeltaT, inc, hparams);
             break;
         case 1:
         default:
