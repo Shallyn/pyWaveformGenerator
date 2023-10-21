@@ -7943,54 +7943,67 @@ void calculate_prDot_from_ezetapphi(REAL8 eta, REAL8 chi1, REAL8 chi2,
     //REAL8 cz = cos(zeta);
     REAL8 eczp = 1. + e*cz;
     REAL8 eczp2 = eczp*eczp;
-    REAL8 eczp3 = eczp2*eczp;
+    REAL8 cz2 = cz*cz - sz*sz;
+    REAL8 cz3 = cz2*cz - 3.*cz*sz*sz;
     REAL8 e2 = e*e;
+    REAL8 e3 = e2*e;
     REAL8 e4 = e2*e2;
-    REAL8 pfm = 1./pf;
-    REAL8 pfm2 = pfm*pfm;
-    REAL8 pfm3 = pfm2*pfm;
-    REAL8 pfm4 = pfm2*pfm2;
-    REAL8 pfm5 = pfm4*pfm;
-    REAL8 pfm6 = pfm4*pfm2;
-    REAL8 pfm7 = pfm6*pfm;
-    REAL8 pfm8 = pfm7*pfm;
+    REAL8 pf2, pf3, pf4, pf5, pf6, pf7, pf8;
+    pf2 = pf*pf;
+    pf3 = pf2*pf;
+    pf4 = pf2*pf2;
+    pf5 = pf4*pf;
+    pf6 = pf5*pf;
+    pf7 = pf6*pf;
+    pf8 = pf7*pf;
     REAL8 chi12 = chi1*chi1, chi22 = chi2*chi2;
-    prDot0 = (-1 + eczp)*eczp2*pfm4;
-    prDot2 = -0.5*(eczp2*((-1 + eczp)*(-9 + 2*eczp - eta) + e2*(7 + eczp*(-5 + eta) - eta))*pfm6);
-    prDot3 = (eczp2*(e2*(2 - 3*eczp) + 3*(2 - 3*eczp + eczp2))*
-        (chi1*(2 + 2*dm - eta) - chi2*(-2 + 2*dm + eta))*pfm7)/2.;
-    prDot4 = (eczp2*(-259 - 298*e2 - 83*e4 + 423*eczp + 290*e2*eczp + 55*e4*eczp - 164*eczp2 - 
-        28*e2*eczp2 + 21*eta + 22*e2*eta + 21*e4*eta - 89*eczp*eta + 10*e2*eczp*eta - 
-        17*e4*eczp*eta + 116*eczp2*eta + 4*e2*eczp2*eta - 48*eczp3*eta + 
-        8*chi1*chi2*eta*(-((-1 + eczp)*(-(eczp*(-3 + eta)) + 6*eczp2*eta - 2*(3 + eta))) + 
-        e2*(-2 - 6*eta + eczp*(3 + 11*eta))) - 3*eta2 + 6*e2*eta2 - 3*e4*eta2 + 
-        3*eczp*eta2 - 6*e2*eczp*eta2 + 3*e4*eczp*eta2 - 
-        4*chi12*(dm*(-((-1 + eczp)*(4 - 2*eta - eczp*(1 + eta) + eczp2*(-3 + 6*eta))) + 
-        e2*(4 - 6*eta + eczp*(-7 + 11*eta))) + 
-        e2*(4 - 14*eta + eczp*(-7 + 25*eta - 11*eta2) + 6*eta2) + 
-        (-1 + eczp)*(-2*(2 - 5*eta + eta2) - eczp*(-1 + eta + eta2) + 
-        3*eczp2*(1 - 4*eta + 2*eta2))) + 
-        4*chi22*(dm*(-((-1 + eczp)*(4 - 2*eta - eczp*(1 + eta) + eczp2*(-3 + 6*eta))) + 
-        e2*(4 - 6*eta + eczp*(-7 + 11*eta))) - 
-        (-1 + eczp)*(-2*(2 - 5*eta + eta2) - eczp*(-1 + eta + eta2) + 
-        3*eczp2*(1 - 4*eta + 2*eta2)) + 
-        e2*(-4 + 14*eta - 6*eta2 + eczp*(7 - 25*eta + 11*eta2))))*pfm8)/8.;
+    REAL8 chi12sq = (chi1 + chi2)*(chi1 + chi2);
+    prDot0 = (cz*e)/pf4;
+    prDot2 = -0.5*(e*((3 + cz2)*e + cz*(-7 + e2*(-5 + eta) - eta)))/pf6;
+    prDot3 = -0.25*(e*(-((1 + 3*cz2)*e) + 6*cz*(1 + e2))*(chi1*(2 + 2*dm - eta) - chi2*(-2 + 2*dm + eta)))/pf7;
+    prDot4 = (e*(e*(3*cz3*e*(-2*eta*(2 + chi12sq*eta) + chi22*(-1 + dm + 4*eta - 2*dm*eta) + 
+        chi12*(-1 + 4*eta + dm*(-1 + 2*eta))) + 
+        2*cz2*(-41 - 7*e2 - 7*eta - 6*chi1*chi2*eta + e2*eta + 
+        chi22*(-7 + 7*dm + 25*eta - 11*dm*eta) + 
+        chi12*(-7 + 25*eta + dm*(-7 + 11*eta)) - 11*chi12sq*eta2) + 
+        2*(-59 - 21*e2 + 11*eta - 2*chi1*chi2*eta + 3*e2*eta + 
+        chi12*(-1 + dm*(-1 + eta) + 3*eta) + chi22*(-1 + dm + 3*eta - dm*eta) - 
+        chi12sq*eta2)) + cz*(95 + 
+        (-1 + 24*chi1*chi2 - 12*chi22*(-1 + dm) + 12*chi12*(1 + dm))*eta - 
+        3*(-1 + 4*chi12 + 8*chi1*chi2 + 4*chi22)*eta2 + e4*(55 - 17*eta + 3*eta2) + 
+        e2*(4*chi1*chi2*eta*(6 + 13*eta) - 6*(-39 + 3*eta + eta2) + 
+        chi12*(19 + dm*(19 - 26*eta) - 64*eta + 26*eta2) + 
+        chi22*(19 - 19*dm - 64*eta + 26*dm*eta + 26*eta2)))))/(8.*pf8);
     REAL8 pr0, pr2, pr3, pr4;
-    pr0 = e*pfm;
-    pr2 = e*(1 + e2 - eczp)*pfm3;
-    pr3 = -0.5*(e*(1 + e2 - eczp)*(chi1*(2 + 2*dm - eta) - chi2*(-2 + 2*dm + eta))*pfm4);
-    pr4 = (e*(16 + chi12 + chi22 + chi12*dm - chi22*dm + 8*e4 - 4*eta - 2*chi12*eta + 
-        4*chi1*chi2*eta - 2*chi22*eta + 
-        2*eczp*(2*(-8 + eta) - 2*chi1*chi2*eta*(1 + eta) + 
-        chi12*(-1 + dm*(-1 + eta) + 3*eta - eta2) - 
-        chi22*(1 + dm*(-1 + eta) - 3*eta + eta2)) + 
-        2*eczp2*(-1 + chi22*(-1 + dm + 4*eta - 2*dm*eta - 2*eta2) - 4*chi1*chi2*eta2 - 
-        chi12*(1 + dm - 4*eta - 2*dm*eta + 2*eta2)) + 
-        e2*(32 + 3*chi22 - 3*chi22*dm - 8*eczp - 4*eta - 10*chi22*eta + 4*chi22*dm*eta + 
-        4*chi1*chi2*eta*(1 + 2*eta) + 4*chi22*eta2 + 
-        chi12*(3 + 3*dm - 10*eta - 4*dm*eta + 4*eta2)))*pfm5)/4.;
-    *ret_prT = sz*(pr0 + pr2 + pr3 + pr4);
-    *ret_prDot = prDot0 + prDot2 + prDot3 + prDot4;
+    pr0 = e/pf;
+    pr2 = ((-cz + e)*e2)/pf3;
+    pr3 = -0.5*((-cz + e)*e2*(chi1*(2 + 2*dm - eta) - chi2*(-2 + 2*dm + eta)))/pf4;
+    pr4 = (e*(-18 - 3*chi12 - 3*chi22 - 3*chi12*dm + 3*chi22*dm + 23*e2 + 2*chi12*e2 + 
+        2*chi22*e2 + 2*chi12*dm*e2 - 2*chi22*dm*e2 + 8*e4 + 12*chi12*eta + 
+        12*chi22*eta + 6*chi12*dm*eta - 6*chi22*dm*eta - 4*e2*eta - 6*chi12*e2*eta + 
+        4*chi1*chi2*e2*eta - 6*chi22*e2*eta - 2*chi12*dm*e2*eta + 2*chi22*dm*e2*eta - 
+        6*chi12*eta2 - 12*chi1*chi2*eta2 - 6*chi22*eta2 + 2*chi12*e2*eta2 + 
+        4*chi1*chi2*e2*eta2 + 2*chi22*e2*eta2 + 
+        cz2*e2*(-1 + chi22*(-1 + dm + 4*eta - 2*dm*eta - 2*eta2) - 4*chi1*chi2*eta2 - 
+        chi12*(1 + dm - 4*eta - 2*dm*eta + 2*eta2)) - 
+        2*cz*e*(18 + 4*e2 - 2*eta + 2*chi1*chi2*eta*(1 + 5*eta) + 
+        chi12*(3 + dm*(3 - 5*eta) - 11*eta + 5*eta2) + 
+        chi22*(3 - 3*dm - 11*eta + 5*dm*eta + 5*eta2))))/(4.*pf5);
+    // pr0 = e2/pf2;
+    // pr2 = (2*(-cz + e)*e3)/pf4;
+    // pr3 = -(((-cz + e)*e3*(chi1*(2 + 2*dm - eta) - chi2*(-2 + 2*dm + eta)))/pf5);
+    // pr4 = (e2*(-18 - 3*chi12 - 3*chi22 - 3*chi12*dm + 3*chi22*dm + 24*e2 + 2*chi12*e2 + 
+    //     2*chi22*e2 + 2*chi12*dm*e2 - 2*chi22*dm*e2 + 10*e4 + 12*chi12*eta + 
+    //     12*chi22*eta + 6*chi12*dm*eta - 6*chi22*dm*eta - 4*e2*eta - 6*chi12*e2*eta + 
+    //     4*chi1*chi2*e2*eta - 6*chi22*e2*eta - 2*chi12*dm*e2*eta + 2*chi22*dm*e2*eta - 
+    //     6*chi12*eta2 - 12*chi1*chi2*eta2 - 6*chi22*eta2 + 2*chi12*e2*eta2 + 
+    //     4*chi1*chi2*e2*eta2 + 2*chi22*e2*eta2 - 
+    //     2*cz*e*(18 + 6*e2 + chi12*(3 + dm*(3 - 5*eta) - 11*eta) - 2*eta + 
+    //     2*chi1*chi2*eta + chi22*(3 - 3*dm - 11*eta + 5*dm*eta) + 5*chi12sq*eta2) + 
+    //     cz2*e2*(chi22*(-1 + dm + 4*eta - 2*dm*eta - 2*eta2) - 4*chi1*chi2*eta2 - 
+    //     chi12*(1 + dm - 4*eta - 2*dm*eta + 2*eta2))))/(2.*pf6);
+    *ret_prT = sz*sqrt(pr0 + pr2 + pr3 + pr4);
+    *ret_prDot = eczp2*(prDot0 + prDot2 + prDot3 + prDot4);
     return;
 }
 

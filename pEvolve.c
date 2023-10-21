@@ -1329,7 +1329,11 @@ INT evolve_conserv(REAL8 m1,  REAL8 m2,
         memcpy(ICvalues->data+6, core->s1Vec->data, 3*sizeof(REAL8));
         memcpy(ICvalues->data+9, core->s2Vec->data, 3*sizeof(REAL8));
     } else {
-        status = SEOBInitialConditions_Conserve(ICvalues, MfMin, ecc, core);
+        if (ecc > 0.0 && get_egw_flag()) {
+            //status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
+            status = SEOBInitialConditions_e_anomaly(ICvalues, MfMin, ecc, zeta, xi, core);
+        } else
+            status = SEOBInitialConditions_Conserve(ICvalues, MfMin, ecc, core);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");

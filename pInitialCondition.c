@@ -3742,7 +3742,7 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     finalValues = gsl_multiroot_fsolver_root( rootSolver );
     REAL8 r0, pphi0;
     *r = r0 = gsl_vector_get( finalValues, 0 );
-    *pphi = pphi0 = gsl_vector_get( finalValues, 1 ) * gsl_vector_get( finalValues, 0 );
+    *pphi = pphi0 = gsl_vector_get( finalValues, 1 ) * r0;
     gsl_multiroot_fsolver_free( rootSolver );
     gsl_vector_free( initValues );
 
@@ -3804,7 +3804,7 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     // print_debug("tmpeq(x_lo) = %.16e, tmpeq(x_hi) = %.16e\n", 
     //     EOBSolvingInitialPr_from_ezeta(x_lo, &fparams2), 
     //     EOBSolvingInitialPr_from_ezeta(x_hi, &fparams2));
-#if 1
+#if 0
     /* Initialise the gsl stuff */
     GSL_START;
     INT status;
