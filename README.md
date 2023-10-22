@@ -60,4 +60,4 @@ plt.show()
 
 which will looks like
 
-![plot](./figures/tmpfig.jpg)
+![plot](./figures/example.jpg)
