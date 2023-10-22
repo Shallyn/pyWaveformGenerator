@@ -39,6 +39,8 @@ In this case one have to make sure that one of $\chi_{1x,1y,2x,2y}\neq0$.
 Then we can see the waveform
 
 ```Python
+import matplotlib.pyplot as plt
+
 h22 = waveform.h22
 fig = plt.figure(figsize = (12, 6))
 
