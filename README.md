@@ -27,7 +27,7 @@ Generate eccentric-precession waveform, run
 
 ```python
 from pyWaveformGenerator.waveform import calculate_waveform_ep
-waveform, dynamics = calculate_waveform((10, 10, 
+waveform, dynamics = calculate_waveform_ep((10, 10, 
 	0.2, 0, 0, 
 	0, -0.3, 0, 
 	0.2, 100, 
