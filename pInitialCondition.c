@@ -34,6 +34,17 @@ struct tagSEOBRootParams
     SpinEOBParams *params;     /**<< Spin EOB parameters -- physical, pre-computed, etc. */
     REAL8          omega;      /**<< Orbital frequency */
     REAL8          e0;
+    REAL8          cz;
+    REAL8          sz;
+    REAL8          c1n;
+    REAL8          c1l;
+    REAL8          c1e;
+    REAL8          c2n;
+    REAL8          c2l;
+    REAL8          c2e;
+    REAL8          c1c1;
+    REAL8          c1c2;
+    REAL8          c2c2;
 }
 SEOBRootParams;
 
@@ -1217,6 +1228,160 @@ XLALFindSphericalOrbitPrec(
     //         dHdr, dHdptheta, dHdpphi);
     /* populate the function vector */
     gsl_vector_set(f, 0, dHdr + e0/r/r);
+    gsl_vector_set(f, 1, dHdptheta);
+    gsl_vector_set(f, 2, dHdpphi - rootParams->omega);
+
+    // XLAL_PRINT_INFO("Current funcvals = %.16e %.16e %.16e\n",
+    // gsl_vector_get(f, 0), gsl_vector_get(f, 1), gsl_vector_get(f, 2));
+
+    /* Rescale back */
+
+
+    rootParams->values[0] = prefactor*scale1*(sqrt(rootParams->values[0]*rootParams->values[0]-36.0));
+    rootParams->values[4] *= scale2;
+    rootParams->values[5] *= scale3;
+
+	return CEV_SUCCESS;
+}
+
+void calculate_prDot_from_ezetapphiPrec(REAL8 eta, 
+        REAL8 c1n, REAL8 c1l, REAL8 c1e, 
+        REAL8 c2n, REAL8 c2l, REAL8 c2e,
+        REAL8 c1c1, REAL8 c1c2, REAL8 c2c2, 
+        REAL8 e, REAL8 sz, REAL8 cz, 
+        REAL8 pl, REAL8 pe, REAL8 L,
+        REAL8 *ret_prT, REAL8 *ret_prDot);
+
+static int
+XLALFindSphericalOrbitPrecEccAnomaly(
+                           const gsl_vector * x,	/**<< Parameters requested by gsl root finder */
+                           void *params,	        /**<< Spin EOB parameters */
+                           gsl_vector * f	      /**<< Function values for the given parameters*/
+)
+{
+    SEOBRootParams *rootParams = (SEOBRootParams *) params;
+    REAL8		mTotal = rootParams->params->m1 + rootParams->params->m2;
+    REAL8		px, py      , pz, r, ptheta, pphi, L;
+    REAL8       prDot;
+
+    /* Numerical derivative of Hamiltonian wrt given value */
+    REAL8		dHdx    , dHdpy, dHdpz;
+    REAL8		dHdr    , dHdptheta, dHdpphi;
+    REAL8 e0;
+    int i;
+    /* Populate the appropriate values */
+    /* In the special theta=pi/2 phi=0 case, r is x */
+
+    REAL8 temp = gsl_vector_get(x, 0)/scale1;
+    REAL8 prefactor = 1.0;
+    if (temp  < 0.0)
+    {
+        prefactor=-1.0;
+    }
+
+    rootParams->values[0] = r =  sqrt(temp*temp+36.0);
+    rootParams->values[4] = py = gsl_vector_get(x, 1)/scale2;
+    rootParams->values[5] = pz = gsl_vector_get(x, 2)/scale3;
+    //printf("r is %.17f\n",r);
+    if(isnan(rootParams->values[0])) 
+    {
+        rootParams->values[0] = 100.;
+    }
+    if(isnan(rootParams->values[4])) 
+    {
+        rootParams->values[4] = 0.1;
+    }
+    if(isnan(rootParams->values[5])) 
+    {
+        rootParams->values[5] = 0.01;
+    }
+    // XLAL_PRINT_INFO("%3.10f %3.10f %3.10f %3.10f %3.10f %3.10f\n",
+    //     rootParams->values[0], rootParams->values[1], rootParams->values[2],
+    //     rootParams->values[3], rootParams->values[4], rootParams->values[5]);
+    // XLAL_PRINT_INFO("Values r = %.16e, py = %.16e, pz = %.16e\n", r, py, pz);
+    // fflush(NULL);
+
+    ptheta = -r * pz;
+    pphi = r * py;
+    L = r*sqrt(py*py + pz*pz);
+    calculate_prDot_from_ezetapphiPrec(rootParams->params->eta, rootParams->c1n, rootParams->c1l, rootParams->c1e, 
+        rootParams->c2n, rootParams->c2l, rootParams->c2e, rootParams->c1c1, rootParams->c1c2, rootParams->c2c2,
+        rootParams->e0, rootParams->sz, rootParams->cz, py, pz, L, &px, &prDot);
+    // XLAL_PRINT_INFO("Input Values r = %.16e, py = %.16e, pz = %.16e\n pthetha = %.16e pphi = %.16e\n", r, py, pz, ptheta, pphi);
+
+    /* dH by dR and dP */
+    REAL8	tmpDValues[14];
+    int status;
+    for ( i = 0; i < 3; i++) 
+    {
+        rootParams->values[i + 6] /= mTotal * mTotal;
+        rootParams->values[i + 9] /= mTotal * mTotal;
+    }
+    UINT oldignoreflux = rootParams->params->ignoreflux;
+    rootParams->params->ignoreflux = 1;
+    status = XLALSpinPrecHcapNumericalDerivative(0, rootParams->values, tmpDValues, rootParams->params);
+    rootParams->params->ignoreflux = oldignoreflux;
+    for ( i = 0; i < 3; i++) 
+    {
+        rootParams->values[i + 6] *= mTotal * mTotal;
+        rootParams->values[i + 9] *= mTotal * mTotal;
+    }
+    REAL8 rvec[3] =
+        {rootParams->values[0], rootParams->values[1], rootParams->values[2]};
+    REAL8 pvec[3] =
+        {rootParams->values[3], rootParams->values[4], rootParams->values[5]};
+    REAL8 chi1vec[3] =
+        {rootParams->values[6], rootParams->values[7], rootParams->values[8]};
+    REAL8 chi2vec[3] =
+        {rootParams->values[9], rootParams->values[10], rootParams->values[11]};
+    REAL8 Lvec[3] = {CalculateCrossProduct(0, rvec, pvec),
+    CalculateCrossProduct(1, rvec, pvec), CalculateCrossProduct(2, rvec, pvec)};
+    REAL8 theta1 = acos(CalculateDotProduct(chi1vec, Lvec)
+                / sqrt(CalculateDotProduct(chi1vec, chi1vec))
+                / sqrt(CalculateDotProduct(Lvec, Lvec)));
+    REAL8 theta2 = acos(CalculateDotProduct(chi2vec, Lvec)
+                / sqrt(CalculateDotProduct(chi2vec, chi2vec))
+                / sqrt(CalculateDotProduct(Lvec, Lvec)));
+
+    // XLAL_PRINT_INFO("rvec = %.16e %.16e %.16e\n", rvec[0], rvec[1], rvec[2]);
+    // XLAL_PRINT_INFO("pvec = %.16e %.16e %.16e\n", pvec[0], pvec[1], pvec[2]);
+    // XLAL_PRINT_INFO("theta1 = %.16e\n", theta1);
+    // XLAL_PRINT_INFO("theta2 = %.16e\n", theta2);
+
+    if (theta1 > 1.0e-6 && theta2 >= 1.0e-6) 
+    {
+        dHdx = -tmpDValues[3];
+        dHdpy = tmpDValues[1];
+        dHdpz = tmpDValues[2];
+    } else 
+    {
+        //rootParams->values[5] = 0.;
+        //rootParams->values[6] = 0.;
+        //rootParams->values[7] = 0.;
+        //rootParams->values[8] = sqrt(CalculateDotProductPrec(chi1vec, chi1vec));
+        //rootParams->values[9] = 0.;
+        //rootParams->values[10]= 0.;
+        //rootParams->values[11]= sqrt(CalculateDotProductPrec(chi2vec, chi2vec));
+        dHdx = XLALSpinPrecHcapNumDerivWRTParam(0,
+                            rootParams->values, rootParams->params);
+        dHdpy = XLALSpinPrecHcapNumDerivWRTParam(4,
+                                rootParams->values, rootParams->params);
+        dHdpz = XLALSpinPrecHcapNumDerivWRTParam(5,
+                                rootParams->values, rootParams->params);
+    }
+    if (IS_REAL8_FAIL_NAN(dHdx)) { return CEV_FAILURE; }
+    if (IS_REAL8_FAIL_NAN(dHdpy)) { return CEV_FAILURE; }
+    if (IS_REAL8_FAIL_NAN(dHdpz)) { return CEV_FAILURE; }
+    // XLAL_PRINT_INFO("dHdx = %.16e, dHdpy = %.16e, dHdpz = %.16e\n", dHdx, dHdpy, dHdpz);
+
+    /* Now convert to spherical polars */
+    dHdr      = dHdx - dHdpy * pphi / (r * r) + dHdpz * ptheta / (r * r);
+    dHdptheta = -dHdpz / r;
+    dHdpphi   = dHdpy / r;
+    // XLAL_PRINT_INFO("dHdr = %.16e dHdptheta = %.16e dHdpphi = %.16e\n",
+    //         dHdr, dHdptheta, dHdpphi);
+    /* populate the function vector */
+    gsl_vector_set(f, 0, dHdr + prDot);
     gsl_vector_set(f, 1, dHdptheta);
     gsl_vector_set(f, 2, dHdpphi - rootParams->omega);
 
@@ -4477,7 +4642,7 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 		return CEV_FAILURE;
 	}
 
-	rootFunction.f = XLALFindSphericalOrbitPrec;
+	rootFunction.f = XLALFindSphericalOrbitPrecEccAnomaly;
 	rootFunction.n = 3;
 	rootFunction.params = &rootParams;
 
@@ -4486,13 +4651,18 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 
 	/* Calculate the initial velocity from the given initial frequency */
     REAL8 fMinE = fMin;
-    rootParams.e0 = 0.0;
-    if (CODE_VERSION == 1)
-        rootParams.e0 = e0;
-    else if (CODE_VERSION == 2)
-    {
-        fMinE /= pow(1-e0*e0, 1.5);
-    }
+    rootParams.e0 = e0;
+    rootParams.cz = cos(zeta);
+    rootParams.sz = sin(zeta);
+    rootParams.c1n = params->chi1Vec->data[0];
+    rootParams.c1l = params->chi1Vec->data[1];
+    rootParams.c1e = params->chi1Vec->data[2];
+    rootParams.c2n = params->chi2Vec->data[0];
+    rootParams.c2l = params->chi2Vec->data[1];
+    rootParams.c2e = params->chi2Vec->data[2];
+    rootParams.c1c1 = rootParams.c1n*rootParams.c1n + rootParams.c1l*rootParams.c1l + rootParams.c1e*rootParams.c1e;
+    rootParams.c1c2 = rootParams.c1n*rootParams.c2n + rootParams.c1l*rootParams.c2l + rootParams.c1e*rootParams.c2e;
+    rootParams.c2c2 = rootParams.c2n*rootParams.c2n + rootParams.c2l*rootParams.c2l + rootParams.c2e*rootParams.c2e;
 	omega = CST_PI * mTotal * CST_MTSUN_SI * fMinE;
 	v0 = cbrt(omega);
 

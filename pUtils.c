@@ -246,7 +246,8 @@ void DestroySpinEOBParams(SpinEOBParams *params)
 {
     if (!params)
         return;
-    
+    STRUCTFREE(params->chi1Vec, REAL8Vector);
+    STRUCTFREE(params->chi2Vec, REAL8Vector);
     STRUCTFREE(params->s1Vec, REAL8Vector);
     STRUCTFREE(params->s2Vec, REAL8Vector);
     STRUCTFREE(params->J0Vec, REAL8Vector);

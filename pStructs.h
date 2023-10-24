@@ -797,6 +797,8 @@ typedef struct tagSpinEOBParams
     REAL8                   tPeakOmega;
 
     // Spin Vectors
+    REAL8Vector             *chi1Vec;
+    REAL8Vector             *chi2Vec;
     REAL8Vector             *s1Vec;
     REAL8Vector             *s2Vec;
     REAL8Vector             *sigmaStar;
