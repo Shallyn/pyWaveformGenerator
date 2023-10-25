@@ -13,11 +13,19 @@ sometimes the lib cannot use in Apple core macbook.
 Run in python
 ```python
 from pyWaveformGenerator.waveform import calculate_waveform
-waveform, dynamics = calculate_waveform((10, 10, 
-	0, 0, 0, 
-	0, 0, 0, 
-	0, 100, 
-	0, 0, 0, 0), 20)
+m1 = m2 = 10
+chi1x = chi1y = chi1z = 0
+chi2x = chi2y = chi2z = 0
+e0 = 0
+dL = 100
+zeta_rad = iota_rad = beta_rad = Phic_rad = 0
+fMin = 20
+waveform, dynamics = calculate_waveform((m1, m2, 
+	chi1x, chi1y, chi1z, 
+	chi2x, chi2y, chi2z, 
+	e0, dL, 
+	zeta_rad, iota_rad, 
+  beta_rad, Phic_rad), fMin)
 ```
 see more details and description in waveform.py
 
@@ -27,11 +35,22 @@ Generate eccentric-precession waveform, run
 
 ```python
 from pyWaveformGenerator.waveform import calculate_waveform_ep
-waveform, dynamics = calculate_waveform_ep((10, 10, 
-	0.2, 0, 0, 
-	0, -0.3, 0, 
-	0.2, 100, 
-	0, 0, 0, 0), 20, srate=16384, is_coframe=False)
+m1 = m2 = 10
+chi1x = 0.2
+chi1y = chi1z = 0
+chi2y = -0.3
+chi2x = chi2z = 0
+e0 = 0.2
+dL = 100
+zeta_rad = 0
+iota_rad = beta_rad = Phic_rad = 0
+fMin = 20
+waveform, dynamics = calculate_waveform_ep((m1, m2, 
+	chi1x, chi1y, chi1z, 
+	chi2x, chi2y, chi2z, 
+	e0, dL, 
+	zeta_rad, iota_rad, 
+  beta_rad, Phic_rad), fMin, srate=16384, is_coframe=False)
 ```
 
 In this case one have to make sure that one of $\chi_{1x,1y,2x,2y}\neq0$.
