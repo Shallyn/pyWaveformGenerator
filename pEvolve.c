@@ -3842,6 +3842,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     core->J0Vec->data[0] += L0Vec[0];
     core->J0Vec->data[1] += L0Vec[1];
     core->J0Vec->data[2] += L0Vec[2];
+
 #if 0
     // here we convert general Initial Condition to V1
     {

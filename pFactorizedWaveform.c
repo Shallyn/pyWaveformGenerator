@@ -3230,7 +3230,6 @@ XLALSimIMRSpinPrecEOBNonKeplerCoeff(
     //         XLAL_ERROR( XLAL_EINVAL );
     //     }
     // }
-
     REAL8 omegaCirc = 0;
     REAL8 tmpValues[14]= {0.};
     REAL8 r3;
@@ -3271,9 +3270,13 @@ XLALSimIMRSpinEOBFluxGetPrecSpinFactorizedWaveform(
 {
     // int		debugPK = 0;
     INT l, m;
+// PRINT_LOG_INFO(LOG_CRITICAL, "polvalues %3.10f %3.10f %3.10f %3.10f", values->data[0], values->data[1], values->data[2], values->data[3]);
+// PRINT_LOG_INFO(LOG_CRITICAL, "values %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f", 
+//     cartvalues->data[0], cartvalues->data[1], cartvalues->data[2], cartvalues->data[3], cartvalues->data[4], cartvalues->data[5], cartvalues->data[6], cartvalues->data[7], cartvalues->data[8], cartvalues->data[9], cartvalues->data[10], cartvalues->data[11]);
 	const	REAL8 vPhiKepler = params->alignedSpins ?
 					XLALSimIMRSpinAlignedEOBNonKeplerCoeff(values->data, params) :
 					XLALSimIMRSpinPrecEOBNonKeplerCoeff(cartvalues->data, params);
+// print_debug("done, vPhiKepler = %.16e\n", vPhiKepler);
 	if (IS_REAL8_FAIL_NAN(vPhiKepler)) {
 		return CEV_FAILURE;
 	}

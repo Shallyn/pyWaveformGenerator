@@ -1243,6 +1243,7 @@ XLALSimIMRSpinAlignedEOBNonKeplerCoeff (const REAL8 values[],
 							/**<< EOB parameters */
 )
 {
+print_debug("here\n");
     REAL8 STEP_SIZE = 1.0e-4;
 
     REAL8 omegaCirc;

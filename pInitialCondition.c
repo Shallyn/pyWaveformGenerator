@@ -1308,7 +1308,7 @@ XLALFindSphericalOrbitPrecEccAnomaly(
         rootParams->c2n, rootParams->c2l, rootParams->c2e, rootParams->c1c1, rootParams->c1c2, rootParams->c2c2,
         rootParams->e0, rootParams->sz, rootParams->cz, py, pz, L, &px, &prDot);
     // XLAL_PRINT_INFO("Input Values r = %.16e, py = %.16e, pz = %.16e\n pthetha = %.16e pphi = %.16e\n", r, py, pz, ptheta, pphi);
-    rootParams->values[4] = px;
+    rootParams->values[3] = px;
     /* dH by dR and dP */
     REAL8	tmpDValues[14];
     int status;
@@ -1381,6 +1381,7 @@ XLALFindSphericalOrbitPrecEccAnomaly(
     // XLAL_PRINT_INFO("dHdr = %.16e dHdptheta = %.16e dHdpphi = %.16e\n",
     //         dHdr, dHdptheta, dHdpphi);
     /* populate the function vector */
+    // print_debug("(r, px, py, pz) = (%.16e, %.16e, %.16e, %.16e), dHdr = %.16e, prDot = %.16e\n", r, px, py, pz, dHdr, prDot);
     gsl_vector_set(f, 0, dHdr + prDot);
     gsl_vector_set(f, 1, dHdptheta);
     gsl_vector_set(f, 2, dHdpphi - rootParams->omega);
@@ -3778,7 +3779,6 @@ static REAL8 EOBSolvingInitialPr_from_ezeta(REAL8 pr, void *params)
     REAL8 d2Hdrdpphi, d2Hdr2;
     sphValues[3] = pr;
     cartValues[3] = pr;
-    // CODING PLACE
     d2Hdr2 = XLALCalculateSphHamiltonianDeriv2( 0, 0, sphValues, fparams->eobpms );
     d2Hdrdpphi = XLALCalculateSphHamiltonianDeriv2( 0, 5, sphValues, fparams->eobpms );
     REAL8Vector qCartVec, pCartVec;
@@ -3822,7 +3822,12 @@ static REAL8 EOBSolvingInitialPr_from_ezeta(REAL8 pr, void *params)
     // flux  = InspiralSpinFactorizedFlux_elip( &polarDynamics, polarData, tmpdvalues, nqcCoeffs, omega, params, ham, lMax, eobVersion );
     flux  = flux / eobpms->eta;
 
-    rDot0 = calculate_rDot_from_pr(eobpms->eta, eobpms->chi1, eobpms->chi2, r0, pr, pphi0);
+    REAL8 DeltaT, DeltaR, csi;
+    DeltaT = XLALSimIMRSpinEOBHamiltonianDeltaT( eobpms->seobCoeffs, r0, eobpms->eta, eobpms->a );
+    DeltaR = XLALSimIMRSpinEOBHamiltonianDeltaR( eobpms->seobCoeffs, r0, eobpms->eta, eobpms->a );
+    csi    = sqrt( DeltaT * DeltaR ) / (r0*r0 + eobpms->a*eobpms->a);
+
+    rDot0 = calculate_rDot_from_pr(eobpms->eta, eobpms->chi1, eobpms->chi2, r0, pr/csi, pphi0);
     rDot1 = -flux * d2Hdrdpphi / (d2Hdr2 * omega0);
     dHdpr = XLALSpinHcapNumDerivWRTParam( 3, cartValues, eobpms );
     eq = dHdpr - (rDot0 + rDot1);
@@ -3912,6 +3917,7 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     gsl_vector_free( initValues );
 
     // Step 2, solve initial pr
+    // CODING
     REAL8 pr0, prDot0;
     calculate_prDot_from_ezetapphi(params->eta, params->chi1, params->chi2,
         e, rootParams.sz, rootParams.cz, pphi0, &pr0, &prDot0);
@@ -3936,6 +3942,8 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     qCart[0] = r0;
     pCart[0] = pr0;
     pCart[1] = pphi0/r0;
+
+    // print_debug("r0, pr0, pphi0 = %.16e, %.16e, %.16e\n", r0, pr0, pphi0);
 
     CartesianToSpherical( qSph, pSph, qCart, pCart );
     for (int i=0; i<3; i++)
@@ -3964,11 +3972,12 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     REAL8 x_lo, x_hi, root;
     x_lo = GET_MAX(-0.9, pr0 - 0.2);
     x_hi = GET_MIN(pr0 + 0.2, 0.9);
-    gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
     // print_debug("x_lo = %.16e, x_hi = %.16e\n", x_lo, x_hi);
     // print_debug("tmpeq(x_lo) = %.16e, tmpeq(x_hi) = %.16e\n", 
     //     EOBSolvingInitialPr_from_ezeta(x_lo, &fparams2), 
     //     EOBSolvingInitialPr_from_ezeta(x_hi, &fparams2));
+
+    gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
 #if 1
     /* Initialise the gsl stuff */
     GSL_START;
@@ -4428,7 +4437,211 @@ INT EOBInitialConditionsSA_e_anomaly(REAL8Vector    *initConds,
     return CEV_SUCCESS;
 }
 
+typedef struct {
+    SpinEOBParams   *eobpms;
+    REAL8           r0;
+    REAL8           py;
+    REAL8           pz;
+    REAL8           L;
+    REAL8           omega;
+    REAL8           cz;
+    REAL8           sz;
+    REAL8           c1n;
+    REAL8           c2n;
+    REAL8           c1c1;
+    REAL8           c1c2;
+    REAL8           c2c2;
+    REAL8           sphvalues[12];
+    REAL8           cartvalues[12];
+    REAL8           tmpS1[3];
+    REAL8           tmpS2[3];
+    REAL8           tmpS1Norm[3];
+    REAL8           tmpS2Norm[3];
+    REAL8           sKData[3];
+    REAL8           sSData[3];
+}RootParams_SolPrPrec;
 
+REAL8 calculate_rDot_from_prPrec(REAL8 eta, 
+        REAL8 c1n, REAL8 c2n, 
+        REAL8 c1c1, REAL8 c1c2, REAL8 c2c2,
+        REAL8 r, REAL8 prT, REAL8 L);
+
+static REAL8 EOBSolvingInitialPr_from_ezetaPrec(REAL8 pr, void *params)
+{
+    RootParams_SolPrPrec *fparams = (RootParams_SolPrPrec *) params;
+    SpinEOBParams *eobpms = fparams->eobpms;
+    REAL8 eq;
+
+	REAL8		dHdpphi , d2Hdr2, d2Hdrdpphi;
+	REAL8		rDot, rDot0, rDot1, dHdpr, flux, dEdr;
+
+	REAL8		sphValues[12];
+	REAL8		cartValues[12];
+    memcpy(sphValues, fparams->sphvalues, sizeof(sphValues));
+    memcpy(cartValues, fparams->cartvalues, sizeof(cartValues));
+    sphValues[3] = pr;
+    cartValues[3] = pr;
+	d2Hdr2 = XLALCalculateSphHamiltonianDeriv2Prec(0, 0, sphValues, eobpms);
+	d2Hdrdpphi = XLALCalculateSphHamiltonianDeriv2Prec(0, 5, sphValues, eobpms);
+
+    // print_debug("d2Hdr2 = %.16e, d2Hdrdpphi = %.16e\n", d2Hdr2, d2Hdrdpphi);
+
+	/* New code to compute derivatives w.r.t. cartesian variables */
+
+	REAL8		tmpDValues[14];
+    REAL8 mTotal;
+    mTotal = eobpms->m1 + eobpms->m2;
+	int i, status;
+	for (i = 0; i < 3; i++) {
+		cartValues[i + 6] /= mTotal * mTotal;
+		cartValues[i + 9] /= mTotal * mTotal;
+	}
+    UINT oldignoreflux = eobpms->ignoreflux;
+    eobpms->ignoreflux = 1;
+    status = XLALSpinPrecHcapNumericalDerivative(0, cartValues, tmpDValues, eobpms);
+    eobpms->ignoreflux = oldignoreflux;
+	for (i = 0; i < 3; i++) {
+		cartValues[i + 6] *= mTotal * mTotal;
+		cartValues[i + 9] *= mTotal * mTotal;
+	}
+
+	dHdpphi = tmpDValues[1] / sqrt(cartValues[0] * cartValues[0] + cartValues[1] * cartValues[1] + cartValues[2] * cartValues[2]);
+	//XLALSpinPrecHcapNumDerivWRTParam(4, cartValues, params) / sphValues[0];
+
+	dEdr = -dHdpphi * d2Hdr2 / d2Hdrdpphi;
+
+    // print_log("d2Hdr2 = %.16e d2Hdrdpphi = %.16e dHdpphi = %.16e\n",
+    //     d2Hdr2, d2Hdrdpphi, dHdpphi);
+    REAL8Vector s1Vec, s2Vec, s1VecNorm, s2VecNorm, sKerr, sStar;
+    REAL8Vector qCartVec, pCartVec;
+    REAL8 qCart[3], pCart[3];
+    REAL8 qSph[3], pSph[3];
+    memcpy(qCart, cartValues, 3*sizeof(REAL8));
+    memcpy(pCart, cartValues+3, 3*sizeof(REAL8));
+    memcpy(qSph, sphValues, 3*sizeof(REAL8));
+    memcpy(pSph, sphValues+3, 3*sizeof(REAL8));
+
+    /* We will need to calculate the Hamiltonian to get the flux */
+    s1Vec.length = s2Vec.length = s1VecNorm.length = s2VecNorm.length = sKerr.length = sStar.length = 3;
+    s1Vec.data = fparams->tmpS1;
+    s2Vec.data = fparams->tmpS2;
+    s1VecNorm.data = fparams->tmpS1Norm;
+    s2VecNorm.data = fparams->tmpS2Norm;
+    sKerr.data = fparams->sKData;
+    sStar.data = fparams->sSData;
+
+    qCartVec.length = pCartVec.length = 3;
+    qCartVec.data = qCart;
+    pCartVec.data = pCart;
+
+    //chi1 = tmpS1[0] * LnHat[0] + tmpS1[1] * LnHat[1] + tmpS1[2] * LnHat[2];
+    //chi2 = tmpS2[0] * LnHat[0] + tmpS2[1] * LnHat[1] + tmpS2[2] * LnHat[2];
+
+    //if (debugPK)
+        //XLAL_PRINT_INFO("magS1 = %.16e, magS2 = %.16e\n", chi1, chi2);
+
+    //chiS = 0.5 * (chi1 / (mass1 * mass1) + chi2 / (mass2 * mass2));
+    //chiA = 0.5 * (chi1 / (mass1 * mass1) - chi2 / (mass2 * mass2));
+
+    // EOBCalculateSigmaKerr(&sKerr, &s1VecNorm, &s2VecNorm);
+    // EOBCalculateSigmaStar(&sStar, eobpms->m1, eobpms->m2, &s1VecNorm, &s2VecNorm);
+
+    /*
+        * The a in the flux has been set to zero, but not in the
+        * Hamiltonian
+        */
+    REAL8 a = sqrt(sKerr.data[0] * sKerr.data[0] + sKerr.data[1] * sKerr.data[1] + sKerr.data[2] * sKerr.data[2]);
+    //XLALSimIMREOBCalcSpinPrecFacWaveformCoefficients(params->eobParams->hCoeffs, mass1, mass2, eta, /* a */ 0.0, chiS, chiA);
+    //XLALSimIMRCalculateSpinPrecEOBHCoeffs(params->seobCoeffs, eta, a);
+    REAL8 ham = XLALSimIMRSpinPrecEOBHamiltonian(eobpms->eta, &qCartVec, &pCartVec, &s1VecNorm, &s2VecNorm, &sKerr, &sStar, eobpms->tortoise, eobpms->seobCoeffs, eobpms->hParams);
+// print_debug("here 4\n");
+
+    // print_log("Stas: hamiltonian in ICs at this point is %.16e\n", ham);
+    /* And now, finally, the flux */
+    REAL8Vector	polarDynamics, cartDynamics;
+    REAL8		polarData[4], cartData[12];
+
+    polarDynamics.length = 4;
+    polarDynamics.data = polarData;
+
+    polarData[0] = qSph[0];
+    polarData[1] = 0.;
+    polarData[2] = pSph[0];
+    polarData[3] = pSph[2];
+
+    cartDynamics.length = 12;
+    cartDynamics.data = cartData;
+
+    memcpy(cartData, qCart, 3 * sizeof(REAL8));
+    memcpy(cartData + 3, pCart, 3 * sizeof(REAL8));
+    memcpy(cartData + 6, fparams->tmpS1Norm, 3 * sizeof(REAL8));
+    memcpy(cartData + 9, fparams->tmpS2Norm, 3 * sizeof(REAL8));
+
+    // print_log("Stas: starting FLux calculations\n");
+    // print_log("polarDynamics = (%.16e, %.16e, %.16e, %.16e)\n", 
+    //     polarDynamics.data[0], polarDynamics.data[1], polarDynamics.data[2], polarDynamics.data[3]);
+    // print_log("cartDynamics = (%.16e, %.16e, %.16e, %.16e)\n", 
+    //     cartDynamics.data[0], cartDynamics.data[1], cartDynamics.data[2], cartDynamics.data[3]);
+
+
+    REAL8 omega = fparams->omega;
+
+    flux = XLALInspiralPrecSpinFactorizedFlux(&polarDynamics, &cartDynamics, eobpms->nqcCoeffs, omega, 0, qSph[0]*omega, eobpms, ham, 8, 4);
+
+    /*
+        * flux  = XLALInspiralSpinFactorizedFlux( &polarDynamics,
+        * nqcCoeffs, omega, params, ham, lMax, SpinAlignedEOBversion
+        * );
+        */
+    // print_log( "Initial Conditions: Stas flux = %.16e\n", flux);
+    //exit(0);
+
+    flux = flux / eobpms->eta;
+    rDot1 = -flux / dEdr;
+    /*
+        * We now need dHdpr - we take it that it is safely linear up
+        * to a pr of 1.0e-3 PK: Ideally, the pr should be of the
+        * order of other momenta, in order for its contribution to
+        * the Hamiltonian to not get buried in the numerical noise
+        * in the numerically larger momenta components
+        */
+    cartValues[3] = 1.0e-3;
+    for (i = 0; i < 3; i++) 
+    {
+        cartValues[i + 6] /= mTotal * mTotal;
+        cartValues[i + 9] /= mTotal * mTotal;
+    }
+    oldignoreflux = eobpms->ignoreflux;
+    eobpms->ignoreflux = 1;
+    eobpms->seobCoeffs->updateHCoeffs = 1;
+    status = XLALSpinPrecHcapNumericalDerivative(0, cartValues, tmpDValues, eobpms);
+    eobpms->ignoreflux = oldignoreflux;
+    for (i = 0; i < 3; i++) 
+    {
+        cartValues[i + 6] *= mTotal * mTotal;
+        cartValues[i + 9] *= mTotal * mTotal;
+    }
+    REAL8   csi = sqrt(XLALSimIMRSpinPrecEOBHamiltonianDeltaT(eobpms->seobCoeffs, qSph[0], eobpms->eta, a)*XLALSimIMRSpinPrecEOBHamiltonianDeltaR(eobpms->seobCoeffs, qSph[0], eobpms->eta, a)) / (qSph[0] * qSph[0] + a * a);
+
+    dHdpr = csi*tmpDValues[0];
+    //XLALSpinPrecHcapNumDerivWRTParam(3, cartValues, params);
+
+    // XLAL_PRINT_INFO("Ingredients going into prDot:\n");
+    // XLAL_PRINT_INFO("flux = %.16e, dEdr = %.16e, dHdpr = %.16e, dHdpr/pr = %.16e\n", flux, dEdr, dHdpr, dHdpr / cartValues[3]);
+    /*
+        * We can now calculate what pr should be taking into account
+        * the flux
+        */
+    //pSph[0] = rDot / (dHdpr / cartValues[3]);
+
+    rDot0 = calculate_rDot_from_prPrec(eobpms->eta, fparams->c1n, fparams->c2n, fparams->c1c1, fparams->c1c2, fparams->c2c2, fparams->r0, pr/csi, fparams->L);
+    rDot = rDot0 + rDot1;
+    eq = dHdpr - (rDot0 + rDot1);
+// #if 0
+// #endif
+
+    return 100*eq;
+}
 /* For precessing case */
 INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
                          const REAL8    mass1,
@@ -4531,7 +4744,7 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 	SpinAlignedEOBversion = 4;
 	/* We compute the ICs for the non-tortoise p, and convert at the end */
 	tmpTortoise = params->tortoise;
-	params->tortoise = 0;
+	params->tortoise = 1;
 
 	EOBNonQCCoeffs *nqcCoeffs = NULL;
 	nqcCoeffs = params->nqcCoeffs;
@@ -4841,6 +5054,100 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 	gsl_multiroot_fsolver_free(rootSolver);
 	gsl_vector_free(initValues);
 
+	CartesianToSpherical(qSph, pSph, qCart, pCart);
+	memcpy(sphValues, qSph, sizeof(qSph));
+	memcpy(sphValues + 3, pSph, sizeof(pSph));
+	memcpy(sphValues + 6, tmpS1, sizeof(tmpS1));
+	memcpy(sphValues + 9, tmpS2, sizeof(tmpS2));
+
+	memcpy(cartValues, qCart, sizeof(qCart));
+	memcpy(cartValues + 3, pCart, sizeof(pCart));
+	memcpy(cartValues + 6, tmpS1, sizeof(tmpS1));
+	memcpy(cartValues + 9, tmpS2, sizeof(tmpS2));
+
+    // CODING
+    const gsl_root_fsolver_type *TT = gsl_root_fsolver_brent;
+    gsl_root_fsolver *rootSolver1D = gsl_root_fsolver_alloc (TT);
+    gsl_function F;
+    RootParams_SolPrPrec fparams2;
+    fparams2.eobpms = params;
+    fparams2.r0 = qCart[0];
+    fparams2.py = tmp_py;
+    fparams2.pz = tmp_pz;
+    fparams2.L = tmp_L;
+    fparams2.omega = omega;
+    fparams2.cz = rootParams.cz;
+    fparams2.sz = rootParams.sz;
+    fparams2.c1n = rootParams.c1n;
+    fparams2.c2n = rootParams.c2n;
+    fparams2.c1c1 = rootParams.c1c1;
+    fparams2.c1c2 = rootParams.c1c2;
+    fparams2.c2c2 = rootParams.c2c2;
+    memcpy(fparams2.sphvalues, sphValues, sizeof(sphValues));
+    memcpy(fparams2.cartvalues, cartValues, sizeof(cartValues));
+    memcpy(fparams2.tmpS1, tmpS1, sizeof(tmpS1));
+    memcpy(fparams2.tmpS2, tmpS2, sizeof(tmpS2));
+    memcpy(fparams2.tmpS1Norm, tmpS1Norm, sizeof(tmpS1Norm));
+    memcpy(fparams2.tmpS2Norm, tmpS2Norm, sizeof(tmpS2Norm));
+    s1Vec.length = s2Vec.length = s1VecNorm.length = s2VecNorm.length = sKerr.length = sStar.length = 3;
+    s1Vec.data = tmpS1;
+    s2Vec.data = tmpS2;
+    s1VecNorm.data = tmpS1Norm;
+    s2VecNorm.data = tmpS2Norm;
+    sKerr.data = sKerrData;
+    sStar.data = sStarData;
+    EOBCalculateSigmaKerr(&sKerr, &s1VecNorm, &s2VecNorm);
+    EOBCalculateSigmaStar(&sStar, mass1, mass2, &s1VecNorm, &s2VecNorm);
+    memcpy(fparams2.sKData, sKerrData, sizeof(sKerrData));
+    memcpy(fparams2.sSData, sStarData, sizeof(sStarData));
+    // print_debug("pr = %.16e, eq = %.16e\n", tmp_px,
+    //     EOBSolvingInitialPr_from_ezetaPrec(tmp_px, &fparams2));
+    F.function = &EOBSolvingInitialPr_from_ezetaPrec;
+    F.params = &fparams2;
+    REAL8 x_lo, x_hi;
+    x_lo = GET_MAX(-0.9, tmp_px - 0.2);
+    x_hi = GET_MIN(tmp_px + 0.2, 0.9);
+    gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
+    /* Initialise the gsl stuff */
+    GSL_START;
+    REAL8 res_pr;
+    INT status;
+    /* We are now ready to iterate to find the solution */
+    i = 0;
+    do
+    {
+        gslStatus = gsl_root_fsolver_iterate( rootSolver1D );
+        if ( gslStatus != GSL_SUCCESS )
+        {
+            // PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
+            print_debug("cannot find initial condition for pr0\n");
+            gsl_root_fsolver_free( rootSolver1D );
+            res_pr = tmp_px;
+            return CEV_SUCCESS;
+        }
+        x_lo = gsl_root_fsolver_x_lower (rootSolver1D);
+        x_hi = gsl_root_fsolver_x_upper (rootSolver1D);
+        gslStatus = gsl_root_test_interval (x_lo, x_hi, 1e-9, 1e-9);
+        // print_debug ("%5d [%.7f, %.7f] %.7f %+.7f\n",
+        //     i, x_lo, x_hi,
+        //     gsl_root_fsolver_root (rootSolver1D),
+        //     x_hi - x_lo);
+        i++;
+    }
+    while ( gslStatus == GSL_CONTINUE && i <= maxIter );
+
+    if ( i > maxIter && gslStatus != GSL_SUCCESS )
+    {
+        PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
+        // print_debug("cannot find initial condition for pr0\n");
+        res_pr = tmp_px;
+    }
+    else 
+        res_pr = gsl_root_fsolver_root (rootSolver1D);
+    pCart[0] = res_pr;
+	CartesianToSpherical(qSph, pSph, qCart, pCart);
+    GSL_END;
+
 
 	/*
 	 * STEP 3) Rotate to L0 along z-axis and N0 along x-axis frame, where
@@ -4892,21 +5199,12 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 	 * (4.14), then initial dr/dt using Eq. (4.10), and finally pr0 using
 	 * Eq. (4.15).
 	 */
-
 	/* Now we can calculate the flux. Change to spherical co-ords */
-	CartesianToSpherical(qSph, pSph, qCart, pCart);
-	memcpy(sphValues, qSph, sizeof(qSph));
-	memcpy(sphValues + 3, pSph, sizeof(pSph));
-	memcpy(sphValues + 6, tmpS1, sizeof(tmpS1));
-	memcpy(sphValues + 9, tmpS2, sizeof(tmpS2));
 
-	memcpy(cartValues, qCart, sizeof(qCart));
-	memcpy(cartValues + 3, pCart, sizeof(pCart));
-	memcpy(cartValues + 6, tmpS1, sizeof(tmpS1));
-	memcpy(cartValues + 9, tmpS2, sizeof(tmpS2));
+#if 0
 
 	REAL8		dHdpphi , d2Hdr2, d2Hdrdpphi;
-	REAL8		rDot    , dHdpr, flux, dEdr;
+	REAL8		rDot, rDot1, rDot2, dHdpr, flux, dEdr;
 
 	d2Hdr2 = XLALCalculateSphHamiltonianDeriv2Prec(0, 0, sphValues, params);
 	d2Hdrdpphi = XLALCalculateSphHamiltonianDeriv2Prec(0, 5, sphValues, params);
@@ -4935,23 +5233,23 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 
 	dEdr = -dHdpphi * d2Hdr2 / d2Hdrdpphi;
 
-    // XLAL_PRINT_INFO("d2Hdr2 = %.16e d2Hdrdpphi = %.16e dHdpphi = %.16e\n",
+    // print_log("d2Hdr2 = %.16e d2Hdrdpphi = %.16e dHdpphi = %.16e\n",
     //     d2Hdr2, d2Hdrdpphi, dHdpphi);
 
-	if (d2Hdr2 != 0.0 && e0 == 0.0) 
+	if (d2Hdr2 != 0.0 && 0) 
     {
 		/* We will need to calculate the Hamiltonian to get the flux */
-		s1Vec.length = s2Vec.length = s1VecNorm.length = s2VecNorm.length = sKerr.length = sStar.length = 3;
-		s1Vec.data = tmpS1;
-		s2Vec.data = tmpS2;
-		s1VecNorm.data = tmpS1Norm;
-		s2VecNorm.data = tmpS2Norm;
-		sKerr.data = sKerrData;
-		sStar.data = sStarData;
+		// s1Vec.length = s2Vec.length = s1VecNorm.length = s2VecNorm.length = sKerr.length = sStar.length = 3;
+		// s1Vec.data = tmpS1;
+		// s2Vec.data = tmpS2;
+		// s1VecNorm.data = tmpS1Norm;
+		// s2VecNorm.data = tmpS2Norm;
+		// sKerr.data = sKerrData;
+		// sStar.data = sStarData;
 
-		qCartVec.length = pCartVec.length = 3;
-		qCartVec.data = qCart;
-		pCartVec.data = pCart;
+		// qCartVec.length = pCartVec.length = 3;
+		// qCartVec.data = qCart;
+		// pCartVec.data = pCart;
 
 		//chi1 = tmpS1[0] * LnHat[0] + tmpS1[1] * LnHat[1] + tmpS1[2] * LnHat[2];
 		//chi2 = tmpS2[0] * LnHat[0] + tmpS2[1] * LnHat[1] + tmpS2[2] * LnHat[2];
@@ -4974,7 +5272,7 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 		//XLALSimIMRCalculateSpinPrecEOBHCoeffs(params->seobCoeffs, eta, a);
 		ham = XLALSimIMRSpinPrecEOBHamiltonian(eta, &qCartVec, &pCartVec, &s1VecNorm, &s2VecNorm, &sKerr, &sStar, params->tortoise, params->seobCoeffs, params->hParams);
 
-        // XLAL_PRINT_INFO("Stas: hamiltonian in ICs at this point is %.16e\n", ham);
+        // print_log("Stas: hamiltonian in ICs at this point is %.16e\n", ham);
 
 		/* And now, finally, the flux */
 		REAL8Vector	polarDynamics, cartDynamics;
@@ -5058,7 +5356,7 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 	/* Now we are done - convert back to cartesian coordinates ) */
 	SphericalToCartesian(qCart, pCart, qSph, pSph);
     PRINT_LOG_INFO(LOG_DEBUG, "Sph initial condition : r = (%e,%e,%e), p = (%e,%e,%e)", qSph[0], qSph[1], qSph[2], pSph[0], pSph[1], pSph[2]);
-
+#endif
 	/*
 	 * STEP 5) Rotate back to the original inertial frame by inverting
 	 * the rotation of STEP 3 and then  inverting the rotation of STEP 1.

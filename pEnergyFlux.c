@@ -157,9 +157,12 @@ XLALInspiralPrecSpinFactorizedFlux(
 				   const UINT SpinAlignedEOBversion	/**< 1 for SEOBNRv1, 2 for SEOBNRv2 */
 )
 {
+    // print_log("omega, dr, ncrv, H = %.16e, %.16e, %.16e, %.16e\n",
+    //     omega, dr, ncrv, H);
     // int	debugPK = 0;
     int i = 0;
     double radius = sqrt(values->data[0]*values->data[0] + values->data[1] *values->data[1]  + values->data[2] *values->data[2]  );
+    // print_debug("radius = %.16e\n", radius);
     if (radius < 1.) 
     {
         return 0.;
@@ -172,7 +175,6 @@ XLALInspiralPrecSpinFactorizedFlux(
             PRINT_LOG_INFO(LOG_CRITICAL, "nan polvalues:  %3.10f %3.10f %3.10f %3.10f",polvalues->data[0], polvalues->data[1], polvalues->data[2], polvalues->data[3] );
             return REAL8_FAIL_NAN;
         }
-
     for( i =0; i < 12; i++)
         if( isnan(values->data[i]) ) 
         {
@@ -199,7 +201,8 @@ XLALInspiralPrecSpinFactorizedFlux(
     omegaSq = omega * omega;
 
     v = cbrt(omega);
-
+    // print_log("flux::v = %.16e\n", v);
+    // return 0.0;
 #if 0
     /* Update the factorized multipole coefficients, w.r.t. new spins */
     if (0) {		/* {{{ */
