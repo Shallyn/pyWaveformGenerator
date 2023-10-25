@@ -21,7 +21,7 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 1, **kwargs)
             > m1, m2: component mass of BH in solar mass,
             > s1x, s1y, s1z, s2x, s2y, s2z: dimentionless spin vector chi of BH, the norm of these vectors should less than 1
             > e0 initial eccentricity at given orbital frequency f_min
-            > dL luminosity distance in Mpc
+            > dL luminosity distance in Mpc 
             > zeta_rad relativistic anomaly zeta in r = p / (1 + e cos(zeta)),
                 you need to set egw_flag=1 to turn on it.
             > iota_rad inclination angle in rad

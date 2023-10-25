@@ -1308,7 +1308,7 @@ XLALFindSphericalOrbitPrecEccAnomaly(
         rootParams->c2n, rootParams->c2l, rootParams->c2e, rootParams->c1c1, rootParams->c1c2, rootParams->c2c2,
         rootParams->e0, rootParams->sz, rootParams->cz, py, pz, L, &px, &prDot);
     // XLAL_PRINT_INFO("Input Values r = %.16e, py = %.16e, pz = %.16e\n pthetha = %.16e pphi = %.16e\n", r, py, pz, ptheta, pphi);
-
+    rootParams->values[4] = px;
     /* dH by dR and dP */
     REAL8	tmpDValues[14];
     int status;
@@ -3969,7 +3969,7 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     // print_debug("tmpeq(x_lo) = %.16e, tmpeq(x_hi) = %.16e\n", 
     //     EOBSolvingInitialPr_from_ezeta(x_lo, &fparams2), 
     //     EOBSolvingInitialPr_from_ezeta(x_hi, &fparams2));
-#if 0
+#if 1
     /* Initialise the gsl stuff */
     GSL_START;
     INT status;
@@ -4823,11 +4823,19 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 	qCart[0] = sqrt(gsl_vector_get(finalValues, 0)*gsl_vector_get(finalValues, 0)+36.0);
 	pCart[1] = gsl_vector_get(finalValues, 1)/scale2;
 	pCart[2] = gsl_vector_get(finalValues, 2)/scale3;
-    if (CODE_VERSION == 2)
-    {
-        qCart[0] /= 1. + e0;
-        pCart[1] *= 1. + e0;
-    }
+    REAL8 tmp_py, tmp_pz, tmp_L, tmp_px, tmp_prDot;
+    tmp_py = pCart[1];
+    tmp_pz = pCart[2];
+    tmp_L = qCart[0]*sqrt(tmp_py*tmp_py + tmp_pz*tmp_pz);
+    calculate_prDot_from_ezetapphiPrec(params->eta, rootParams.c1n, rootParams.c1l, rootParams.c1e, 
+        rootParams.c2n, rootParams.c2l, rootParams.c2e, rootParams.c1c1, rootParams.c1c2, rootParams.c2c2,
+        rootParams.e0, rootParams.sz, rootParams.cz, tmp_py, tmp_pz, tmp_L, &tmp_px, &tmp_prDot);
+    pCart[0] = tmp_px;
+    // if (CODE_VERSION == 2)
+    // {
+    //     qCart[0] /= 1. + e0;
+    //     pCart[1] *= 1. + e0;
+    // }
 
 	/* Free the GSL root finder, since we're done with it */
 	gsl_multiroot_fsolver_free(rootSolver);
