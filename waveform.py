@@ -169,4 +169,4 @@ def calculate_waveform_ep(params, f_min, srate = 16384, is_coframe = False, code
             > dynamics.omega: the angular velocity of the orbit (ndarray)
             > dynamics.Hreal: the EOB Hamiltonian of the orbit (ndarray)
     '''
-    return calculate_waveform(params, f_min, srate, code_version=code_version, is_coframe=is_coframe, prec_flag=3)
+    return calculate_waveform(params, f_min, srate, code_version=code_version, is_coframe=is_coframe, prec_flag=3, egw_flag=1, **kwargs)
