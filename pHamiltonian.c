@@ -1243,7 +1243,6 @@ XLALSimIMRSpinAlignedEOBNonKeplerCoeff (const REAL8 values[],
 							/**<< EOB parameters */
 )
 {
-print_debug("here\n");
     REAL8 STEP_SIZE = 1.0e-4;
 
     REAL8 omegaCirc;
@@ -2765,7 +2764,7 @@ REAL8 XLALSimIMRSpinPrecEOBHamiltonian(
         PRINT_LOG_INFO(LOG_DEBUG, "H = %.16e", H );
 
         PRINT_LOG_INFO(LOG_DEBUG ,"Done printing components.");
-        PRINT_LOG_INFO( LOG_CRITICAL, "Hreal = %.16e in Hamiltonian", Hreal);
+        PRINT_LOG_INFO(LOG_CRITICAL, "Hreal = %.16e in Hamiltonian", Hreal);
         return REAL8_FAIL_NAN;
     }
 

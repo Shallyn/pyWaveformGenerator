@@ -1224,7 +1224,7 @@ XLALFindSphericalOrbitPrec(
     dHdptheta = -dHdpz / r;
     dHdpphi   = dHdpy / r;
     e0 = rootParams->e0;
-    // XLAL_PRINT_INFO("dHdr = %.16e dHdptheta = %.16e dHdpphi = %.16e\n",
+    // print_debug("dHdr = %.16e dHdptheta = %.16e dHdpphi = %.16e\n",
     //         dHdr, dHdptheta, dHdpphi);
     /* populate the function vector */
     gsl_vector_set(f, 0, dHdr + e0/r/r);
@@ -1265,8 +1265,8 @@ XLALFindSphericalOrbitPrecEccAnomaly(
     REAL8       prDot;
 
     /* Numerical derivative of Hamiltonian wrt given value */
-    REAL8		dHdx    , dHdpy, dHdpz;
-    REAL8		dHdr    , dHdptheta, dHdpphi;
+    REAL8		dHdx    , dHdpx, dHdpy, dHdpz;
+    REAL8		dHdr    , dHdpr, dHdptheta, dHdpphi;
     REAL8 e0;
     int i;
     /* Populate the appropriate values */
@@ -1307,7 +1307,7 @@ XLALFindSphericalOrbitPrecEccAnomaly(
     calculate_prDot_from_ezetapphiPrec(rootParams->params->eta, rootParams->c1n, rootParams->c1l, rootParams->c1e, 
         rootParams->c2n, rootParams->c2l, rootParams->c2e, rootParams->c1c1, rootParams->c1c2, rootParams->c2c2,
         rootParams->e0, rootParams->sz, rootParams->cz, py, pz, L, &px, &prDot);
-    // XLAL_PRINT_INFO("Input Values r = %.16e, py = %.16e, pz = %.16e\n pthetha = %.16e pphi = %.16e\n", r, py, pz, ptheta, pphi);
+    // print_debug("Input Values r = %.16e, px = %.16e, py = %.16e, pz = %.16e\n pthetha = %.16e pphi = %.16e\n", r, px, py, pz, ptheta, pphi);
     rootParams->values[3] = px;
     /* dH by dR and dP */
     REAL8	tmpDValues[14];
@@ -1351,6 +1351,7 @@ XLALFindSphericalOrbitPrecEccAnomaly(
     if (theta1 > 1.0e-6 && theta2 >= 1.0e-6) 
     {
         dHdx = -tmpDValues[3];
+        dHdpx = tmpDValues[0];
         dHdpy = tmpDValues[1];
         dHdpz = tmpDValues[2];
     } else 
@@ -1364,25 +1365,31 @@ XLALFindSphericalOrbitPrecEccAnomaly(
         //rootParams->values[11]= sqrt(CalculateDotProductPrec(chi2vec, chi2vec));
         dHdx = XLALSpinPrecHcapNumDerivWRTParam(0,
                             rootParams->values, rootParams->params);
+        dHdpx = XLALSpinPrecHcapNumDerivWRTParam(3,
+                                rootParams->values, rootParams->params);
         dHdpy = XLALSpinPrecHcapNumDerivWRTParam(4,
                                 rootParams->values, rootParams->params);
         dHdpz = XLALSpinPrecHcapNumDerivWRTParam(5,
                                 rootParams->values, rootParams->params);
     }
     if (IS_REAL8_FAIL_NAN(dHdx)) { return CEV_FAILURE; }
+    if (IS_REAL8_FAIL_NAN(dHdpx)) { return CEV_FAILURE; }
     if (IS_REAL8_FAIL_NAN(dHdpy)) { return CEV_FAILURE; }
     if (IS_REAL8_FAIL_NAN(dHdpz)) { return CEV_FAILURE; }
     // XLAL_PRINT_INFO("dHdx = %.16e, dHdpy = %.16e, dHdpz = %.16e\n", dHdx, dHdpy, dHdpz);
 
     /* Now convert to spherical polars */
     dHdr      = dHdx - dHdpy * pphi / (r * r) + dHdpz * ptheta / (r * r);
+    dHdpr = dHdpx;
     dHdptheta = -dHdpz / r;
     dHdpphi   = dHdpy / r;
     // XLAL_PRINT_INFO("dHdr = %.16e dHdptheta = %.16e dHdpphi = %.16e\n",
     //         dHdr, dHdptheta, dHdpphi);
     /* populate the function vector */
-    // print_debug("(r, px, py, pz) = (%.16e, %.16e, %.16e, %.16e), dHdr = %.16e, prDot = %.16e\n", r, px, py, pz, dHdr, prDot);
-    gsl_vector_set(f, 0, dHdr + prDot);
+    // print_debug("(r, px, py, pz, L) = (%.16e, %.16e, %.16e, %.16e, %.16e), dHdr = %.16e, prDot = %.16e\n", r, px, py, pz, L, dHdr, prDot);
+    // print_debug("(r, px, py, pz, L) = (%.16e, %.16e, %.16e, %.16e, %.16e), dHdpr = %.16e, prDot = %.16e\n", r, px, py, pz, L, dHdpr, prDot);
+    // gsl_vector_set(f, 0, dHdr + prDot);
+    gsl_vector_set(f, 0, dHdpr - prDot);
     gsl_vector_set(f, 1, dHdptheta);
     gsl_vector_set(f, 2, dHdpphi - rootParams->omega);
 
@@ -3712,9 +3719,10 @@ XLALFindSphericalOrbitSAWithAnomaly(const gsl_vector *x, /**<< Parameters reques
     /* Populate the appropriate values */
     /* In the special theta=pi/2 phi=0 case, r is x */
     rootParams->values[0] = r  = gsl_vector_get( x, 0 );
-    rootParams->values[4] = py = gsl_vector_get( x, 1 );
+    pphi = gsl_vector_get( x, 1 );
+    rootParams->values[4] = pphi/r;
     e0 = rootParams->e0;
-    pphi   = r * py;
+    // pphi   = r * py;
     // print_debug( "Values r = %.16e, py = %.16e\n", r, py );
     calculate_prDot_from_ezetapphi(rootParams->params->eta, rootParams->params->chi1, rootParams->params->chi2,
         e0, rootParams->sz, rootParams->cz, pphi, &prT, &prDot);
@@ -3722,11 +3730,11 @@ XLALFindSphericalOrbitSAWithAnomaly(const gsl_vector *x, /**<< Parameters reques
     rootParams->values[3] = prT;
     
     /* dHdR */
-    dHdx = XLALSpinHcapNumDerivWRTParam( 0, rootParams->values, rootParams->params );
-    if ( IS_REAL8_FAIL_NAN( dHdx ) )
-    {
-        return CEV_FAILURE;
-    }
+    // dHdx = XLALSpinHcapNumDerivWRTParam( 0, rootParams->values, rootParams->params );
+    // if ( IS_REAL8_FAIL_NAN( dHdx ) )
+    // {
+    //     return CEV_FAILURE;
+    // }
     //printf( "dHdx = %.16e\n", dHdx );
     
     /* dHdPphi (I think we can use dHdPy in this coord system) */
@@ -3736,18 +3744,44 @@ XLALFindSphericalOrbitSAWithAnomaly(const gsl_vector *x, /**<< Parameters reques
     {
         return CEV_FAILURE;
     }
-        
+
+    REAL8 dHdpr;
+    dHdpr = XLALSpinHcapNumDerivWRTParam( 3, rootParams->values, rootParams->params );
+    if ( IS_REAL8_FAIL_NAN( dHdpr ) )
+    {
+        return CEV_FAILURE;
+    }
+
     /* Now convert to spherical polars */
-    dHdr      = dHdx - dHdpy * pphi / (r*r);
+    // dHdr      = dHdx - dHdpy * pphi / (r*r);
     dHdpphi   = dHdpy / r;
-    
+    // if (IS_DEBUG)
+    // {
+    //     REAL8 ham;
+    //     HcapDerivParams hamParams;
+    //     REAL8 hamValues[12];
+    //     memcpy(hamValues, rootParams->values, sizeof(hamValues));
+    //     hamParams.params = rootParams->params;
+    //     hamParams.values = hamValues;
+    //     hamParams.varyParam = 0;
+    //     ham = GSLSpinHamiltonianWrapper(r, &hamParams);
+    //     print_log("values = %.16e, %.16e, %.16e\n\t%.16e, %.16e, %.16e\n", 
+    //         rootParams->values[0], rootParams->values[1], rootParams->values[2], 
+    //         rootParams->values[3], rootParams->values[4], rootParams->values[5]);
+    //     print_log("ham, pphi, dHdr, dHdpr, dHdpphi = %.16e, %.16e, %.16e, %.16e, %.16e\n", ham*rootParams->params->eta, pphi, dHdr, dHdpr, dHdpphi);
+    // }
     /* populate the function vector */
-    gsl_vector_set( f, 0, dHdr + prDot);
-    gsl_vector_set( f, 1, dHdpphi - rootParams->omega );
+    // X.L. actually this 'prDot' is rDot
+    gsl_vector_set( f, 0, (dHdpr - prDot));
+    gsl_vector_set( f, 1, (dHdpphi - rootParams->omega));
     // print_debug( "pr, prDot = %.16e %.16e\n\n", prT, prDot);
     // print_debug( "Current funcvals = %.16e %.16e\n", gsl_vector_get( f, 0 ), gsl_vector_get( f, 1 ));
     //  gsl_vector_get( f, 2 )/*dHdpphi*/ );
-    
+    // REAL8 eq1, eq2;
+    // eq1 = dHdpr - prDot;
+    // eq2 = dHdpphi - rootParams->omega;
+    // print_log("eq1 = %.10e, eq2 = %.10e, r, pphi, dHdpr, rDot = (%.10e, %.10e), %.10e, %.10e\n", 
+    //     eq1, eq2, r, pphi, dHdpr, prDot);
     return CEV_SUCCESS;
 }
 
@@ -3842,32 +3876,39 @@ static REAL8 EOBSolvingInitialPr_from_ezeta(REAL8 pr, void *params)
 
 int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams *params, REAL8 *r, REAL8 *pr, REAL8 *pphi)
 {
+    REAL8 r0, pphi0, mT2;
+    REAL8 sz, cz;
+    sz = sin(anomaly);
+    cz = cos(anomaly);
+    mT2 = (params->m1 + params->m2) * (params->m1 + params->m2);
+    int gslStatus;
+    const int maxIter = 100;
+    int i = 0;
+
     SEOBRootParamsV2 rootParams;
+    REAL8 v0    = GET_CBRT( omega );
+    rootParams.e0 = e;
+    rootParams.omega  = omega;
+    rootParams.sz = sz;
+    rootParams.cz = cz;
+    // print_debug("zeta sz, cz = %.16e, %.16e, %.16e\n", anomaly, rootParams.sz, rootParams.cz);
+    rootParams.params = params;
+    memset(rootParams.values, 0, sizeof(rootParams.values));
+    rootParams.values[0] = (1.-e) / (v0*v0);
+    rootParams.values[4] = pow(1.-e, 0.5) * v0;
+    for (int ii=0; ii<3; ii++)
+    {
+        rootParams.values[ii+6] = params->s1Vec->data[ii]*mT2;
+        rootParams.values[ii+9] = params->s2Vec->data[ii]*mT2;
+    }
+
     const gsl_multiroot_fsolver_type *T = gsl_multiroot_fsolver_hybrids;
     gsl_multiroot_fsolver *rootSolver = NULL;
 
     gsl_multiroot_function rootFunction;
     gsl_vector *initValues  = NULL;
     gsl_vector *finalValues = NULL;
-    int gslStatus;
-    const int maxIter = 100;
 
-    REAL8 v0    = GET_CBRT( omega );
-    rootParams.e0 = e;
-    rootParams.omega  = omega;
-    rootParams.sz = sin(anomaly);
-    rootParams.cz = cos(anomaly);
-    // print_debug("zeta sz, cz = %.16e, %.16e, %.16e\n", anomaly, rootParams.sz, rootParams.cz);
-    rootParams.params = params;
-    memset(rootParams.values, 0, sizeof(rootParams.values));
-    rootParams.values[0] = (1.-e) / (v0*v0);
-    rootParams.values[4] = pow(1.-e, 0.5) * v0;
-    REAL8 mT2 = (params->m1 + params->m2) * (params->m1 + params->m2);
-    for (int i=0; i<3; i++)
-    {
-        rootParams.values[i+6] = params->s1Vec->data[i]*mT2;
-        rootParams.values[i+9] = params->s2Vec->data[i]*mT2;
-    }
     rootSolver = gsl_multiroot_fsolver_alloc( T, 2 );
     if ( !rootSolver )
     {
@@ -3881,13 +3922,35 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
         return CEV_FAILURE;
     }
     gsl_vector_set( initValues, 0, rootParams.values[0] ); // r
-    gsl_vector_set( initValues, 1, rootParams.values[4] ); // py
+    gsl_vector_set( initValues, 1, rootParams.values[0]*rootParams.values[4] ); // py | pphi
+    // test
+    // {
+    //     DEBUG_START;
+    //     gsl_vector *tmpVecIn, *tmpVecOut;
+    //     tmpVecIn = gsl_vector_calloc( 2 );
+    //     tmpVecOut = gsl_vector_calloc( 2 );
+    //     gsl_vector_set( tmpVecIn, 0, 28.095084564678984 ); // r
+    //     gsl_vector_set( tmpVecIn, 1, 5.191163877890155*100 ); // py
+    //     {
+    //         REAL8 pphi0, pr0, prDot0;
+    //         pphi0 = 5.191163877890155;
+    //         print_debug("eta, chi1, chi2 = (%.16e, %.16e, %.16e)\n", params->eta, params->chi1, params->chi2);
+    //         print_debug("omega0, ecc, zeta, pphi0 = (%.16e, %.16e, %.16e, %.16e)\n", omega, e, anomaly, pphi0);
+    //             calculate_prDot_from_ezetapphi(params->eta, params->chi1, params->chi2,
+    //                 e, sin(anomaly), cos(anomaly), pphi0, &pr0, &prDot0);
+    //         print_debug("pr0, prDot0 = (%.16e, %.16e)\n", pr0, prDot0);
+    //     }
+
+    //     XLALFindSphericalOrbitSAWithAnomaly(tmpVecIn, &rootParams, tmpVecOut);
+    //     gsl_vector_free(tmpVecIn);
+    //     gsl_vector_free(tmpVecOut);
+    //     DEBUG_END;
+    // }
     rootFunction.f      = XLALFindSphericalOrbitSAWithAnomaly;
     rootFunction.n      = 2;
     rootFunction.params = &rootParams;
     gsl_multiroot_fsolver_set( rootSolver, &rootFunction, initValues );
 
-    int i = 0;
     do
     {
         gslStatus = gsl_multiroot_fsolver_iterate( rootSolver );
@@ -3910,9 +3973,8 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
         return CEV_FAILURE;
     }
     finalValues = gsl_multiroot_fsolver_root( rootSolver );
-    REAL8 r0, pphi0;
     *r = r0 = gsl_vector_get( finalValues, 0 );
-    *pphi = pphi0 = gsl_vector_get( finalValues, 1 ) * r0;
+    *pphi = pphi0 = gsl_vector_get( finalValues, 1 );
     gsl_multiroot_fsolver_free( rootSolver );
     gsl_vector_free( initValues );
 
@@ -3920,7 +3982,7 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     // CODING
     REAL8 pr0, prDot0;
     calculate_prDot_from_ezetapphi(params->eta, params->chi1, params->chi2,
-        e, rootParams.sz, rootParams.cz, pphi0, &pr0, &prDot0);
+        e, sz, cz, pphi0, &pr0, &prDot0);
     const gsl_root_fsolver_type *TT = gsl_root_fsolver_brent;
     gsl_root_fsolver *rootSolver1D = gsl_root_fsolver_alloc (TT);
     gsl_function F;
@@ -3946,10 +4008,10 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     // print_debug("r0, pr0, pphi0 = %.16e, %.16e, %.16e\n", r0, pr0, pphi0);
 
     CartesianToSpherical( qSph, pSph, qCart, pCart );
-    for (int i=0; i<3; i++)
+    for (int ii=0; ii<3; ii++)
     {
-        tmpS1[i] = params->s1Vec->data[i]*mT2;
-        tmpS2[i] = params->s2Vec->data[i]*mT2;
+        tmpS1[ii] = params->s1Vec->data[ii]*mT2;
+        tmpS2[ii] = params->s2Vec->data[ii]*mT2;
     }
     memcpy( sphValues, qSph, sizeof( qSph ) );
     memcpy( sphValues+3, pSph, sizeof( pSph ) );
@@ -4027,6 +4089,20 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
 
     gsl_root_fsolver_free(rootSolver1D);
     return CEV_SUCCESS;
+}
+
+REAL8 eval_by_3p_cspline_g1(REAL8 dx, REAL8 x0, REAL8 ym1, REAL8 y0, REAL8 y1, REAL8 h)
+{
+    REAL8 dx2;
+    dx2 = dx*dx;
+    return (dx*h*(4*y0 - y1 - 3*ym1) + 2*dx2*ym1 + h*h*(-2*y0 + y1 + ym1))/(2.*dx2);
+}
+
+REAL8 eval_by_3p_cspline_gm1(REAL8 dx, REAL8 x0, REAL8 ym1, REAL8 y0, REAL8 y1, REAL8 h)
+{
+    REAL8 dx2;
+    dx2 = dx*dx;
+    return (2*dx2*y0 + dx*h*(y1 - ym1) + h*h*(-2*y0 + y1 + ym1))/(2.*dx2);
 }
 
 /* For nonprecessing case */
@@ -4213,13 +4289,84 @@ INT EOBInitialConditionsSA_e_anomaly(REAL8Vector    *initConds,
     memset( qCart, 0, sizeof(qCart) );
     memset( pCart, 0, sizeof(pCart) );
     // calc_rpphi_from_e(root, omega, params, &(qCart[0]), &(pCart[1]));
-    calc_rpphi_from_eanomaly(ecc, anomaly, omega, params, &(qCart[0]), &(pCart[0]), &(pCart[1]));
+    if (fabs(anomaly) < 1e-2)
+    {
+        REAL8 step_size = 0.015;
+        REAL8 zeta_m1, zeta_0, zeta_1;
+        REAL8 pr_m1, pr_1, pr_0;
+        REAL8 r_m1, r_1, r_0;
+        REAL8 L_m1, L_1, L_0;
+        if (anomaly < 0)
+        {
+            zeta_m1 = -0.02;
+            zeta_0 = -0.005;
+            zeta_1 = 0.01;
+        } else {
+            zeta_1 = 0.02;
+            zeta_0 = 0.005;
+            zeta_m1 = -0.01;
+        }
+        calc_rpphi_from_eanomaly(ecc, zeta_m1, omega, params, &r_m1, &pr_m1, &L_m1);
+        calc_rpphi_from_eanomaly(ecc, zeta_1, omega, params, &r_1, &pr_1, &L_1);
+        calc_rpphi_from_eanomaly(ecc, zeta_0, omega, params, &r_0, &pr_0, &L_0);
+        REAL8 h;
+        if (anomaly < zeta_0)
+        {
+            h = anomaly - zeta_m1;
+            qCart[0] = eval_by_3p_cspline_gm1(step_size, zeta_0, r_m1, r_0, r_1, h);
+            pCart[0] = eval_by_3p_cspline_gm1(step_size, zeta_0, pr_m1, pr_0, pr_1, h);
+            pCart[1] = eval_by_3p_cspline_gm1(step_size, zeta_0, L_m1, L_0, L_1, h);
+        } else {
+            h = anomaly - zeta_0;
+            qCart[0] = eval_by_3p_cspline_g1(step_size, zeta_0, r_m1, r_0, r_1, h);
+            pCart[0] = eval_by_3p_cspline_g1(step_size, zeta_0, pr_m1, pr_0, pr_1, h);
+            pCart[1] = eval_by_3p_cspline_g1(step_size, zeta_0, L_m1, L_0, L_1, h);
+        }
+        // print_debug("L = (%.16e, %.16e, %.16e)\n", L_m1, L_0, L_1);
+    } else if (fabs(anomaly - CST_PI) < 1e-2) {
+        REAL8 step_size = 0.015;
+        REAL8 zeta_m1, zeta_0, zeta_1;
+        REAL8 pr_m1, pr_1, pr_0;
+        REAL8 r_m1, r_1, r_0;
+        REAL8 L_m1, L_1, L_0;
+        if (anomaly < CST_PI)
+        {
+            zeta_m1 = CST_PI-0.02;
+            zeta_0 = CST_PI-0.005;
+            zeta_1 = CST_PI+0.01;
+        } else {
+            zeta_1 = CST_PI+0.02;
+            zeta_0 = CST_PI+0.005;
+            zeta_m1 = CST_PI-0.01;
+        }
+        calc_rpphi_from_eanomaly(ecc, zeta_m1, omega, params, &r_m1, &pr_m1, &L_m1);
+        calc_rpphi_from_eanomaly(ecc, zeta_1, omega, params, &r_1, &pr_1, &L_1);
+        calc_rpphi_from_eanomaly(ecc, zeta_0, omega, params, &r_0, &pr_0, &L_0);
+        REAL8 h;
+        if (anomaly < zeta_0)
+        {
+            h = anomaly - zeta_m1;
+            qCart[0] = eval_by_3p_cspline_gm1(step_size, zeta_0, r_m1, r_0, r_1, h);
+            pCart[0] = eval_by_3p_cspline_gm1(step_size, zeta_0, pr_m1, pr_0, pr_1, h);
+            pCart[1] = eval_by_3p_cspline_gm1(step_size, zeta_0, L_m1, L_0, L_1, h);
+        } else {
+            h = anomaly - zeta_0;
+            qCart[0] = eval_by_3p_cspline_g1(step_size, zeta_0, r_m1, r_0, r_1, h);
+            pCart[0] = eval_by_3p_cspline_g1(step_size, zeta_0, pr_m1, pr_0, pr_1, h);
+            pCart[1] = eval_by_3p_cspline_g1(step_size, zeta_0, L_m1, L_0, L_1, h);
+        }
+        // print_debug("L = (%.16e, %.16e, %.16e)\n", L_m1, L_0, L_1);
+    } else
+        calc_rpphi_from_eanomaly(ecc, anomaly, omega, params, &(qCart[0]), &(pCart[0]), &(pCart[1]));
     // qCart[0] = gsl_vector_get( finalValues, 0 );
     // pCart[1] = gsl_vector_get( finalValues, 1 );
+    // CODING
+    // print_debug("pphi = %.16e\n", pCart[1]);
     pCart[1] /= qCart[0];
     /* Free the GSL root finder, since we're done with it */
     gsl_root_fsolver_free( rootSolver );
-    
+//DEBUG_START;
+//DEBUG_END;
     /* STEP 3) Rotate to L0 along z-axis and N0 along x-axis frame, where L0 is the initial orbital angular momentum
      *         and L0 is calculated using initial position and linear momentum obtained in STEP 2.
      */
@@ -4642,6 +4789,171 @@ static REAL8 EOBSolvingInitialPr_from_ezetaPrec(REAL8 pr, void *params)
 
     return 100*eq;
 }
+
+INT Calculate_rpypz_from_ezeta(SEOBRootParams *rootParams, REAL8 e0, REAL8 zeta, 
+    REAL8 *ret_r, REAL8 *ret_py, REAL8 *ret_pz)
+{
+    int i;
+	INT gslStatus;
+    INT cntGslNoProgress = 0, MAXcntGslNoProgress = 5;
+    //INT cntGslNoProgress = 0, MAXcntGslNoProgress = 50;
+    REAL8 multFacGslNoProgress = 3./5.;
+    REAL8 v0 = cbrt(rootParams->omega);
+    REAL8 tmpS1[3], tmpS2[3];
+    memcpy(tmpS1, rootParams->values+6, sizeof(tmpS1));
+    memcpy(tmpS2, rootParams->values+9, sizeof(tmpS2));
+	//const int	maxIter = 2000;
+	const int	maxIter = 10000;
+	const gsl_multiroot_fsolver_type *T = gsl_multiroot_fsolver_hybrids;
+	gsl_multiroot_fsolver *rootSolver = NULL;
+
+	gsl_multiroot_function rootFunction;
+	gsl_vector     *initValues = NULL;
+	gsl_vector     *finalValues = NULL;
+    /* Initialise the gsl stuff */
+	rootSolver = gsl_multiroot_fsolver_alloc(T, 3);
+	if (!rootSolver) {
+		return CEV_FAILURE;
+	}
+	initValues = gsl_vector_calloc(3);
+	if (!initValues) {
+		gsl_multiroot_fsolver_free(rootSolver);
+		return CEV_FAILURE;
+	}
+    rootParams->e0 = e0;
+    rootParams->cz = cos(zeta);
+    rootParams->sz = sin(zeta);
+
+	rootFunction.f = XLALFindSphericalOrbitPrecEccAnomaly;
+	rootFunction.n = 3;
+	rootFunction.params = rootParams;
+
+	gsl_vector_set(initValues, 0, rootParams->values[0]);
+	gsl_vector_set(initValues, 1, rootParams->values[4]);
+    gsl_vector_set(initValues, 2, rootParams->values[5]);
+
+	gsl_multiroot_fsolver_set(rootSolver, &rootFunction, initValues);
+
+	/* We are now ready to iterate to find the solution */
+	i = 0;
+
+    INT4 jittered=0;
+	REAL8 r_now = 0.0;
+	REAL8 temp = 0.0;
+	do 
+    {
+            gslStatus = gsl_multiroot_fsolver_iterate(rootSolver);
+            if (gslStatus == GSL_ENOPROG || gslStatus == GSL_ENOPROGJ) 
+            {
+                PRINT_LOG_INFO(LOG_ERROR, "NO PROGRESS being made by Spherical orbit root solver\n");
+
+                /* Print Residual Function values whose roots we are trying to find */
+                finalValues = gsl_multiroot_fsolver_f(rootSolver);
+                PRINT_LOG_INFO(LOG_ERROR, "Function value here given by the following:\n");
+                PRINT_LOG_INFO(LOG_ERROR, " F1 = %.16e, F2 = %.16e, F3 = %.16e\n",
+                gsl_vector_get(finalValues, 0),
+                gsl_vector_get(finalValues, 1), gsl_vector_get(finalValues, 2));
+
+                /* Print Step sizes in each of function variables */
+                finalValues = gsl_multiroot_fsolver_dx(rootSolver);
+                // XLAL_PRINT_INFO("Stepsizes in each dimension:\n");
+                // XLAL_PRINT_INFO(" x = %.16e, py = %.16e, pz = %.16e\n",
+                // gsl_vector_get(finalValues, 0)/scale1,
+                // gsl_vector_get(finalValues, 1)/scale2,
+                // gsl_vector_get(finalValues, 2)/scale3);
+
+                /* Only allow this flag to be caught MAXcntGslNoProgress no. of times */
+                cntGslNoProgress += 1;
+                if (cntGslNoProgress >= MAXcntGslNoProgress) 
+                {
+                    cntGslNoProgress = 0;
+
+                    if(multFacGslNoProgress < 1.) { multFacGslNoProgress *= 1.02; }
+                    else { multFacGslNoProgress /= 1.01; }
+
+                }
+                /* Now that no progress is being made, we need to reset the initial guess
+                * for the (r,pPhi, pTheta) and reset the integrator */
+                rootParams->values[0] = scale1 * sqrt(1. / (v0 * v0)*1./(v0*v0) -36.0);	/* Initial r */
+                rootParams->values[4] = scale2 * v0;	            /* Initial p */
+                if( cntGslNoProgress % 2 )
+                    rootParams->values[5] = scale3 * 1e-3 / multFacGslNoProgress;
+                else
+                    rootParams->values[5] = scale3 * 1e-3 * multFacGslNoProgress;
+                //PK
+                memcpy(rootParams->values + 6, tmpS1, sizeof(tmpS1));
+                memcpy(rootParams->values + 9, tmpS2, sizeof(tmpS2));
+                // XLAL_PRINT_INFO("New ICs guess: x = %.16e, py = %.16e, pz = %.16e\n",
+                //         rootParams.values[0]/scale1, rootParams.values[4]/scale2,
+                //         rootParams.values[5]/scale3);
+                // fflush(NULL);
+                gsl_vector_set(initValues, 0, rootParams->values[0]);
+                gsl_vector_set(initValues, 1, rootParams->values[4]);
+                gsl_vector_set(initValues, 2, rootParams->values[5]);
+                gsl_multiroot_fsolver_set(rootSolver, &rootFunction, initValues);
+            }
+            else if (gslStatus == GSL_EBADFUNC) 
+            {
+                PRINT_LOG_INFO(LOG_CRITICAL, "Inf or Nan encountered in evaluluation of spherical orbit Eqn");
+                gsl_multiroot_fsolver_free(rootSolver);
+                gsl_vector_free(initValues);
+                return CEV_FAILURE;
+            }
+            else if (gslStatus != GSL_SUCCESS) 
+            {
+                PRINT_LOG_INFO(LOG_CRITICAL, "Error in GSL iteration function!");
+                gsl_multiroot_fsolver_free(rootSolver);
+                gsl_vector_free(initValues);
+                return CEV_FAILURE;
+            }
+
+        /* different ways to test convergence of the method */
+		gslStatus = gsl_multiroot_test_residual(rootSolver->f, 1.0e-9);
+        /*XLAL_CALLGSL(gslStatus= gsl_multiroot_test_delta(
+          gsl_multiroot_fsolver_dx(rootSolver),
+          gsl_multiroot_fsolver_root(rootSolver),
+          1.e-8, 1.e-5));*/
+
+		if (jittered==0) 
+        {
+            finalValues = gsl_multiroot_fsolver_dx(rootSolver);
+            if (isnan(gsl_vector_get(finalValues, 1))) 
+            {
+                rootParams->values[0] = scale1 * sqrt(1. / (v0 * v0)*1/(v0*v0)*(1.+1.e-8) - 36.0);	/* Jitter on initial r */
+                rootParams->values[4] = scale2 * v0*(1.-1.e-8);	            /* Jitter on initial p */
+                rootParams->values[5] = scale3 * 1e-3;
+                memcpy(rootParams->values + 6, tmpS1, sizeof(tmpS1));
+                memcpy(rootParams->values + 9, tmpS2, sizeof(tmpS2));
+                gsl_vector_set(initValues, 0, rootParams->values[0]);
+                gsl_vector_set(initValues, 1, rootParams->values[4]);
+                gsl_vector_set(initValues, 2, rootParams->values[5]);
+                gsl_multiroot_fsolver_set(rootSolver, &rootFunction, initValues);
+                jittered=1;
+            }
+		}
+		i++;
+	}
+	while (gslStatus == GSL_CONTINUE && i <= maxIter);
+
+    // if(debugPK) { fflush(NULL); fclose(out); }
+
+	if (i > maxIter && gslStatus != GSL_SUCCESS) 
+    {
+		gsl_multiroot_fsolver_free(rootSolver);
+		gsl_vector_free(initValues);
+		return CEV_FAILURE;
+	}
+	finalValues = gsl_multiroot_fsolver_root(rootSolver);
+
+	*ret_r = sqrt(gsl_vector_get(finalValues, 0)*gsl_vector_get(finalValues, 0)+36.0);
+	*ret_py = gsl_vector_get(finalValues, 1)/scale2;
+	*ret_pz = gsl_vector_get(finalValues, 2)/scale3;
+
+	gsl_multiroot_fsolver_free(rootSolver);
+	gsl_vector_free(initValues);
+    return CEV_SUCCESS;
+}
+
 /* For precessing case */
 INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
                          const REAL8    mass1,
@@ -4716,12 +5028,6 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 
 	/* Root finding stuff for finding the spherical orbit */
 	SEOBRootParams	rootParams;
-	const gsl_multiroot_fsolver_type *T = gsl_multiroot_fsolver_hybrids;
-	gsl_multiroot_fsolver *rootSolver = NULL;
-
-	gsl_multiroot_function rootFunction;
-	gsl_vector     *initValues = NULL;
-	gsl_vector     *finalValues = NULL;
 	INT gslStatus;
     INT cntGslNoProgress = 0, MAXcntGslNoProgress = 5;
     //INT cntGslNoProgress = 0, MAXcntGslNoProgress = 50;
@@ -4840,43 +5146,34 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 	 * for a spherical orbit without radiation reaction.
 	 */
 
-  /* Initialise the gsl stuff */
-	rootSolver = gsl_multiroot_fsolver_alloc(T, 3);
-	if (!rootSolver) {
-		gsl_matrix_free(rotMatrix);
-		gsl_matrix_free(invMatrix);
-		return CEV_FAILURE;
-	}
-	initValues = gsl_vector_calloc(3);
-	if (!initValues) {
-		gsl_multiroot_fsolver_free(rootSolver);
-		gsl_matrix_free(rotMatrix);
-		gsl_matrix_free(invMatrix);
-		return CEV_FAILURE;
-	}
 
-	rootFunction.f = XLALFindSphericalOrbitPrecEccAnomaly;
-	rootFunction.n = 3;
-	rootFunction.params = &rootParams;
 
     /* Set to use optimized or unoptimized code */
     // rootParams.use_optimized = 0;
 
 	/* Calculate the initial velocity from the given initial frequency */
-    REAL8 fMinE = fMin;
     rootParams.e0 = e0;
-    rootParams.cz = cos(zeta);
-    rootParams.sz = sin(zeta);
+    // rootParams.cz = cos(zeta);
+    // rootParams.sz = sin(zeta);
+    REAL8 m1sq, m2sq;
+    m1sq = mass1*mass1;
+    m2sq = mass2*mass2;
     rootParams.c1n = params->chi1Vec->data[0];
     rootParams.c1l = params->chi1Vec->data[1];
     rootParams.c1e = params->chi1Vec->data[2];
     rootParams.c2n = params->chi2Vec->data[0];
     rootParams.c2l = params->chi2Vec->data[1];
     rootParams.c2e = params->chi2Vec->data[2];
+    // rootParams.c1n = tmpS1[0] / m1sq;
+    // rootParams.c1l = tmpS1[1] / m1sq;
+    // rootParams.c1e = tmpS1[2] / m1sq;
+    // rootParams.c2n = tmpS2[0] / m2sq;
+    // rootParams.c2l = tmpS2[1] / m2sq;
+    // rootParams.c2e = tmpS2[2] / m2sq;
     rootParams.c1c1 = rootParams.c1n*rootParams.c1n + rootParams.c1l*rootParams.c1l + rootParams.c1e*rootParams.c1e;
     rootParams.c1c2 = rootParams.c1n*rootParams.c2n + rootParams.c1l*rootParams.c2l + rootParams.c1e*rootParams.c2e;
     rootParams.c2c2 = rootParams.c2n*rootParams.c2n + rootParams.c2l*rootParams.c2l + rootParams.c2e*rootParams.c2e;
-	omega = CST_PI * mTotal * CST_MTSUN_SI * fMinE;
+	omega = CST_PI * mTotal * CST_MTSUN_SI * fMin;
 	v0 = cbrt(omega);
 
 	/* Given this, we can start to calculate the initial conditions */
@@ -4894,12 +5191,6 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 	memcpy(rootParams.values + 9, tmpS2, sizeof(tmpS2));
 
 #if 0
-    print_debug("omega = %.16e\n", omega);
-    print_debug("ICs guess: x = %.16e, py = %.16e, pz = %.16e\n",
-      rootParams.values[0]/scale1, rootParams.values[4]/scale2,
-      rootParams.values[5]/scale3);
-    //fflush(NULL);
-#endif
 	gsl_vector_set(initValues, 0, rootParams.values[0]);
 	gsl_vector_set(initValues, 1, rootParams.values[4]);
     gsl_vector_set(initValues, 2, rootParams.values[5]);
@@ -5023,19 +5314,28 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 		return CEV_FAILURE;
 	}
 	finalValues = gsl_multiroot_fsolver_root(rootSolver);
-#if 0
-    print_debug("Spherical orbit conditions here given by the following:\n");
-    print_debug(" x = %.16e, py = %.16e, pz = %.16e\n",
-    gsl_vector_get(finalValues, 0)/scale1,
-    gsl_vector_get(finalValues, 1)/scale2,
-    gsl_vector_get(finalValues, 2)/scale3);
-#endif
 	memset(qCart, 0, sizeof(qCart));
 	memset(pCart, 0, sizeof(pCart));
 
 	qCart[0] = sqrt(gsl_vector_get(finalValues, 0)*gsl_vector_get(finalValues, 0)+36.0);
 	pCart[1] = gsl_vector_get(finalValues, 1)/scale2;
 	pCart[2] = gsl_vector_get(finalValues, 2)/scale3;
+	gsl_multiroot_fsolver_free(rootSolver);
+	gsl_vector_free(initValues);
+#else
+	memset(qCart, 0, sizeof(qCart));
+	memset(pCart, 0, sizeof(pCart));
+
+	// qCart[0] = sqrt(gsl_vector_get(finalValues, 0)*gsl_vector_get(finalValues, 0)+36.0);
+	// pCart[1] = gsl_vector_get(finalValues, 1)/scale2;
+	// pCart[2] = gsl_vector_get(finalValues, 2)/scale3;
+    if (Calculate_rpypz_from_ezeta(&rootParams, e0, zeta, &(qCart[0]), &(pCart[1]), &(pCart[2]))!= CEV_SUCCESS)
+    {
+		gsl_matrix_free(rotMatrix);
+		gsl_matrix_free(invMatrix);
+        return CEV_FAILURE;
+    }
+#endif
     REAL8 tmp_py, tmp_pz, tmp_L, tmp_px, tmp_prDot;
     tmp_py = pCart[1];
     tmp_pz = pCart[2];
@@ -5051,8 +5351,6 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
     // }
 
 	/* Free the GSL root finder, since we're done with it */
-	gsl_multiroot_fsolver_free(rootSolver);
-	gsl_vector_free(initValues);
 
 	CartesianToSpherical(qSph, pSph, qCart, pCart);
 	memcpy(sphValues, qSph, sizeof(qSph));
