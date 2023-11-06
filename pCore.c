@@ -8031,8 +8031,8 @@ REAL8 calculate_rDot_from_prPrec(REAL8 eta,
 }
 
 void calculate_prDot_from_ezetapphi(REAL8 eta, REAL8 chi1, REAL8 chi2, 
-        REAL8 e, REAL8 sz, REAL8 cz, REAL8 pf,
-        REAL8 *ret_prT, REAL8 *ret_prDot)
+        REAL8 e, REAL8 sz, REAL8 cz, REAL8 pf, REAL8 Omg,
+        REAL8 *ret_prT, REAL8 *ret_prDot, REAL8 *ret_r, REAL8 *ret_rDot, REAL8 *ret_L)
 {
     REAL8 prDot0, prDot2, prDot3, prDot4;
     REAL8 dm = sqrt(1. - 4.*eta);
@@ -8071,29 +8071,30 @@ void calculate_prDot_from_ezetapphi(REAL8 eta, REAL8 chi1, REAL8 chi2,
     //     e2*(4*chi1*chi2*eta*(6 + 13*eta) - 6*(-39 + 3*eta + eta2) + 
     //     chi12*(19 + dm*(19 - 26*eta) - 64*eta + 26*eta2) + 
     //     chi22*(19 - 19*dm - 64*eta + 26*dm*eta + 26*eta2)))))/(8.*pf8);
-    // prDot0 = (cz*e)/pf4;
-    // prDot2 = -0.5*(e*((3 + cz2)*e + cz*(-7 + e2*(-5 + eta) - eta)))/pf6;
-    // prDot3 = -0.25*(e*(-((1 + 3*cz2)*e) + 6*cz*(1 + e2))*
-    //     (2*(chi1 + chi2) + 2*chi1*dm - 2*chi2*dm - (chi1 + chi2)*eta))/pf7;
-    // prDot4 = (e*(e*(2*cz2*(-41 + 7*chi22*(-1 + dm) - 7*chi12*(1 + dm) + e2*(-7 + eta) + 
-    //     (-7 - 6*chi1*chi2 + chi22*(25 - 11*dm) + chi12*(25 + 11*dm))*eta - 
-    //     11*chi12sq*eta2) + 
-    //     2*(-59 + chi22*(-1 + dm) - chi12*(1 + dm) + 3*e2*(-7 + eta) + 
-    //     (11 - 2*chi1*chi2 - chi22*(-3 + dm) + chi12*(3 + dm))*eta - 
-    //     chi12sq*eta2) - 
-    //     3*cz3*e*(-(chi22*(-1 + dm)) + chi12*(1 + dm) + 4*eta + 
-    //     2*chi22*(-2 + dm)*eta - 2*chi12*(2 + dm)*eta + 
-    //     2*chi12sq*eta2)) + 
-    //     cz*(95 + eta*(-1 + 12*(chi1 + chi2)*(chi1 + chi2 + chi1*dm - chi2*dm) - 
-    //     3*(-1 + 4*chi12sq)*eta) + e4*(55 + eta*(-17 + 3*eta)) + 
-    //     e2*(234 - 19*chi22*(-1 + dm) + 19*chi12*(1 + dm) - 
-    //     2*(9 - 12*chi1*chi2 + chi22*(32 - 13*dm) + chi12*(32 + 13*dm))*eta + 
-    //     (-6 + 26*chi12sq)*eta2))))/(8.*pf8);
+    prDot0 = (cz*e)/pf4;
+    prDot2 = -0.5*(e*((3 + cz2)*e + cz*(-7 + e2*(-5 + eta) - eta)))/pf6;
+    prDot3 = -0.25*(e*(-((1 + 3*cz2)*e) + 6*cz*(1 + e2))*
+        (2*(chi1 + chi2) + 2*chi1*dm - 2*chi2*dm - (chi1 + chi2)*eta))/pf7;
+    prDot4 = (e*(e*(2*cz2*(-41 + 7*chi22*(-1 + dm) - 7*chi12*(1 + dm) + e2*(-7 + eta) + 
+        (-7 - 6*chi1*chi2 + chi22*(25 - 11*dm) + chi12*(25 + 11*dm))*eta - 
+        11*chi12sq*eta2) + 
+        2*(-59 + chi22*(-1 + dm) - chi12*(1 + dm) + 3*e2*(-7 + eta) + 
+        (11 - 2*chi1*chi2 - chi22*(-3 + dm) + chi12*(3 + dm))*eta - 
+        chi12sq*eta2) - 
+        3*cz3*e*(-(chi22*(-1 + dm)) + chi12*(1 + dm) + 4*eta + 
+        2*chi22*(-2 + dm)*eta - 2*chi12*(2 + dm)*eta + 
+        2*chi12sq*eta2)) + 
+        cz*(95 + eta*(-1 + 12*(chi1 + chi2)*(chi1 + chi2 + chi1*dm - chi2*dm) - 
+        3*(-1 + 4*chi12sq)*eta) + e4*(55 + eta*(-17 + 3*eta)) + 
+        e2*(234 - 19*chi22*(-1 + dm) + 19*chi12*(1 + dm) - 
+        2*(9 - 12*chi1*chi2 + chi22*(32 - 13*dm) + chi12*(32 + 13*dm))*eta + 
+        (-6 + 26*chi12sq)*eta2))))/(8.*pf8);
     // actually this is rDot
-    prDot0 = e/pf;
-    prDot2 = (e*(-3 - 6*cz*e - e2*(-1 + eta) + eta))/(2.*pf3);
-    prDot3 = -0.5*((-cz + e)*e2*(chi1*(2 + 2*dm - eta) - chi2*(-2 + 2*dm + eta)))/pf4;
-    prDot4 = (e*(-81 - 2*chi12 - 2*chi22 - 2*chi12*dm + 2*chi22*dm + 28*e2 + 6*chi12*e2 + 
+    REAL8 rDot0, rDot2, rDot3, rDot4;
+    rDot0 = e/pf;
+    rDot2 = (e*(-3 - 6*cz*e - e2*(-1 + eta) + eta))/(2.*pf3);
+    rDot3 = -0.5*((-cz + e)*e2*(chi1*(2 + 2*dm - eta) - chi2*(-2 + 2*dm + eta)))/pf4;
+    rDot4 = (e*(-81 - 2*chi12 - 2*chi22 - 2*chi12*dm + 2*chi22*dm + 28*e2 + 6*chi12*e2 + 
         6*chi22*e2 + 6*chi12*dm*e2 - 6*chi22*dm*e2 + 7*e4 + 27*eta + 8*chi12*eta + 
         8*chi22*eta + 4*chi12*dm*eta - 4*chi22*dm*eta + 10*e2*eta - 20*chi12*e2*eta + 
         8*chi1*chi2*e2*eta - 20*chi22*e2*eta - 8*chi12*dm*e2*eta + 8*chi22*dm*e2*eta - 
@@ -8147,8 +8148,35 @@ void calculate_prDot_from_ezetapphi(REAL8 eta, REAL8 chi1, REAL8 chi2,
         cz2*e*(-3 - chi22*(-1 + dm) + chi12*(1 + dm) + 6*eta + 
         2*chi22*(-2 + dm)*eta - 2*chi12*(2 + dm)*eta + 
         2*chi12sq*eta2))))/(4.*pf5);
+    REAL8 r0, r2, r3, r4;
+    r0 = pf2;
+    r2 = -3-e2;
+    r3 = ((3 + e2)*(2*(chi1 + chi2) + 2*chi1*dm - 2*chi2*dm - (chi1 + chi2)*eta))/(2.*pf);
+    r4 = -0.5*(2*e4 + 2*(9 + chi12 - 3*eta) + 2*chi1*chi2*eta*(3 + eta) + 
+        chi22*(2 - 2*dm + eta*(-5 + dm + eta)) + chi12*(2*dm - (5 + dm)*eta + eta2) + 
+        e2*(2*(6 + chi22 - chi22*dm + chi12*(1 + dm)) - 
+        (2 - 2*chi1*chi2 + chi22*(7 - 3*dm) + chi12*(7 + 3*dm))*eta + 
+        3*chi12sq*eta2))/pf2;
+    REAL8 cbL3_0, L3_0, L3_2, L3_3, L3_4;
+    L3_0 = eczp2/Omg;
+    cbL3_0 = cbrt(L3_0);
+    L3_2 = cbL3_0*(9 - 4*cz*e - e2*(-3 + eta) + eta)/2.;
+    L3_3 = ((-5 + cz*e - 2*e2)*(2*(chi1 + chi2) + 2*chi1*dm - 2*chi2*dm - (chi1 + chi2)*eta))/2.;
+    L3_4 = (36*(chi22 + (chi1 - chi2)*(chi1 + chi2)*dm) + 9*(45 + 4*chi12 - 15*eta) - 
+        72*pow(chi1 - chi2,2)*eta + 5*e4*(9 + (-3 + eta)*eta) + 5*eta2 + 
+        2*e2*(143 - 21*chi22*(-1 + dm) + 21*chi12*(1 + dm) - 
+        3*(7 - 8*chi1*chi2 + 2*chi22*(12 - 5*dm) + 2*chi12*(12 + 5*dm))*eta + 
+        5*(-1 + 6*chi12sq)*eta2) + 
+        2*e*(cz2*e*(-16 + 3*chi12*(-1 - dm + 2*(2 + dm - eta)*eta) + 
+        3*chi22*(-1 + dm - 2*eta*(-2 + dm + eta)) - 12*chi1*chi2*eta2) - 
+        4*cz*(21 - 3*chi22*(-1 + dm) + 3*chi12*(1 + dm) - eta + 
+        6*chi22*(-2 + dm)*eta - 6*chi12*(2 + dm)*eta + e2*(3 + eta) + 
+        6*chi12sq*eta2)))/(24.*cbL3_0);
+    *ret_r = (r0 + r2 + r3 + r4)/eczp;
     *ret_prT = sz*(pr0 + pr2 + pr3 + pr4);
-    *ret_prDot = sz*(prDot0 + prDot2 + prDot3 + prDot4);
+    *ret_prDot = eczp2*(prDot0 + prDot2 + prDot3 + prDot4);
+    *ret_rDot = sz*(rDot0 + rDot2 + rDot3 + rDot4);
+    *ret_L = cbrt(L3_0 + L3_2 + L3_3 + L3_4);
     return;
 }
 

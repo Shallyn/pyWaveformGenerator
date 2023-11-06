@@ -3697,8 +3697,8 @@ struct tagSEOBRootParamsV2
 SEOBRootParamsV2;
 
 void calculate_prDot_from_ezetapphi(REAL8 eta, REAL8 chi1, REAL8 chi2, 
-        REAL8 e, REAL8 sz, REAL8 cz, REAL8 pf,
-        REAL8 *ret_prT, REAL8 *ret_prDot);
+        REAL8 e, REAL8 sz, REAL8 cz, REAL8 pf, REAL8 Omg,
+        REAL8 *ret_prT, REAL8 *ret_prDot, REAL8 *ret_r, REAL8 *ret_rDot, REAL8 *ret_L);
 REAL8 calculate_rDot_from_pr(REAL8 eta, REAL8 chi1, REAL8 chi2, REAL8 r, REAL8 prT, REAL8 pf);
 
 static int
@@ -3709,8 +3709,8 @@ XLALFindSphericalOrbitSAWithAnomaly(const gsl_vector *x, /**<< Parameters reques
 {
     SEOBRootParamsV2 *rootParams = (SEOBRootParamsV2 *) params;
     
-    REAL8 r, py;
-    REAL8 pphi, prT, prDot;
+    REAL8 r, py, tmpL;
+    REAL8 pphi, prT, prDot, tmpr, rDot;
 
     /* Numerical derivative of Hamiltonian wrt given value */
     REAL8 dHdx, dHdpy;
@@ -3725,16 +3725,16 @@ XLALFindSphericalOrbitSAWithAnomaly(const gsl_vector *x, /**<< Parameters reques
     // pphi   = r * py;
     // print_debug( "Values r = %.16e, py = %.16e\n", r, py );
     calculate_prDot_from_ezetapphi(rootParams->params->eta, rootParams->params->chi1, rootParams->params->chi2,
-        e0, rootParams->sz, rootParams->cz, pphi, &prT, &prDot);
+        e0, rootParams->sz, rootParams->cz, pphi, rootParams->omega, &prT, &prDot, &tmpr, &rDot, &tmpL);
     
     rootParams->values[3] = prT;
     
     /* dHdR */
-    // dHdx = XLALSpinHcapNumDerivWRTParam( 0, rootParams->values, rootParams->params );
-    // if ( IS_REAL8_FAIL_NAN( dHdx ) )
-    // {
-    //     return CEV_FAILURE;
-    // }
+    dHdx = XLALSpinHcapNumDerivWRTParam( 0, rootParams->values, rootParams->params );
+    if ( IS_REAL8_FAIL_NAN( dHdx ) )
+    {
+        return CEV_FAILURE;
+    }
     //printf( "dHdx = %.16e\n", dHdx );
     
     /* dHdPphi (I think we can use dHdPy in this coord system) */
@@ -3753,7 +3753,7 @@ XLALFindSphericalOrbitSAWithAnomaly(const gsl_vector *x, /**<< Parameters reques
     }
 
     /* Now convert to spherical polars */
-    // dHdr      = dHdx - dHdpy * pphi / (r*r);
+    dHdr      = dHdx - dHdpy * pphi / (r*r);
     dHdpphi   = dHdpy / r;
     // if (IS_DEBUG)
     // {
@@ -3772,16 +3772,24 @@ XLALFindSphericalOrbitSAWithAnomaly(const gsl_vector *x, /**<< Parameters reques
     // }
     /* populate the function vector */
     // X.L. actually this 'prDot' is rDot
-    gsl_vector_set( f, 0, (dHdpr - prDot));
+    // gsl_vector_set( f, 0, (dHdpr - prDot));
+    gsl_vector_set( f, 0, 1e-2*((dHdr + prDot) + (r - tmpr) + (dHdpr - rDot) + (pphi - tmpL)));
     gsl_vector_set( f, 1, (dHdpphi - rootParams->omega));
     // print_debug( "pr, prDot = %.16e %.16e\n\n", prT, prDot);
     // print_debug( "Current funcvals = %.16e %.16e\n", gsl_vector_get( f, 0 ), gsl_vector_get( f, 1 ));
     //  gsl_vector_get( f, 2 )/*dHdpphi*/ );
-    // REAL8 eq1, eq2;
-    // eq1 = dHdpr - prDot;
-    // eq2 = dHdpphi - rootParams->omega;
-    // print_log("eq1 = %.10e, eq2 = %.10e, r, pphi, dHdpr, rDot = (%.10e, %.10e), %.10e, %.10e\n", 
-    //     eq1, eq2, r, pphi, dHdpr, prDot);
+    REAL8 eq1, eq2, eq3, eq4, eq5;
+    eq1 = dHdr + prDot;
+    eq2 = dHdpphi - rootParams->omega;
+    eq3 = r - tmpr;
+    eq4 = dHdpr - rDot;
+    eq5 = pphi - tmpL;
+    // print_log("eq1 = %.5e, eq2 = %.5e, eq3 = %.5e, eq4 = %.5e, eq5 = %.5e\n (r, tmpr, pphi, pr, tmpL) = (%.5e, %.5e, %.5e, %.5e, %.5e)\n (-dHdr, prDot) = (%.5e, %.5e)\n (dHdpphi, rootParams->omega) = (%.5e, %.5e)\n (dHdpr, rDot) = (%.5e, %.5e)\n\n", 
+    //     eq1, eq2, eq3, eq4, eq5,
+    //     r, tmpr, pphi, prT, tmpL,
+    //     -dHdr, prDot, 
+    //     dHdpphi, rootParams->omega,
+    //     dHdpr, rDot);
     return CEV_SUCCESS;
 }
 
@@ -3980,9 +3988,9 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
 
     // Step 2, solve initial pr
     // CODING
-    REAL8 pr0, prDot0;
+    REAL8 pr0, prDot0, tmpr, rDot0, tmpL;
     calculate_prDot_from_ezetapphi(params->eta, params->chi1, params->chi2,
-        e, sz, cz, pphi0, &pr0, &prDot0);
+        e, sz, cz, pphi0, params->omega, &pr0, &prDot0, &tmpr, &rDot0, &tmpL);
     const gsl_root_fsolver_type *TT = gsl_root_fsolver_brent;
     gsl_root_fsolver *rootSolver1D = gsl_root_fsolver_alloc (TT);
     gsl_function F;
@@ -4286,9 +4294,13 @@ INT EOBInitialConditionsSA_e_anomaly(REAL8Vector    *initConds,
     /* Calculate the initial velocity from the given initial frequency */
     // initial orbital angular velocity
     omega = CST_PI * mTotal * CST_MTSUN_SI * fMin;
+    // print_debug("fMin = %.16e\n", mTotal * CST_MTSUN_SI * fMin);
     memset( qCart, 0, sizeof(qCart) );
     memset( pCart, 0, sizeof(pCart) );
+#if 1
     // calc_rpphi_from_e(root, omega, params, &(qCart[0]), &(pCart[1]));
+    calc_rpphi_from_eanomaly(ecc, anomaly, omega, params, &(qCart[0]), &(pCart[0]), &(pCart[1]));
+#else
     if (fabs(anomaly) < 1e-2)
     {
         REAL8 step_size = 0.015;
@@ -4358,6 +4370,7 @@ INT EOBInitialConditionsSA_e_anomaly(REAL8Vector    *initConds,
         // print_debug("L = (%.16e, %.16e, %.16e)\n", L_m1, L_0, L_1);
     } else
         calc_rpphi_from_eanomaly(ecc, anomaly, omega, params, &(qCart[0]), &(pCart[0]), &(pCart[1]));
+#endif
     // qCart[0] = gsl_vector_get( finalValues, 0 );
     // pCart[1] = gsl_vector_get( finalValues, 1 );
     // CODING

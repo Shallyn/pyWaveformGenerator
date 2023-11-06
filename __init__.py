@@ -436,8 +436,6 @@ class SEOBNRWaveformCaller(object):
             self.zeta = kwargs['zeta_rad']
         # zeta in [0, 2pi]
         self.zeta = np.pi * ((self.zeta / np.pi) % 2)
-        if self.zeta > 1.8*np.pi:
-            self.zeta = self.zeta - 2.*np.pi
         self.xi = self.xi if 'xi' not in kwargs else kwargs['xi']*np.pi/180
         if 'xi_rad' in kwargs:
             self.xi = kwargs['xi_rad']
