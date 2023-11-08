@@ -3778,12 +3778,12 @@ XLALFindSphericalOrbitSAWithAnomaly(const gsl_vector *x, /**<< Parameters reques
     // print_debug( "pr, prDot = %.16e %.16e\n\n", prT, prDot);
     // print_debug( "Current funcvals = %.16e %.16e\n", gsl_vector_get( f, 0 ), gsl_vector_get( f, 1 ));
     //  gsl_vector_get( f, 2 )/*dHdpphi*/ );
-    REAL8 eq1, eq2, eq3, eq4, eq5;
-    eq1 = dHdr + prDot;
-    eq2 = dHdpphi - rootParams->omega;
-    eq3 = r - tmpr;
-    eq4 = dHdpr - rDot;
-    eq5 = pphi - tmpL;
+    // REAL8 eq1, eq2, eq3, eq4, eq5;
+    // eq1 = dHdr + prDot;
+    // eq2 = dHdpphi - rootParams->omega;
+    // eq3 = r - tmpr;
+    // eq4 = dHdpr - rDot;
+    // eq5 = pphi - tmpL;
     // print_log("eq1 = %.5e, eq2 = %.5e, eq3 = %.5e, eq4 = %.5e, eq5 = %.5e\n (r, tmpr, pphi, pr, tmpL) = (%.5e, %.5e, %.5e, %.5e, %.5e)\n (-dHdr, prDot) = (%.5e, %.5e)\n (dHdpphi, rootParams->omega) = (%.5e, %.5e)\n (dHdpr, rDot) = (%.5e, %.5e)\n\n", 
     //     eq1, eq2, eq3, eq4, eq5,
     //     r, tmpr, pphi, prT, tmpL,
@@ -4042,15 +4042,23 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     REAL8 x_lo, x_hi, root;
     x_lo = GET_MAX(-0.9, pr0 - 0.2);
     x_hi = GET_MIN(pr0 + 0.2, 0.9);
+#if 1
+
     // print_debug("x_lo = %.16e, x_hi = %.16e\n", x_lo, x_hi);
     // print_debug("tmpeq(x_lo) = %.16e, tmpeq(x_hi) = %.16e\n", 
     //     EOBSolvingInitialPr_from_ezeta(x_lo, &fparams2), 
     //     EOBSolvingInitialPr_from_ezeta(x_hi, &fparams2));
+GSL_START;
 
-    gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
-#if 1
+    gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
+    if (gslStatus != GSL_SUCCESS)
+    {
+        PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
+        *pr = pr0;
+        //print_debug("x_lo, x_hi, root = (%.5e, %.5e), %.5e\n", x_lo, x_hi, root);
+        return CEV_FAILURE;
+    }
     /* Initialise the gsl stuff */
-    GSL_START;
     INT status;
     /* We are now ready to iterate to find the solution */
     i = 0;
@@ -4059,8 +4067,8 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
         gslStatus = gsl_root_fsolver_iterate( rootSolver1D );
         if ( gslStatus != GSL_SUCCESS )
         {
-            // PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
-            print_debug("cannot find initial condition for pr0\n");
+            PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
+            //print_debug("cannot find initial condition for pr0\n");
             gsl_root_fsolver_free( rootSolver1D );
             *pr = pr0;
             return CEV_SUCCESS;
