@@ -4054,9 +4054,23 @@ GSL_START;
     if (gslStatus != GSL_SUCCESS)
     {
         PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
-        *pr = pr0;
-        //print_debug("x_lo, x_hi, root = (%.5e, %.5e), %.5e\n", x_lo, x_hi, root);
-        return CEV_FAILURE;
+        int i_try = 100;
+        while(i_try > 0)
+        {
+            x_lo = x_lo - 0.05;
+            x_hi = x_hi + 0.05;
+            gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
+            if (gslStatus == GSL_SUCCESS)
+                break;
+            else
+                i_try--;
+        }
+        if (i_try == 0)
+        {
+            *pr = pr0;
+            return CEV_FAILURE;
+        }
+        // print_debug("x_lo, x_hi, root = (%.5e, %.5e), %.5e\n", x_lo, x_hi, root);
     }
     /* Initialise the gsl stuff */
     INT status;
