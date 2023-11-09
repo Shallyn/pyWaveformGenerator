@@ -4040,8 +4040,8 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     /* Given this, we can start to calculate the initial conditions */
     /* for spherical coords in the new basis */
     REAL8 x_lo, x_hi, root;
-    x_lo = GET_MAX(-0.9, pr0 - 0.2);
-    x_hi = GET_MIN(pr0 + 0.2, 0.9);
+    x_lo = GET_MAX(-0.9, pr0 - 0.02);
+    x_hi = GET_MIN(pr0 + 0.02, 0.9);
 #if 1
 
     // print_debug("x_lo = %.16e, x_hi = %.16e\n", x_lo, x_hi);
@@ -4057,8 +4057,8 @@ GSL_START;
         int i_try = 100;
         while(i_try > 0)
         {
-            x_lo = x_lo - 0.05;
-            x_hi = x_hi + 0.05;
+            x_lo = x_lo - 0.02;
+            x_hi = x_hi + 0.02;
             gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
             if (gslStatus == GSL_SUCCESS)
                 break;

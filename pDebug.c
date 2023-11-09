@@ -157,7 +157,7 @@ INT choose_debug(INT debug_id,
     REAL8 m1,  REAL8 m2, 
     REAL8 s1x, REAL8 s1y, REAL8 s1z, 
     REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-    REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams)
+    REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams)
 {
     switch(debug_id)
     {

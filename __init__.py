@@ -15,6 +15,27 @@ from .pyUtils import *
 #pwd = Path(__file__).absolute().parent
 #pwd = Path(sys.path[0])
 # pwd = Path(os.getcwd())
+
+#-----Constants-----#
+k_B_SI = 1.3806505e-23 # J/K
+h_SI = 6.62606896e-34 # J s
+ly_SI = 9.4605284e15 # 1 ly to m
+AU_SI = 149597870700 # 1 AU to m
+pc_SI = 3.08567758e16 # 1 Parsec to m
+c_SI = 299792458 # Speed Of Light [m s^-1]
+M_Sun_SI = 1.98892e30 # Mass of Sun [kg]
+R_Sun_SI = 6.96342e8 # Radius of Sun [m]
+alp_GP_SI = 192.85948 * np.pi / 180 # Direction Of Galactic Polar
+det_GP_SI = 27.12825 * np.pi / 180 # Direction Of Galactic Polar
+l_CP_SI = 122.932
+G_SI = 6.672e-11 # Gravitational Constant [m^3 s^-2 kg^-1]
+h_0_SI = 0.678 # Hubble Constant
+MRSUN_SI = 1.47662504e3 
+MTSUN_SI = 4.92549095e-6 
+#---------Comm--------#
+def dim_t(M):
+    return c_SI**3 / ( M * M_Sun_SI * G_SI)
+
 lib_path = Path(__file__).parent / '.libs/libEOB.so'
 my_waveform_lib = ctypes.CDLL(lib_path)
 my_waveform_lib.CreateREAL8Vector.restype = ctypes.POINTER(pyREAL8Vector)
@@ -362,7 +383,8 @@ class SEOBNRWaveformCaller(object):
         self.is_coframe = 0 # only valid when prec_flag > 0
         self.use_coaphase = 0 # default
         self.zeta = 0 # anomaly angle zeta in r = p / (1 + e cos(zeta))
-        self.xi = 0 # angle between initial Lhat and zhat
+        self.xi = 0
+        self.Mf_ref = 0.005
 
     def set_params(self, **kwargs):
         self.__parse_params(**kwargs)
@@ -389,6 +411,9 @@ class SEOBNRWaveformCaller(object):
         if 'beta_rad' in kwargs:
             self.beta = kwargs['beta_rad']
         self.f_min = self.f_min if 'f_min' not in kwargs else kwargs['f_min']
+        self.Mf_ref = self.Mf_ref if 'Mf_ref' not in kwargs else kwargs['Mf_ref']
+        if 'f_ref' in kwargs:
+            self.Mf_ref = kwargs['f_ref'] / dim_t(self.m1 + self.m2)
         self.distance = self.distance if 'distance' not in kwargs else kwargs['distance']
         if 'srate' in kwargs:
             self.srate = kwargs['srate']
@@ -570,7 +595,8 @@ class SEOBNRWaveformCaller(object):
                       ctypes.c_int(self.is_coframe),
                       ctypes.c_int(self.use_coaphase),
                       ctypes.c_double(self.zeta),
-                      ctypes.c_double(self.xi)
+                      ctypes.c_double(self.xi),
+                      ctypes.c_double(self.Mf_ref)
                       ]
         input_pms = pyInputParams(*value_list)
         ret_struct = ctypes.POINTER(pyOutputStruct)()

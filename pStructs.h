@@ -38,6 +38,8 @@ typedef struct tagHyperParams
     REAL8 inEPS_REL;
     REAL8 inEPS_ABS;
     INT is_coframe;
+    REAL8  Mf_min;
+    REAL8  Mf_ref;
 }HyperParams;
 
 typedef struct {
@@ -786,7 +788,6 @@ typedef struct tagSpinEOBParams
     REAL8                   p0; // initial semi-latus
     REAL8                   e0;
     REAL8                   x0; // initial inclination
-
     // Numerical Deriv aux
     REAL8                   omega;
     UINT                    omegaPeaked;

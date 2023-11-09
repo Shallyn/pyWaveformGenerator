@@ -37,7 +37,7 @@ static int XLALEOBHighestInitialFreq(
 INT evolve(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
            INT is_only22,
            HyperParams *hparams, 
            REAL8TimeSeries **hPlusOut,
@@ -56,6 +56,7 @@ INT evolve(REAL8 m1,  REAL8 m2,
     REAL8Vector *seobvalues_test = NULL;
     REAL8Vector* m1rVec = NULL;
     REAL8Array *dynamicsAdaS = NULL;
+    REAL8Array *dynamicsInverse = NULL;
     REAL8Array *dynamicsHiS = NULL;
     REAL8Vector *Jfinal = NULL;
     REAL8Vector *Lhatfinal = NULL;
@@ -284,7 +285,7 @@ if(1) {failed = 1; goto QUIT;}
     */
     this_step++;
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Evolve EOB trajectory with adaptive sampling.", this_step);
-    INT retLenAdaS = 0;
+    INT retLenAdaS = 0, retLenInverse = 0;
     REAL8 tendAdaS = 20. / mTScaled;    
     REAL8 tstartAdaS = 0.;
     REAL8 deltaT_min = 8.0e-5;
@@ -299,11 +300,19 @@ if(1) {failed = 1; goto QUIT;}
         EPS_REL = hparams->inEPS_REL;
     if (hparams->inEPS_ABS > 0.)
         EPS_ABS = hparams->inEPS_ABS;
+    // inv integrate dynamics
+    // if (MfMin < Mf_ref)
+    // {
+    //     status = SEOBIntegrateDynamics_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
+    //        deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
+    //     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    // }
     status = SEOBIntegrateDynamics(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     PRINT_LOG_INFO(LOG_DEBUG, "AdaS data length = %d", retLenAdaS);
+    // status = SEOBCombineInverseAndAdaSDynamics(&dynamicsAdaS, dynamicsInverse);
     status = SEOBComputeExtendedSEOBdynamics(&seobdynamicsAdaS, dynamicsAdaS, retLenAdaS, core);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     m1rVec = CreateREAL8Vector(retLenAdaS);
@@ -1169,6 +1178,7 @@ QUIT:
     STRUCTFREE(core, SpinEOBParams);
 
     STRUCTFREE(dynamicsAdaS, REAL8Array);
+    STRUCTFREE(dynamicsInverse, REAL8Array);
     STRUCTFREE(ICvalues, REAL8Vector);
     STRUCTFREE(seobdynamicsAdaS, SEOBdynamics);
 
@@ -1213,7 +1223,7 @@ QUIT:
 INT evolve_conserv(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
            HyperParams *hparams, 
            SEOBCoreOutputs *all)
 {
@@ -1223,6 +1233,7 @@ INT evolve_conserv(REAL8 m1,  REAL8 m2,
     SpinEOBParams *core = NULL;
     REAL8Vector *ICvalues = NULL;
     REAL8Array *dynamicsAdaS = NULL;
+    REAL8Array *dynamicsInverse = NULL;
     REAL8Vector *Jfinal = NULL;
     REAL8Vector *Lhatfinal = NULL;
     COMPLEX16Vector *sigmaQNMlm0 = NULL;
@@ -1561,6 +1572,7 @@ QUIT:
     STRUCTFREE(core, SpinEOBParams);
 
     STRUCTFREE(dynamicsAdaS, REAL8Array);
+    STRUCTFREE(dynamicsInverse, REAL8Array);
     STRUCTFREE(ICvalues, REAL8Vector);
     // STRUCTFREE(seobdynamicsAdaS, SEOBdynamics);
     STRUCTFREE(seobvalues_final, REAL8Vector);
@@ -1593,7 +1605,7 @@ QUIT:
 INT evolve_adaptive(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
            INT is_only22,
            HyperParams *hparams, 
            REAL8TimeSeries **hPlusOut,
@@ -2596,7 +2608,7 @@ QUIT:
 INT evolve_SA(REAL8 m1,  REAL8 m2, 
            REAL8 s1z, 
            REAL8 s2z,
-           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 INdeltaT,
+           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT,
            HyperParams *hparams, 
            REAL8Vector **tRetVec,
            SphHarmListCAmpPhaseSequence **hlm,
@@ -2615,6 +2627,7 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
     REAL8Vector *seobvalues_test = NULL;
     REAL8Vector* m1rVec = NULL;
     REAL8Array *dynamicsAdaS = NULL;
+    REAL8Array *dynamicsInverse = NULL;
     REAL8Array *dynamicsHiS = NULL;
     REAL8Vector *Jfinal = NULL;
     REAL8Vector *Lhatfinal = NULL;
@@ -2833,7 +2846,7 @@ if(1) {failed = 1; goto QUIT;}
     */
     this_step++;
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Evolve EOB trajectory with adaptive sampling.", this_step);
-    INT retLenAdaS = 0;
+    INT retLenAdaS = 0, retLenInverse = 0;
     REAL8 tendAdaS = 20. / mTScaled;    
     REAL8 tstartAdaS = 0.;
     REAL8 deltaT_min = 8.0e-5;
@@ -2843,6 +2856,12 @@ if(1) {failed = 1; goto QUIT;}
         EPS_REL = hparams->inEPS_REL;
     if (hparams->inEPS_ABS > 0.)
         EPS_ABS = hparams->inEPS_ABS;
+    // if (MfMin < Mf_ref)
+    // {
+    //     status = SEOBIntegrateDynamics_SA_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
+    //        deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
+    //     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    // }
     status = SEOBIntegrateDynamics_SA(&dynamicsAdaS, &retLenAdaS, 
         ICvalues_SA, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core);
@@ -3624,6 +3643,7 @@ QUIT:
     STRUCTFREE(core, SpinEOBParams);
 
     // STRUCTFREE(dynamicsAdaS, REAL8Array);
+    STRUCTFREE(dynamicsInverse, REAL8Array);
     STRUCTFREE(ICvalues, REAL8Vector);
     STRUCTFREE(ICvalues_SA, REAL8Vector);
     STRUCTFREE(seobdynamicsAdaS, SEOBSAdynamics);
@@ -3690,7 +3710,7 @@ QUIT:
 INT evolve_prec(REAL8 m1,  REAL8 m2, 
            REAL8 s1x, REAL8 s1y, REAL8 s1z, 
            REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 INdeltaT, REAL8 inc,
+           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
            HyperParams *hparams, 
            SEOBPrecCoreOutputs *all)
 {
@@ -3704,6 +3724,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     REAL8Vector *seobvalues_test = NULL;
     REAL8Vector* m1rVec = NULL;
     REAL8Array *dynamicsAdaS = NULL;
+    REAL8Array *dynamicsInverse = NULL;
     REAL8Array *dynamicsHiS = NULL;
     REAL8Vector *Jfinal = NULL;
     REAL8Vector *Lhatfinal = NULL;
@@ -3863,7 +3884,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     */
     this_step++;
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Evolve EOB trajectory with adaptive sampling.", this_step);
-    INT retLenAdaS = 0;
+    INT retLenAdaS = 0, retLenInverse = 0;
     REAL8 tendAdaS = 20. / mTScaled;    
     REAL8 tstartAdaS = 0.;
     REAL8 deltaT_min = 8.0e-5;
@@ -3873,6 +3894,12 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
         EPS_REL = hparams->inEPS_REL;
     if (hparams->inEPS_ABS > 0.)
         EPS_ABS = hparams->inEPS_ABS;
+    // if (MfMin < Mf_ref)
+    // {
+    //     status = SEOBIntegrateDynamics_prec_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
+    //        deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);
+    //     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    // }
     status = SEOBIntegrateDynamics_prec(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);
@@ -4309,6 +4336,7 @@ QUIT:
     STRUCTFREE(core, SpinEOBParams);
 
     STRUCTFREE(dynamicsAdaS, REAL8Array);
+    STRUCTFREE(dynamicsInverse, REAL8Array);
     STRUCTFREE(ICvalues, REAL8Vector);
 
     STRUCTFREE(dynamicsHiS, REAL8Array);

@@ -39,7 +39,12 @@ class pyHyperParams(ctypes.Structure):
                 ('pr_ini', ctypes.c_double),
                 ('pphi_ini', ctypes.c_double),
                 ('ptheta_ini', ctypes.c_double),
-                ('tStepBack', ctypes.c_double))
+                ('tStepBack', ctypes.c_double),
+                ('inEPS_REL', ctypes.c_double),
+                ('inEPS_ABS', ctypes.c_double),
+                ('is_coframe', ctypes.c_int),
+                ('Mf_min', ctypes.c_double),
+                ('Mf_ref', ctypes.c_double))
 
 class pyFacWaveformCoeffs(ctypes.Structure):
     _fields_ = (('delta22vh3',ctypes.c_double),
@@ -678,6 +683,8 @@ class pySpinEOBParams(ctypes.Structure):
                 ('spin1z_omegaPeak', ctypes.c_double),
                 ('spin2z_omegaPeak', ctypes.c_double),
                 ('tPeakOmega', ctypes.c_double),
+                ('chi1Vec', ctypes.POINTER(pyREAL8Vector)),
+                ('chi2Vec', ctypes.POINTER(pyREAL8Vector)),
                 ('s1Vec', ctypes.POINTER(pyREAL8Vector)),
                 ('s2Vec', ctypes.POINTER(pyREAL8Vector)),
                 ('sigmaStar', ctypes.POINTER(pyREAL8Vector)),
@@ -759,7 +766,8 @@ class pyInputParams(ctypes.Structure):
                 ('is_coframe', ctypes.c_int),
                 ('use_coaphase', ctypes.c_int),
                 ('zeta', ctypes.c_double),
-                ('xi', ctypes.c_double))
+                ('xi', ctypes.c_double),
+                ('Mf_ref', ctypes.c_double))
 
 
 class pyOutputStruct(ctypes.Structure):
