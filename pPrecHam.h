@@ -16,6 +16,10 @@ int PrecHcapNumericalDerivative(double t,
                                 const REAL8 values[],
                                 REAL8 dvalues[],
                                 void *funcParams);
+int PrecHcapNumericalDerivative_inverse(double t,
+                                const REAL8 values[],
+                                REAL8 dvalues[],
+                                void *funcParams);
 
 #endif
 

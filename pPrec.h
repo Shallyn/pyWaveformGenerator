@@ -26,6 +26,20 @@ INT SEOBIntegrateDynamics_prec(REAL8Array **dynamics,
                           SpinEOBParams *seobParams,
                           INT flagConstantSampling);
 
+INT SEOBIntegrateDynamics_prec_inverse(REAL8Array **dynamics,
+                          INT *retLenOut,
+                          REAL8Vector *ICvalues,
+                          REAL8 EPS_ABS,
+                          REAL8 EPS_REL,
+                          REAL8 deltaT,
+                          REAL8 deltaT_min,
+                          REAL8 tstart,
+                          REAL8 tend ,
+                          SpinEOBParams *seobParams,
+                          INT flagConstantSampling);
+void SEOBConcactInverseDynToAdaSDynPrec(REAL8Array **dyn_out, REAL8Array *dyn_inv, 
+        INT *retLen_out, INT retLen_inv);
+
 
 INT SEOBComputeExtendedSEOBPrecdynamics(SEOBPrecdynamics **seobdynamics,
                                     REAL8Array *dynamics,

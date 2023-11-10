@@ -314,6 +314,152 @@ static int PrecStopConditionBasedOnPR(double t,
     return GSL_SUCCESS;
 }
 
+static int PrecStopConditionBasedOnPR_inverse(double t, 
+                                      const double values[],
+                                      double dvalues[],
+                                      void *funcParams) 
+{
+    int debugPK = 0;
+    int debugPKverbose = 0;
+    INT i;
+    SpinEOBParams *params = (SpinEOBParams *)funcParams;
+
+    REAL8 r2, pDotr = 0;
+    REAL8 p[3], r[3], pdotVec[3], rdotVec[3];
+    REAL8 omega, omega_xyz[3], L[3], dLdt1[3], dLdt2[3];
+
+    memcpy(r, values, 3 * sizeof(REAL8));
+    memcpy(p, values + 3, 3 * sizeof(REAL8));
+    memcpy(rdotVec, dvalues, 3 * sizeof(REAL8));
+    memcpy(pdotVec, dvalues + 3, 3 * sizeof(REAL8));
+
+    r2 = inner_product3d(r, r);
+    cross_product3d(values, dvalues, omega_xyz);
+    omega = sqrt(inner_product3d(omega_xyz, omega_xyz)) / r2;
+    REAL8 omega0 = CST_PI * params->hParams->Mf_min;
+    if (omega < omega0)
+        return 1;
+    return GSL_SUCCESS;
+}
+
+
+void SortSEOBDynamicsArrayPrec(REAL8Array **ret_dyn, INT length, REAL8Array *dyn_inv)
+{
+    INT i,j;
+    REAL8Array *dyn = CreateREAL8Array(2, 21, length);
+    for (i=0; i<length; i++)
+    {
+        dyn->data[i] = -dyn_inv->data[length - 1 - i];
+        for (j=1; j<21; j++)
+            dyn->data[i + j*length] = dyn_inv->data[length - 1 - i + j*length];
+    }
+    //     FILE *out = fopen("debug_inverse_Cons1.dat" ,"w");
+    // for (i=0; i<length; i++)
+    // {
+    //     fprintf(out, "%.16e\t%.16e\t%.16e\t%.16e\n", 
+    //         dyn->data[i], dyn->data[i + length], dyn->data[i + 2*length],
+    //         dyn->data[i + 3*length]);
+    // }
+    //     fclose(out);
+    *ret_dyn = dyn;
+    return;
+}
+
+void SEOBConcactInverseDynToAdaSDynPrec(REAL8Array **dyn_out, REAL8Array *dyn_inv, 
+        INT *retLen_out, INT retLen_inv)
+{
+    REAL8Array *dyn_adas = *dyn_out;
+    INT retLenAdaS = (*retLen_out);
+    INT i, retLen = retLenAdaS + retLen_inv-1;
+    REAL8Array *dyn_conc = CreateREAL8Array(2, 21, retLen);
+    *retLen_out = retLen;
+    for (i=0; i<21; i++)
+    {
+        memcpy(dyn_conc->data + i*retLen, dyn_inv->data + i*retLen_inv, (retLen_inv-1)*sizeof(REAL8));
+        memcpy(dyn_conc->data+i*retLen+retLen_inv-1, dyn_adas->data + i*retLenAdaS, retLenAdaS*sizeof(REAL8));
+    }
+    // FILE *out = fopen("debug_inverse_Cons.dat" ,"w");
+    REAL8 t0 = dyn_conc->data[0];
+    for (i=0; i<retLen; i++)
+    {
+        dyn_conc->data[i] = dyn_conc->data[i] - t0;
+        // fprintf(out, "%.16e\t%.16e\t%.16e\t%.16e\n", 
+        //     dyn_conc->data[i], dyn_conc->data[i+retLen], 
+        //     dyn_conc->data[i+2*retLen], dyn_conc->data[i+3*retLen]);
+    }
+    // fclose(out);
+    STRUCTFREE(dyn_adas, REAL8Array);
+    *dyn_out = dyn_conc;
+    return;
+}
+
+INT SEOBIntegrateDynamics_prec_inverse(REAL8Array **dynamics,
+                          INT *retLenOut,
+                          REAL8Vector *ICvalues,
+                          REAL8 EPS_ABS,
+                          REAL8 EPS_REL,
+                          REAL8 deltaT,
+                          REAL8 deltaT_min,
+                          REAL8 tstart,
+                          REAL8 tend ,
+                          SpinEOBParams *seobParams,
+                          INT flagConstantSampling)
+{
+    INT retLen;
+    UINT i;
+    REAL8Array *dynamics_spinaligned = NULL;
+    REAL8Array *dynamics_inverse = NULL;
+
+    INT status, failed = 0;
+    /* Dimensions of vectors of dynamical variables to be integrated */
+    UINT nb_Hamiltonian_variables = 14;
+
+    REAL8Vector *values = CreateREAL8Vector(nb_Hamiltonian_variables);
+    if (!values) {failed = 1; goto QUIT;}
+    memcpy(values->data, ICvalues->data, values->length * sizeof(REAL8));
+
+    ARKIntegrator *integrator = NULL;
+    integrator = XLALAdaptiveRungeKutta4Init(
+        nb_Hamiltonian_variables, PrecHcapNumericalDerivative_inverse,
+        PrecStopConditionBasedOnPR_inverse, EPS_ABS, EPS_REL);
+
+    if (!integrator) {failed = 1; goto QUIT;}
+
+    /* Ensure that integration stops ONLY when the stopping condition is True */
+    integrator->stopontestonly = 1;
+    /* When this option is set to 0, the integration can be exceedingly slow for
+    * spin-aligned systems */
+    integrator->retries = 1;
+    /* Computing the dynamical evolution of the system */
+    // Prec
+    retLen = XLALAdaptiveRungeKutta4NoInterpolateWithDerivPrec(integrator, seobParams, 
+        values->data, 0., tend-tstart, 
+        deltaT, deltaT_min, &dynamics_inverse);
+    if (retLen < 0)
+    {
+        PRINT_LOG_INFO(LOG_CRITICAL, "Integration Failed!!!");
+        failed = 1;
+        goto QUIT;
+    }
+    PRINT_LOG_INFO(LOG_INFO, "Integration End");
+    // sort dynamics
+    SortSEOBDynamicsArrayPrec(dynamics, retLen, dynamics_inverse);
+    STRUCTFREE(dynamics_inverse, REAL8Array);
+
+    // NOTE: functions like XLALAdaptiveRungeKutta4 would give nans if the times
+    // do not start at 0 -- we have to adjust the starting time after integration
+    /* Adjust starting time */
+    for ( i = 0; i < retLen; i++)
+        (*dynamics)->data[i] += tstart;
+
+QUIT:
+    STRUCTFREE(values, REAL8Vector);
+    STRUCTFREE(integrator, ARKIntegrator);
+    *retLenOut = retLen;
+    if (failed)
+        return CEV_FAILURE;
+    return CEV_SUCCESS;
+}
 
 INT SEOBIntegrateDynamics_prec(REAL8Array **dynamics,
                           INT *retLenOut,

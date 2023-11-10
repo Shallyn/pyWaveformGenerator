@@ -1675,6 +1675,14 @@ static int SEOBSACalculatehlmAmpPhase(
         (*hlm)->camp_real->data[i] = cabs(hlmNQC);
         (*hlm)->camp_imag->data[i] = 0.; /* We use only real amplitudes */
         (*hlm)->phase->data[i] = carg(hlmNQC);
+        // CODING DEBUG
+        // if (isnan(cabs(hlmNQC)) || isnan(carg(hlmNQC)))
+        // {
+        //     print_debug("hlm_val = %.5e + I %.5e, Nlm = %.5e + I %.5e\n",
+        //         creal(hlm_val), cimag(hlm_val), creal(factor_nqc), cimag(factor_nqc));
+        //     print_debug("t = %.16e, omega = %.16e, ham = %.16e, r = %.16e, phi = %.16e, prT = %.16e, pphi = %.16e\n\n",
+        //         t, omega, ham, seobdynamics->rVec[i], seobdynamics->phiVec[i], seobdynamics->prTVec[i], seobdynamics->pphiVec[i]);
+        // }
         // if (i==0 || i==1)
         // {
         //     print_debug("[%d,%d]%.16e\t%.16e\t%.16e\n", l, m, t, creal(hlmNQC), cimag(hlmNQC));
@@ -1938,6 +1946,27 @@ static int XLALEOBSpinPrecAlignedStopCondition(
     return GSL_SUCCESS;
 }
 
+static int XLALEOBSpinPrecAlignedStopCondition_inverse(
+    double t,       /**< UNUSED */
+    const double values[], /**< dynamical variable values */
+    double dvalues[],      /**< dynamical variable time derivative values */
+    void *funcParams       /**< physical parameters */
+) 
+{
+    REAL8 omega, r;
+    SpinEOBParams *params = (SpinEOBParams *)funcParams;
+
+    r = values[0];
+    omega = fabs(dvalues[1]);
+    REAL8 omega0 = CST_PI * params->hParams->Mf_min;
+    // print_debug("omega, omega0 = %.16e, %.16e\n", omega, omega0);
+    if (omega < omega0) 
+    {
+        return 1;
+    }
+    return GSL_SUCCESS;
+}
+
 REAL8 g_h_rISCO = 6.;
 REAL8 get_h_rISCO()
 {
@@ -2050,7 +2079,7 @@ static int XLALSpinPrecAlignedHiSRStopCondition_inverse(
     REAL8 omega, r;
     SpinEOBParams *params = (SpinEOBParams *)funcParams;
     r = values[0];
-    omega = dvalues[1];
+    omega = fabs(dvalues[1]);
     REAL8 omega0 = CST_PI * params->hParams->Mf_min;
     if (omega < omega0) 
     {
@@ -2333,7 +2362,7 @@ XLALEOBSpinPrecStopConditionBasedOnPR_inverse(double t,
     r2 = inner_product3d(r, r);
     cross_product3d(values, dvalues, omega_xyz);
     omega = sqrt(inner_product3d(omega_xyz, omega_xyz)) / r2;
-    REAL8 omega0 = CST_PI * params->hParams->Mf_ref;
+    REAL8 omega0 = CST_PI * params->hParams->Mf_min;
     if (omega < omega0)
         return 1;
     return GSL_SUCCESS;
@@ -2738,12 +2767,17 @@ void SortSEOBDynamicsArray_aligned(REAL8Array **ret_dyn, INT length, REAL8Array 
 {
     INT i,j;
     REAL8Array *dyn = CreateREAL8Array(2, 5, length);
+        // FILE *out = fopen("debug_inverse_SACons.dat" ,"w");
     for (i=0; i<length; i++)
     {
-        dyn->data[i] = -dyn_inv->data[i];
+        // fprintf(out, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n",
+        //     dyn_inv->data[i], dyn_inv->data[i + length], dyn_inv->data[i + 2*length],
+        //     dyn_inv->data[i + 3*length], dyn_inv->data[i + 4*length]);
+        dyn->data[i] = -dyn_inv->data[length - 1 - i];
         for (j=1; j<5; j++)
-            dyn->data[i + j*length] = dyn_inv->data[i + j*length];
+            dyn->data[i + j*length] = dyn_inv->data[length - 1 - i + j*length];
     }
+        // fclose(out);
     *ret_dyn = dyn;
     return;
 }
@@ -2754,14 +2788,49 @@ void SortSEOBDynamicsArray(REAL8Array **ret_dyn, INT length, REAL8Array *dyn_inv
     REAL8Array *dyn = CreateREAL8Array(2, 15, length);
     for (i=0; i<length; i++)
     {
-        dyn->data[i] = -dyn_inv->data[i];
+        dyn->data[i] = -dyn_inv->data[length - 1 - i];
         for (j=1; j<15; j++)
-            dyn->data[i + j*length] = dyn_inv->data[i + j*length];
+            dyn->data[i + j*length] = dyn_inv->data[length - 1 - i + j*length];
     }
+    //     FILE *out = fopen("debug_inverse_Cons1.dat" ,"w");
+    // for (i=0; i<length; i++)
+    // {
+    //     fprintf(out, "%.16e\t%.16e\t%.16e\t%.16e\n", 
+    //         dyn->data[i], dyn->data[i + length], dyn->data[i + 2*length],
+    //         dyn->data[i + 3*length]);
+    // }
+    //     fclose(out);
     *ret_dyn = dyn;
     return;
 }
 
+void SEOBConcactInverseDynToAdaSDyn(REAL8Array **dyn_out, REAL8Array *dyn_inv, 
+        INT *retLen_out, INT retLen_inv)
+{
+    REAL8Array *dyn_adas = *dyn_out;
+    INT retLenAdaS = (*retLen_out);
+    INT i, retLen = retLenAdaS + retLen_inv-1;
+    REAL8Array *dyn_conc = CreateREAL8Array(2, 15, retLen);
+    *retLen_out = retLen;
+    for (i=0; i<15; i++)
+    {
+        memcpy(dyn_conc->data + i*retLen, dyn_inv->data + i*retLen_inv, (retLen_inv-1)*sizeof(REAL8));
+        memcpy(dyn_conc->data+i*retLen+retLen_inv-1, dyn_adas->data + i*retLenAdaS, retLenAdaS*sizeof(REAL8));
+    }
+    // FILE *out = fopen("debug_inverse_Cons.dat" ,"w");
+    REAL8 t0 = dyn_conc->data[0];
+    for (i=0; i<retLen; i++)
+    {
+        dyn_conc->data[i] = dyn_conc->data[i] - t0;
+        // fprintf(out, "%.16e\t%.16e\t%.16e\t%.16e\n", 
+        //     dyn_conc->data[i], dyn_conc->data[i+retLen], 
+        //     dyn_conc->data[i+2*retLen], dyn_conc->data[i+3*retLen]);
+    }
+    // fclose(out);
+    STRUCTFREE(dyn_adas, REAL8Array);
+    *dyn_out = dyn_conc;
+    return;
+}
 
 INT SEOBIntegrateDynamics_inverse(REAL8Array **dynamics,
                           INT *retLenOut,
@@ -3076,13 +3145,52 @@ void SortSEOBDynamicsArray_SA(REAL8Array **ret_dyn, INT length, REAL8Array *dyn_
 {
     INT i,j;
     REAL8Array *dyn = CreateREAL8Array(2, 8, length);
+        // FILE *out = fopen("debug_inverse_SA.dat" ,"w");
+
     for (i=0; i<length; i++)
     {
-        dyn->data[i] = -dyn_inv->data[i];
+        // fprintf(out, "%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\t%.16e\n",
+        //     dyn_inv->data[i], dyn_inv->data[i + length], dyn_inv->data[i + 2*length],
+        //     dyn_inv->data[i + 3*length], dyn_inv->data[i+4*length], dyn_inv->data[i+5*length],
+        //     dyn_inv->data[i + 6*length], dyn_inv->data[i+7*length]);
+        dyn->data[i] = -dyn_inv->data[length-1 - i];
         for (j=1; j<8; j++)
-            dyn->data[i + j*length] = dyn_inv->data[i + j*length];
+            dyn->data[i + j*length] = dyn_inv->data[length-1-i + j*length];
     }
+        // fclose(out);
+
     *ret_dyn = dyn;
+    return;
+}
+
+void SEOBConcactInverseDynToAdaSDyn_SA(REAL8Array **dyn_out, REAL8Array *dyn_inv,
+                                    INT *retLen_out, INT retLen_inv)
+{
+    REAL8Array *dyn_adas = *dyn_out;
+    INT retLenAdaS = (*retLen_out);
+    INT i, retLen = retLenAdaS + retLen_inv-1;
+    REAL8Array *dyn_conc = CreateREAL8Array(2, 8, retLen);
+    *retLen_out = retLen;
+    for (i=0; i<8; i++)
+    {
+        memcpy(dyn_conc->data + i*retLen, dyn_inv->data + i*retLen_inv, (retLen_inv-1)*sizeof(REAL8));
+        memcpy(dyn_conc->data+i*retLen+retLen_inv-1, dyn_adas->data + i*retLenAdaS, retLenAdaS*sizeof(REAL8));
+    }
+    // t, (r, ph, prT, pphi), (dr, dph), H
+    REAL8 t0 = dyn_conc->data[0];
+    REAL8 phi0 = dyn_conc->data[2*retLen];
+    for (i=0; i<retLen; i++)
+    {
+        dyn_conc->data[i] = dyn_conc->data[i] - t0;
+        dyn_conc->data[i + 2*retLen] = dyn_conc->data[i + 2*retLen] - phi0;
+    }
+    for (i=0; i<retLen_inv-1; i++)
+    {
+        dyn_conc->data[i + 5*retLen] = -dyn_conc->data[i + 5*retLen];
+        dyn_conc->data[i + 6*retLen] = -dyn_conc->data[i + 6*retLen];
+    }
+    STRUCTFREE(dyn_adas, REAL8Array);
+    *dyn_out = dyn_conc;
     return;
 }
 
@@ -3130,23 +3238,10 @@ INT SEOBIntegrateDynamics_SA_inverse(REAL8Array **dynamics,
     we are in the low-sampling or high-sampling portion
     of the waveform. We can tell this apart because for the low-sampling (or
     ada sampling) we always start at t=0 */
-    if (tstart > 0) 
-    {
-        // High sampling
-        if (seobParams->e0 != 0)
-            integrator = XLALAdaptiveRungeKutta4Init(
-                nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SA,
-                EOBHighSRStopConditionEcc, EPS_ABS, EPS_REL);
-        else
-            integrator = XLALAdaptiveRungeKutta4Init(
-                nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SA,
-                XLALSpinPrecAlignedHiSRStopCondition, EPS_ABS, EPS_REL);
-    } else {
-        // Low sampling
-        integrator = XLALAdaptiveRungeKutta4Init(
-            nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SA,
-            XLALEOBSpinPrecAlignedStopCondition, EPS_ABS, EPS_REL);
-    }
+    // Low sampling
+    integrator = XLALAdaptiveRungeKutta4Init(
+        nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SA_inverse,
+        XLALEOBSpinPrecAlignedStopCondition_inverse, EPS_ABS, EPS_REL);
 
     if (!integrator) {failed = 1; goto QUIT;}
 

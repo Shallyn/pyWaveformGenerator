@@ -152,6 +152,13 @@ int	XLALSpinPrecHcapNumericalDerivative_inverse(
                     void    *funcParams	/**<< EOB parameters */
 );
 
+int XLALSpinAlignedHcapDerivative_SA_inverse(
+                  double t,          /**< UNUSED */
+                  const REAL8   values[],   /**< dynamical varables */
+                  REAL8         dvalues[],  /**< time derivative of dynamical variables */
+                  void         *funcParams  /**< EOB parameters */
+                  );
+
 int	XLALSpinPrecHcapNumericalDerivative_Conserve(
                     double	t,	/**<< UNUSED */
                     const	REAL8	values[],	/**<< Dynamical variables */

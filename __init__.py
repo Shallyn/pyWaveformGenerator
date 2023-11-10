@@ -384,8 +384,8 @@ class SEOBNRWaveformCaller(object):
         self.use_coaphase = 0 # default
         self.zeta = 0 # anomaly angle zeta in r = p / (1 + e cos(zeta))
         self.xi = 0
-        self.Mf_ref = 0.005
-
+        #self.Mf_ref = 0.0049258454886941605 # recomended value: omega_22 = 0.03095
+        self.Mf_ref = 0.002
     def set_params(self, **kwargs):
         self.__parse_params(**kwargs)
     

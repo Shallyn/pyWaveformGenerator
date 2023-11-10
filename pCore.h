@@ -94,6 +94,10 @@ INT SEOBIntegrateDynamics_SA_inverse(REAL8Array **dynamics,
                           REAL8 tstart,
                           REAL8 tend ,
                           SpinEOBParams *seobParams);
+void SEOBConcactInverseDynToAdaSDyn_SA(REAL8Array **dyn_out, REAL8Array *dyn_inv,
+                                    INT *retLen_out, INT retLen_inv);
+void SEOBConcactInverseDynToAdaSDyn(REAL8Array **dyn_out, REAL8Array *dyn_inv, 
+        INT *retLen_out, INT retLen_inv);
 
 INT SEOBIntegrateDynamics_adaptive(REAL8Array **dynamics,
                           INT *retLenOut,

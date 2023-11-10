@@ -254,13 +254,13 @@ if(1) {failed = 1; goto QUIT;}
     } else {
         if (ecc > 0.0 && get_egw_flag()) {
             //status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
-            status = SEOBInitialConditions_e_anomaly(ICvalues, MfMin, ecc, zeta, xi, core);
+            status = SEOBInitialConditions_e_anomaly(ICvalues, Mf_ref, ecc, zeta, xi, core);
             // if (status != CEV_SUCCESS && ecc < 0.05)
             // {
-            //     status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+            //     status = SEOBInitialConditions(ICvalues, Mf_ref, ecc, core);
             // }
         } else 
-            status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+            status = SEOBInitialConditions(ICvalues, Mf_ref, ecc, core);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
@@ -301,22 +301,24 @@ if(1) {failed = 1; goto QUIT;}
     if (hparams->inEPS_ABS > 0.)
         EPS_ABS = hparams->inEPS_ABS;
     // inv integrate dynamics
-    // if (MfMin < Mf_ref)
-    // {
-    //     status = SEOBIntegrateDynamics_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
-    //        deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
-    //     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
-    // }
+    // CODING
+    if (MfMin < Mf_ref)
+    {
+        status = SEOBIntegrateDynamics_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
+           deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     status = SEOBIntegrateDynamics(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    if (dynamicsInverse)
+        SEOBConcactInverseDynToAdaSDyn(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
     PRINT_LOG_INFO(LOG_DEBUG, "AdaS data length = %d", retLenAdaS);
-    // status = SEOBCombineInverseAndAdaSDynamics(&dynamicsAdaS, dynamicsInverse);
     status = SEOBComputeExtendedSEOBdynamics(&seobdynamicsAdaS, dynamicsAdaS, retLenAdaS, core);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     m1rVec = CreateREAL8Vector(retLenAdaS);
-    for (i = 0; i < retLenAdaS; i++) 
+    for (i = 0; i < retLenAdaS; i++)
     {
         m1rVec->data[i] = -1* seobdynamicsAdaS->polarrVec[i];
     }
@@ -2414,7 +2416,7 @@ HISR:
     seobdynamicsAdaSHiS->th22Peak = tAttach;
     all->dyn = seobdynamicsAdaSHiS;
     all->hLM = hIlm;
-    all->Plm = listhPlm;
+    all->Plm = listhClm;
 #if 0
     /* Output vector gathering quantities related to merger (similar to previous
     * AttachParams) */
@@ -2565,7 +2567,7 @@ QUIT:
     STRUCTFREE(listhPlm_AdaS, SphHarmListCAmpPhaseSequence);
 
     STRUCTFREE(tVecPmodes, REAL8Vector);
-    // STRUCTFREE(listhPlm, SphHarmListCAmpPhaseSequence);
+    STRUCTFREE(listhPlm, SphHarmListCAmpPhaseSequence);
     // STRUCTFREE(seobdynamicsAdaSHiS, SEOBdynamics);
 
     STRUCTFREE(alphaJ2P, REAL8Vector);
@@ -2739,13 +2741,13 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
     } else {
         if (ecc > 0.0 && get_egw_flag()) {
             //status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
-            status = SEOBInitialConditions_e_anomaly(ICvalues, MfMin, ecc, zeta, 0, core);
+            status = SEOBInitialConditions_e_anomaly(ICvalues, Mf_ref, ecc, zeta, 0, core);
             // if (status != CEV_SUCCESS && ecc < 0.05)
             // {
-            //     status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+            //     status = SEOBInitialConditions(ICvalues, Mf_ref, ecc, core);
             // }
         } else 
-            status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+            status = SEOBInitialConditions(ICvalues, Mf_ref, ecc, core);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
@@ -2856,16 +2858,21 @@ if(1) {failed = 1; goto QUIT;}
         EPS_REL = hparams->inEPS_REL;
     if (hparams->inEPS_ABS > 0.)
         EPS_ABS = hparams->inEPS_ABS;
-    // if (MfMin < Mf_ref)
-    // {
-    //     status = SEOBIntegrateDynamics_SA_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
-    //        deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
-    //     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
-    // }
+    if (MfMin < Mf_ref)
+    {
+        status = SEOBIntegrateDynamics_SA_inverse(&dynamicsInverse, &retLenInverse, ICvalues_SA, EPS_ABS, EPS_REL,
+           deltaT, deltaT_min, tstartAdaS, tendAdaS, core);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     status = SEOBIntegrateDynamics_SA(&dynamicsAdaS, &retLenAdaS, 
         ICvalues_SA, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    // print_debug("retLenAdaS = %d\n", retLenAdaS);
+    if (dynamicsInverse)
+        SEOBConcactInverseDynToAdaSDyn_SA(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
+    // print_debug("retLenAdaS = %d\n", retLenAdaS);
+
     // {
     //     print_debug("test dynSA\n");
     //     INT jj = 0;
@@ -3842,9 +3849,9 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     } else {
         if (ecc > 0.0 && get_egw_flag()) {
             //status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
-            status = SEOBInitialConditions_e_anomaly(ICvalues, MfMin, ecc, zeta, xi, core);
+            status = SEOBInitialConditions_e_anomaly(ICvalues, Mf_ref, ecc, zeta, xi, core);
         } else
-            status = SEOBInitialConditions(ICvalues, MfMin, ecc, core);
+            status = SEOBInitialConditions(ICvalues, Mf_ref, ecc, core);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     }
     PRINT_LOG_INFO(LOG_DEBUG, "initial conditions:");
@@ -3894,17 +3901,19 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
         EPS_REL = hparams->inEPS_REL;
     if (hparams->inEPS_ABS > 0.)
         EPS_ABS = hparams->inEPS_ABS;
-    // if (MfMin < Mf_ref)
-    // {
-    //     status = SEOBIntegrateDynamics_prec_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
-    //        deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);
-    //     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
-    // }
+    if (MfMin < Mf_ref)
+    {
+        status = SEOBIntegrateDynamics_prec_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
+           deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     status = SEOBIntegrateDynamics_prec(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     PRINT_LOG_INFO(LOG_DEBUG, "AdaS data length = %d", retLenAdaS);
+    if (dynamicsInverse)
+        SEOBConcactInverseDynToAdaSDynPrec(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
     status = SEOBComputeExtendedSEOBPrecdynamics(&seobdynamicsAdaS, dynamicsAdaS, retLenAdaS, core);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     m1rVec = CreateREAL8Vector(retLenAdaS);
