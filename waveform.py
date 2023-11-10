@@ -12,7 +12,7 @@ from .psd import GWDetector
 from .pyUtils import rTimeSeries
 
 
-def calculate_waveform(params, f_min, srate = 16384, code_version = 1, **kwargs):
+def calculate_waveform(params, f_min, Mf_ref = 0.002, srate = 16384, code_version = 1, **kwargs):
     '''
         Calculate EOB waveform
         INPUT
@@ -20,7 +20,7 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 1, **kwargs)
             (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, e0, dL, zeta_rad, iota_rad, beta_rad, Phi_rad)
             > m1, m2: component mass of BH in solar mass,
             > s1x, s1y, s1z, s2x, s2y, s2z: dimentionless spin vector chi of BH, the norm of these vectors should less than 1
-            > e0 initial eccentricity at given orbital frequency f_min
+            > e0 initial eccentricity at given reference frequency Mf_ref
             > dL luminosity distance in Mpc 
             > zeta_rad relativistic anomaly zeta in r = p / (1 + e cos(zeta)),
                 you need to set egw_flag=1 to turn on it.
@@ -32,7 +32,8 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 1, **kwargs)
               you need to set prec_flag=3 (see arxiv:2310.04552). 
               However, in this case the initial conditions are limited to the periapsis of the equatorial plane,
               which means that zeta_rad is not supported (and also egw_flag=1 doesn't work in this case). 
-        f_min: initial orbital frequency
+        f_min: initial (angular) frequency
+        Mf_ref: reference (angular) frequency
         srate: the output sample rate
             NOTE: Lowering this value does not significantly improve computational speed, 
                 as the time consuming part of the code is the numerical solution of the dynamic system, 
@@ -73,7 +74,7 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 1, **kwargs)
     ge = SEOBNRWaveformCaller()
     ge.set_params(m1 = m1, m2 = m2, 
                   s1x = s1x, s1y = s1y, s1z = s1z,
-                  s2x = s2x, s2y = s2y, s2z = s2z, srate=srate,
+                  s2x = s2x, s2y = s2y, s2z = s2z, srate=srate, Mf_ref = Mf_ref,
                   ecc = e0, distance = dL, code_version=code_version, zeta_rad = zeta_rad,
                   inc_rad = iota_rad, beta_rad = beta_rad, phiRef_rad = Phi_rad, f_min = f_min, ret_dyn = True, **kwargs)
     waveform, dynamics = ge.run()
@@ -82,7 +83,7 @@ def calculate_waveform(params, f_min, srate = 16384, code_version = 1, **kwargs)
     return waveform, dynamics
     
 
-def calculate_strain(params, f_min, gps0 = 1356566418, detectors = None, is_only22 = False, log_level = 1, code_version = 2, ret_dyn = False, **kwargs) -> rTimeSeries:
+def calculate_strain(params, f_min, Mf_ref = 0.002, gps0 = 1356566418, detectors = None, is_only22 = False, log_level = 1, code_version = 2, ret_dyn = False, **kwargs) -> rTimeSeries:
     m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, e0, dL, theta, phi, iota, psi, t_c, beta_c, Phi_c = params
     ge = SEOBNRWaveformCaller()
     is_ret_dyn = 0
@@ -90,7 +91,7 @@ def calculate_strain(params, f_min, gps0 = 1356566418, detectors = None, is_only
         is_ret_dyn = 1
     ge.set_params(m1 = m1, m2 = m2, 
                   s1x = s1x, s1y = s1y, s1z = s1z,
-                  s2x = s2x, s2y = s2y, s2z = s2z,
+                  s2x = s2x, s2y = s2y, s2z = s2z, Mf_ref = Mf_ref,
                   ecc = e0, distance = dL, code_version=code_version,
                   inc_rad = iota, beta_rad = beta_c, phiRef_rad = Phi_c, f_min = f_min,
                   log_level=log_level, is_only22=is_only22, ret_dyn = is_ret_dyn, **kwargs)
@@ -116,7 +117,7 @@ def calculate_strain(params, f_min, gps0 = 1356566418, detectors = None, is_only
     return ret, waveform, dynamics
 
 
-def calculate_waveform_ep(params, f_min, srate = 16384, is_coframe = False, code_version=1, **kwargs):
+def calculate_waveform_ep(params, f_min, Mf_ref = 0.002, srate = 16384, is_coframe = False, code_version=1, **kwargs):
     '''
         Calculate EOB Eccentric-Precession waveform
         INPUT
@@ -124,7 +125,7 @@ def calculate_waveform_ep(params, f_min, srate = 16384, is_coframe = False, code
             (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, e0, dL, zeta_rad, iota_rad, beta_rad, Phi_rad)
             > m1, m2: component mass of BH in solar mass,
             > s1x, s1y, s1z, s2x, s2y, s2z: dimentionless spin vector chi of BH, the norm of these vectors should less than 1
-            > e0 initial eccentricity at given orbital frequency f_min
+            > e0 initial eccentricity at given reference frequency Mf_ref
             > dL luminosity distance in Mpc
             > zeta_rad relativistic anomaly zeta in r = p / (1 + e cos(zeta)),
                 you need to set egw_flag=1 to turn on it.
@@ -132,7 +133,8 @@ def calculate_waveform_ep(params, f_min, srate = 16384, is_coframe = False, code
             > beta_rad represent the initial direction of major axis of the elliptical orbit, 
                 which is equivalent to the phiRef parameter in lalsim-inspiral
             > Phi_rad the complex angle of h+ - ihx at the merge stage (default unused other than you set use_coaphase=True)
-        f_min: initial orbital frequency
+        f_min: initial (angular) frequency
+        Mf_ref: reference (angular) frequency
         srate: the output sample rate
             NOTE: Lowering this value does not significantly improve computational speed, 
                 as the time consuming part of the code is the numerical solution of the dynamic system, 
@@ -169,4 +171,4 @@ def calculate_waveform_ep(params, f_min, srate = 16384, is_coframe = False, code
             > dynamics.omega: the angular velocity of the orbit (ndarray)
             > dynamics.Hreal: the EOB Hamiltonian of the orbit (ndarray)
     '''
-    return calculate_waveform(params, f_min, srate, code_version=code_version, is_coframe=is_coframe, prec_flag=3, egw_flag=1, **kwargs)
+    return calculate_waveform(params, f_min, Mf_ref, srate, code_version=code_version, is_coframe=is_coframe, prec_flag=3, egw_flag=1, **kwargs)
