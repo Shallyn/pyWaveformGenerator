@@ -1249,8 +1249,9 @@ void calculate_prDot_from_ezetapphiPrec(REAL8 eta,
         REAL8 c2n, REAL8 c2l, REAL8 c2e,
         REAL8 c1c1, REAL8 c1c2, REAL8 c2c2, 
         REAL8 e, REAL8 sz, REAL8 cz, 
-        REAL8 pl, REAL8 pe, REAL8 L,
-        REAL8 *ret_prT, REAL8 *ret_prDot);
+        REAL8 pl, REAL8 pe, REAL8 L, REAL8 Omg,
+        REAL8 *ret_prT, REAL8 *ret_prDot, REAL8 *ret_rDot,
+        REAL8 *ret_r, REAL8 *ret_L);
 
 static int
 XLALFindSphericalOrbitPrecEccAnomaly(
@@ -1262,7 +1263,7 @@ XLALFindSphericalOrbitPrecEccAnomaly(
     SEOBRootParams *rootParams = (SEOBRootParams *) params;
     REAL8		mTotal = rootParams->params->m1 + rootParams->params->m2;
     REAL8		px, py      , pz, r, ptheta, pphi, L;
-    REAL8       prDot;
+    REAL8       prDot, rDot, tmpr, tmpL;
 
     /* Numerical derivative of Hamiltonian wrt given value */
     REAL8		dHdx    , dHdpx, dHdpy, dHdpz;
@@ -1306,7 +1307,9 @@ XLALFindSphericalOrbitPrecEccAnomaly(
     L = r*sqrt(py*py + pz*pz);
     calculate_prDot_from_ezetapphiPrec(rootParams->params->eta, rootParams->c1n, rootParams->c1l, rootParams->c1e, 
         rootParams->c2n, rootParams->c2l, rootParams->c2e, rootParams->c1c1, rootParams->c1c2, rootParams->c2c2,
-        rootParams->e0, rootParams->sz, rootParams->cz, py, pz, L, &px, &prDot);
+        rootParams->e0, rootParams->sz, rootParams->cz, py, pz, L, rootParams->omega,
+        &px, &prDot, &rDot, &tmpr, &tmpL);
+    // prDot = rootParams->cz * rootParams->e0 / pow(L, 4);
     // print_debug("Input Values r = %.16e, px = %.16e, py = %.16e, pz = %.16e\n pthetha = %.16e pphi = %.16e\n", r, px, py, pz, ptheta, pphi);
     rootParams->values[3] = px;
     /* dH by dR and dP */
@@ -1388,11 +1391,18 @@ XLALFindSphericalOrbitPrecEccAnomaly(
     /* populate the function vector */
     // print_debug("(r, px, py, pz, L) = (%.16e, %.16e, %.16e, %.16e, %.16e), dHdr = %.16e, prDot = %.16e\n", r, px, py, pz, L, dHdr, prDot);
     // print_debug("(r, px, py, pz, L) = (%.16e, %.16e, %.16e, %.16e, %.16e), dHdpr = %.16e, prDot = %.16e\n", r, px, py, pz, L, dHdpr, prDot);
-    // gsl_vector_set(f, 0, dHdr + prDot);
-    gsl_vector_set(f, 0, dHdpr - prDot);
+    REAL8 eq1 = dHdr + prDot;
+    REAL8 eq2 = r - tmpr;
+    REAL8 eq3 = L - tmpL;
+    REAL8 eq4 = dHdpr - rDot;
+    gsl_vector_set(f, 0, 1e-5*(eq1 + eq2 + eq3 + eq4));
+    // gsl_vector_set(f, 0, dHdpr - prDot);
     gsl_vector_set(f, 1, dHdptheta);
     gsl_vector_set(f, 2, dHdpphi - rootParams->omega);
-
+    // print_debug("(r, px, py, pz, L) = (%.5e, %.5e, %.5e, %.5e, %.5e), eq1 = %.5e, eq2 = %.5e, eq3 = %.5e, eq4 = %.5e\n", 
+    //     r, px, py, pz, L, eq1, eq2, eq3, eq4);
+    // print_debug("(r, tmpr) = (%.5e, %.5e), (L, tmpL) = (%.5e, %.5e), (dHdpr, rDot) = (%.5e, %.5e)\n\n",
+    //     r, tmpr, L, tmpL, dHdpr, rDot);
     // XLAL_PRINT_INFO("Current funcvals = %.16e %.16e %.16e\n",
     // gsl_vector_get(f, 0), gsl_vector_get(f, 1), gsl_vector_get(f, 2));
 
@@ -5371,13 +5381,14 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
         return CEV_FAILURE;
     }
 #endif
-    REAL8 tmp_py, tmp_pz, tmp_L, tmp_px, tmp_prDot;
+    REAL8 tmp_py, tmp_pz, tmp_L, tmp_LPN, tmp_r, tmp_px, tmp_prDot, tmp_rDot;
     tmp_py = pCart[1];
     tmp_pz = pCart[2];
     tmp_L = qCart[0]*sqrt(tmp_py*tmp_py + tmp_pz*tmp_pz);
     calculate_prDot_from_ezetapphiPrec(params->eta, rootParams.c1n, rootParams.c1l, rootParams.c1e, 
         rootParams.c2n, rootParams.c2l, rootParams.c2e, rootParams.c1c1, rootParams.c1c2, rootParams.c2c2,
-        rootParams.e0, rootParams.sz, rootParams.cz, tmp_py, tmp_pz, tmp_L, &tmp_px, &tmp_prDot);
+        rootParams.e0, rootParams.sz, rootParams.cz, tmp_py, tmp_pz, tmp_L, rootParams.omega,
+        &tmp_px, &tmp_prDot, &tmp_rDot, &tmp_r, &tmp_LPN);
     pCart[0] = tmp_px;
     // if (CODE_VERSION == 2)
     // {

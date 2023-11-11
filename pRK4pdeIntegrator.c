@@ -668,6 +668,7 @@ int XLALAdaptiveRungeKutta4NoInterpolateWithDerivPrec(ARKIntegrator * integrator
     // UINT loop;/*variable for different loop indices below. */
     // if(EOBversion==2) loop = dim;
     // else loop = dim + 3;
+    // INT debug_used = 0;
     PRINT_LOG_INFO(LOG_INFO, "Run RK4 integrator...");
     while (1) 
     {
@@ -688,9 +689,10 @@ try_step:
 
         /* if we would be stepping beyond the final time, stop there instead... */
 
-#if LOCAL_USE_DEBUG
-        if (!integrator->stopontestonly && t + h0 > tend)
-            h0 = tend - t;
+#if 0
+        // if (!integrator->stopontestonly && t + h0 > tend)
+        //     h0 = tend - t;
+        if (debug_used == 0){
         PRINT_LOG_INFO(LOG_DEBUG, "INTEGRATE CURRENT STATE (t, y):");
         print_err("\t%g", t);
         for (i=0; i< dim; i++)
@@ -698,6 +700,8 @@ try_step:
             print_err("\t%g", y[i]);
         }
         print_err("\n");
+        debug_used = 1;
+        }
 #endif
         memcpy(y0, y, dim * sizeof(REAL8));     /* save y to y0, dydt_in to dydt_in0 */
         memcpy(dydt_in0, dydt_in, dim * sizeof(REAL8));
