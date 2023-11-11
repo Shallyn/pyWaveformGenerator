@@ -356,8 +356,8 @@ int XLALAdaptiveRungeKutta4NoInterpolateWithDeriv(ARKIntegrator * integrator,
     bufferlength = (int)((tend - tinit) / deltat_or_h0) + 2;   /* allow for the initial value and possibly a final semi-step */
 
     UINT dimn;/* Variable for different loop indices below */
-    UINT nextra = 1;
-    dimn = dim + 2 + 1 + nextra; // SEOBSA: t, (r, ph, prT, pphi), (dr, dph), H
+    UINT nextra = 3;
+    dimn = 1 + dim + 2 + nextra; // SEOBSA: t, (r, ph, prT, pphi), (dr, dph), (H, dpr, dpphi)
     // dimn = dim + 1;
     buffers = CreateREAL8Array(2, dimn, bufferlength); 
 
@@ -1410,7 +1410,7 @@ int XLALAdaptiveRungeKutta4WithDeriv(ARKIntegrator * integrator,
      * note: REAL8Array has a field dimLength (UINT4Vector) with dimensions, and a field data that points to a single memory block;
      * dimLength itself has fields length and data */
     dim = integrator->sys->dimension;
-    nextra = 1;
+    nextra = 3;
     size_t dimn = 1 + dim + 2 + nextra;
     bufferlength = (int)((tend - tinit) / deltat) + 2;  /* allow for the initial value and possibly a final semi-step */
     buffers = CreateREAL8Array(2, dimn, bufferlength);  /* 2-dimensional array, (dim+1) x bufferlength */

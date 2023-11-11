@@ -405,6 +405,7 @@ INT SEOBIntegrateDynamics_prec_inverse(REAL8Array **dynamics,
                           SpinEOBParams *seobParams,
                           INT flagConstantSampling)
 {
+    PRINT_LOG_INFO(LOG_INFO, "Setting Integrator");
     INT retLen;
     UINT i;
     REAL8Array *dynamics_spinaligned = NULL;
@@ -533,6 +534,35 @@ QUIT:
     *retLenOut = retLen;
     if (failed)
         return CEV_FAILURE;
+    return CEV_SUCCESS;
+}
+
+INT CutSEOBPrecdynamics(SEOBPrecdynamics **eobdyn, REAL8 MfMin)
+{
+    INT i, len_old, len_new;
+    REAL8 omega0 = CST_PI*MfMin;
+    SEOBPrecdynamics *dyn_old = *eobdyn;
+    len_old = dyn_old->length;
+    for(i=0; i<len_old; i++)
+    {
+        // print_debug("omega = %.16e\n", dyn_old->omegaVec[i]);
+        if (dyn_old->omegaVec[i] >= omega0)
+            break;
+    }
+    if (i==0) return CEV_SUCCESS;
+    if(i>0) i--;
+    len_new = len_old - i;
+    if (len_new == 0)
+        return CEV_FAILURE;
+    SEOBPrecdynamics *dyn_new = CreateSEOBPrecdynamics(len_new);
+// print_debug("here: (%d, %d)\n", dyn_new->array->dimLength->data[0], dyn_new->array->dimLength->data[1]);
+    for (int j=0; j<dyn_new->array->dimLength->data[0]; j++)
+        memcpy(dyn_new->array->data + j*len_new, dyn_old->array->data + i + j*len_old, len_new*(sizeof(REAL8)));
+    REAL8 t0 = dyn_new->tVec[0];
+    for (int j=0; j<len_new; j++)
+        dyn_new->tVec[j] = dyn_new->tVec[j] - t0;
+    STRUCTFREE(dyn_old, SEOBPrecdynamics);
+    *eobdyn = dyn_new;
     return CEV_SUCCESS;
 }
 

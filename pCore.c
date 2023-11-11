@@ -3887,6 +3887,64 @@ INT SEOBComputeExtendedSEOBSAdynamics(SEOBSAdynamics **seobsadynamics,
     return CEV_SUCCESS;
 }
 
+INT CutSEOBSAdynamics(SEOBSAdynamics **eobdyn, REAL8 MfMin)
+{
+    INT i, len_old, len_new;
+    REAL8 omega0 = CST_PI*MfMin;
+    SEOBSAdynamics *dyn_old = *eobdyn;
+    len_old = dyn_old->length;
+    for(i=0; i<len_old; i++)
+    {
+        // print_debug("omega = %.16e\n", dyn_old->omegaVec[i]);
+        if (dyn_old->dphiVec[i] >= omega0)
+            break;
+    }
+    if (i==0) return CEV_SUCCESS;
+    if(i>0) i--;
+    len_new = len_old - i;
+    if (len_new == 0)
+        return CEV_FAILURE;
+    SEOBSAdynamics *dyn_new = CreateSEOBSAdynamics(len_new);
+// print_debug("here: (%d, %d)\n", dyn_new->array->dimLength->data[0], dyn_new->array->dimLength->data[1]);
+    for (int j=0; j<dyn_new->array->dimLength->data[0]; j++)
+        memcpy(dyn_new->array->data + j*len_new, dyn_old->array->data + i + j*len_old, len_new*(sizeof(REAL8)));
+    REAL8 t0 = dyn_new->tVec[0];
+    for (int j=0; j<len_new; j++)
+        dyn_new->tVec[j] = dyn_new->tVec[j] - t0;
+    STRUCTFREE(dyn_old, SEOBSAdynamics);
+    *eobdyn = dyn_new;
+    return CEV_SUCCESS;
+}
+
+INT CutSEOBdynamics(SEOBdynamics **eobdyn, REAL8 MfMin)
+{
+    INT i, len_old, len_new;
+    REAL8 omega0 = CST_PI*MfMin;
+    SEOBdynamics *dyn_old = *eobdyn;
+    len_old = dyn_old->length;
+    for(i=0; i<len_old; i++)
+    {
+        // print_debug("omega = %.16e\n", dyn_old->omegaVec[i]);
+        if (dyn_old->omegaVec[i] >= omega0)
+            break;
+    }
+    if (i==0) return CEV_SUCCESS;
+    if(i>0) i--;
+    len_new = len_old - i;
+    if (len_new == 0)
+        return CEV_FAILURE;
+    SEOBdynamics *dyn_new = CreateSEOBdynamics(len_new);
+// print_debug("here: (%d, %d)\n", dyn_new->array->dimLength->data[0], dyn_new->array->dimLength->data[1]);
+    for (int j=0; j<dyn_new->array->dimLength->data[0]; j++)
+        memcpy(dyn_new->array->data + j*len_new, dyn_old->array->data + i + j*len_old, len_new*(sizeof(REAL8)));
+    REAL8 t0 = dyn_new->tVec[0];
+    for (int j=0; j<len_new; j++)
+        dyn_new->tVec[j] = dyn_new->tVec[j] - t0;
+    STRUCTFREE(dyn_old, SEOBdynamics);
+    *eobdyn = dyn_new;
+    return CEV_SUCCESS;
+}
+
 INT SEOBComputeExtendedSEOBdynamics(SEOBdynamics **seobdynamics,
                                     REAL8Array *dynamics,
                                     INT retLen,

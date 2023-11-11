@@ -1879,6 +1879,8 @@ int XLALSpinAlignedHcapDerivative_SA(
         PRINT_LOG_INFO(LOG_CRITICAL, "Deriv is nan: %e %e %e %e\n", dvalues[0], dvalues[1], dvalues[2], dvalues[3] );
         return CEV_FAILURE;
     }
+    params.params->cache[1] = dvalues[2];
+    params.params->cache[2] = dvalues[3];
 // te = clock();
 // print_debug("Time Cost Old: t_p1 = %.16e, t_p12 = %.16e, t_p23 = %.16e, t_p3e = %.16e\n", 
 //         ((REAL8)(t_p1-t0)/CLOCKS_PER_SEC),
@@ -2085,6 +2087,8 @@ int XLALSpinAlignedHcapDerivative_SA_inverse(
         PRINT_LOG_INFO(LOG_CRITICAL, "Input is: %e %e %e %e\n", values[0], values[1], values[2], values[3] );
         return CEV_FAILURE;
     }
+    params.params->cache[1] = dvalues[2];
+    params.params->cache[2] = dvalues[3];
     for (i=0; i<4; i++)
         dvalues[i] = -dvalues[i];
 // te = clock();
@@ -2282,6 +2286,8 @@ int XLALSpinAlignedHcapDerivative_SAConserve(
     dvalues[2] = dvalues[2] * csi;
     dvalues[3] = 0.0;
 #endif
+    params.params->cache[1] = dvalues[2];
+    params.params->cache[2] = dvalues[3];
     // print_debug("cFr = %f, cFf = %f, vr = %f, prDot = %f\n", cFr, cFf, dvalues[0], dvalues[2]);
     //if ( values[0] > 1.3 && values[0] < 3.9 ) printf("Values:\n%f %f %f %f\n", values[0], values[1], values[2], values[3] );
 

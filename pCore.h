@@ -133,6 +133,8 @@ INT SEOBIntegrateDynamics_SA(REAL8Array **dynamics,
                           REAL8 tstart,
                           REAL8 tend ,
                           SpinEOBParams *seobParams);
+INT CutSEOBdynamics(SEOBdynamics **eobdyn, REAL8 MfMin);
+INT CutSEOBSAdynamics(SEOBSAdynamics **eobdyn, REAL8 MfMin);
 
 int XLALEOBCheckNyquistFrequency(REAL8 m1, REAL8 m2, REAL8 spin1[3],
                                  REAL8 spin2[3], REAL8 deltaT, UINT ell_max);

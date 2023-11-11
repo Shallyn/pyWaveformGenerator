@@ -315,8 +315,14 @@ if(1) {failed = 1; goto QUIT;}
     if (dynamicsInverse)
         SEOBConcactInverseDynToAdaSDyn(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
     PRINT_LOG_INFO(LOG_DEBUG, "AdaS data length = %d", retLenAdaS);
-    status = SEOBComputeExtendedSEOBdynamics(&seobdynamicsAdaS, dynamicsAdaS, retLenAdaS, core);
+    status = SEOBComputeExtendedSEOBdynamics(&seobdynamicsAdaS, dynamicsAdaS, retLenAdaS, core);    
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    if (MfMin > Mf_ref)
+    {
+        status = CutSEOBdynamics(&seobdynamicsAdaS, MfMin);
+        retLenAdaS = seobdynamicsAdaS->length;
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     m1rVec = CreateREAL8Vector(retLenAdaS);
     for (i = 0; i < retLenAdaS; i++)
     {
@@ -2898,6 +2904,12 @@ if(1) {failed = 1; goto QUIT;}
     //     print_debug("test dynSA done\n");
     // }
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    if (MfMin > Mf_ref)
+    {
+        status = CutSEOBSAdynamics(&seobdynamicsAdaS, MfMin);
+        retLenAdaS = seobdynamicsAdaS->length;
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     m1rVec = CreateREAL8Vector(retLenAdaS);
     for (i = 0; i < retLenAdaS; i++) 
     {
@@ -2974,6 +2986,8 @@ HISR:
     /* Compute derived quantities for the high-sampling dynamics */
     status = SEOBComputeExtendedSEOBSAdynamics(&seobdynamicsHiS, dynamicsHiS, retLenHiS, core);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+// print_debug("sizeof dynamicsAdaS = (%d, %d)\n", dynamicsAdaS->dimLength->data[0], dynamicsAdaS->dimLength->data[1]);
+// print_debug("sizeof dynamicsHiS = (%d, %d)\n", dynamicsAdaS->dimLength->data[0], dynamicsAdaS->dimLength->data[1]);
 
     /* Find time of peak of omega for the High-sampling dynamics */
     INT foundPeakOmega = 0;
@@ -3916,6 +3930,12 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
         SEOBConcactInverseDynToAdaSDynPrec(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
     status = SEOBComputeExtendedSEOBPrecdynamics(&seobdynamicsAdaS, dynamicsAdaS, retLenAdaS, core);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    if (MfMin > Mf_ref)
+    {
+        status = CutSEOBPrecdynamics(&seobdynamicsAdaS, MfMin);
+        retLenAdaS = seobdynamicsAdaS->length;
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+    }
     m1rVec = CreateREAL8Vector(retLenAdaS);
     for (i = 0; i < retLenAdaS; i++) 
     {
