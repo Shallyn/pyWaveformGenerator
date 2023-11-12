@@ -669,6 +669,34 @@ INT SEOBComputeExtendedSEOBPrecdynamics(SEOBPrecdynamics **seobdynamics,
     return CEV_SUCCESS;
 }
 
+void OrbitalPhaseReducePrec(SEOBPrecdynamics *dyn, REAL8 phiD, REAL8 phiM, REAL8 phi)
+{
+    INT i, length = dyn->length;
+    for (i=0; i<length; i++)
+    {
+        dyn->phiDMod[i] -= phiD;
+        dyn->phiMod[i] -= phiM;
+        dyn->polarphiVec[i] -= phi;
+    }
+    return;
+}
+
+INT SetZeroPhaseAtTimePrec(SEOBPrecdynamics *dyn, REAL8 t, REAL8 *ret_dphiD, REAL8 *ret_dphiM, REAL8 *ret_dphi)
+{
+    REAL8 phiD, phiM, phi;
+    REAL8Vector *dynVec = NULL;
+    INT status;
+    status = SEOBInterpolatePrecDynamicsAtTime(&dynVec, t, dyn);
+    if (status != CEV_SUCCESS)
+        return CEV_FAILURE;
+    *ret_dphiD = phiD = dynVec->data[13];
+    *ret_dphiM = phiM = dynVec->data[14];
+    *ret_dphi = phi = dynVec->data[22];
+    OrbitalPhaseReducePrec(dyn, phiD, phiM, phi);
+    STRUCTFREE(dynVec, REAL8Vector);
+    return CEV_SUCCESS;
+}
+
 int SEOBInterpolatePrecDynamicsAtTime(
     REAL8Vector **seobdynamics_values, /**<< Output: pointer to vector for
                                           seobdynamics interpolated values */

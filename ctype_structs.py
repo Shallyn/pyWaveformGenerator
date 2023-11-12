@@ -44,7 +44,8 @@ class pyHyperParams(ctypes.Structure):
                 ('inEPS_ABS', ctypes.c_double),
                 ('is_coframe', ctypes.c_int),
                 ('Mf_min', ctypes.c_double),
-                ('Mf_ref', ctypes.c_double))
+                ('Mf_ref', ctypes.c_double),
+                ('zero_dyncoaphase', ctypes.c_int))
 
 class pyFacWaveformCoeffs(ctypes.Structure):
     _fields_ = (('delta22vh3',ctypes.c_double),
@@ -767,7 +768,8 @@ class pyInputParams(ctypes.Structure):
                 ('use_coaphase', ctypes.c_int),
                 ('zeta', ctypes.c_double),
                 ('xi', ctypes.c_double),
-                ('Mf_ref', ctypes.c_double))
+                ('Mf_ref', ctypes.c_double),
+                ('zero_dyncoaphase', ctypes.c_int))
 
 
 class pyOutputStruct(ctypes.Structure):

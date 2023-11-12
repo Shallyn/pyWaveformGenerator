@@ -518,6 +518,13 @@ HISR:
     /* Determine the time of attachment */
     REAL8 tAttach = tPeakOmega - Deltat22;
     PRINT_LOG_INFO(LOG_INFO, "tAttach = %.16e, Deltat22 = %.16e", tAttach, Deltat22);
+    if (core->hParams->zero_dyncoaphase)
+    {
+        REAL8 de_phiD, de_phiM, de_phi;
+        status = SetZeroPhaseAtTime(seobdynamicsHiS, tAttach, &de_phiD, &de_phiM, &de_phi);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        OrbitalPhaseReduce(seobdynamicsAdaS, de_phiD, de_phiM, de_phi);
+    }
     //Compute NQC window factors
     if (ecc != 0.0)
     {
@@ -3046,6 +3053,13 @@ HISR:
     /* Determine the time of attachment */
     REAL8 tAttach = tPeakOmega - Deltat22;
     PRINT_LOG_INFO(LOG_INFO, "The location of attachment is %f, Deltat22 = %f", tAttach, Deltat22);
+    if (core->hParams->zero_dyncoaphase)
+    {
+        REAL8 de_phi;
+        status = SetZeroPhaseAtTimeSA(seobdynamicsHiS, tAttach, &de_phi);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        OrbitalPhaseReduceSA(seobdynamicsAdaS, de_phi);
+    }
 
     //Compute NQC window factors
     if (ecc != 0.0)
@@ -4033,7 +4047,13 @@ HISR:
     /* Determine the time of attachment */
     REAL8 tAttach = tPeakOmega - Deltat22;
     PRINT_LOG_INFO(LOG_INFO, "The location of attachment is %f, Deltat22 = %f", tAttach, Deltat22);
-
+    if (core->hParams->zero_dyncoaphase)
+    {
+        REAL8 de_phiD, de_phiM, de_phi;
+        status = SetZeroPhaseAtTimePrec(seobdynamicsHiS, tAttach, &de_phiD, &de_phiM, &de_phi);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        OrbitalPhaseReducePrec(seobdynamicsAdaS, de_phiD, de_phiM, de_phi);
+    }
     //Compute NQC window factors
     if (ecc != 0.0)
     {

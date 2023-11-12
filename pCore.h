@@ -135,6 +135,10 @@ INT SEOBIntegrateDynamics_SA(REAL8Array **dynamics,
                           SpinEOBParams *seobParams);
 INT CutSEOBdynamics(SEOBdynamics **eobdyn, REAL8 MfMin);
 INT CutSEOBSAdynamics(SEOBSAdynamics **eobdyn, REAL8 MfMin);
+void OrbitalPhaseReduce(SEOBdynamics *dyn, REAL8 phiD, REAL8 phiM, REAL8 phi);
+INT SetZeroPhaseAtTime(SEOBdynamics *dyn, REAL8 t, REAL8 *ret_dphiD, REAL8 *ret_dphiM, REAL8 *ret_dphi);
+void OrbitalPhaseReduceSA(SEOBSAdynamics *dyn, REAL8 phi);
+INT SetZeroPhaseAtTimeSA(SEOBSAdynamics *dyn, REAL8 t, REAL8 *ret_dphi);
 
 int XLALEOBCheckNyquistFrequency(REAL8 m1, REAL8 m2, REAL8 spin1[3],
                                  REAL8 spin2[3], REAL8 deltaT, UINT ell_max);

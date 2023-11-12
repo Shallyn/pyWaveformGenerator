@@ -4441,6 +4441,33 @@ QUIT:
     return CEV_SUCCESS;
 }
 
+void OrbitalPhaseReduce(SEOBdynamics *dyn, REAL8 phiD, REAL8 phiM, REAL8 phi)
+{
+    INT i, length = dyn->length;
+    for (i=0; i<length; i++)
+    {
+        dyn->phiDMod[i] -= phiD;
+        dyn->phiMod[i] -= phiM;
+        dyn->polarphiVec[i] -= phi;
+    }
+    return;
+}
+
+INT SetZeroPhaseAtTime(SEOBdynamics *dyn, REAL8 t, REAL8 *ret_dphiD, REAL8 *ret_dphiM, REAL8 *ret_dphi)
+{
+    REAL8 phiD, phiM, phi;
+    REAL8Vector *dynVec = NULL;
+    INT status;
+    status = SEOBInterpolateDynamicsAtTime(&dynVec, t, dyn);
+    if (status != CEV_SUCCESS)
+        return CEV_FAILURE;
+    *ret_dphiD = phiD = dynVec->data[13];
+    *ret_dphiM = phiM = dynVec->data[14];
+    *ret_dphi = phi = dynVec->data[19];
+    OrbitalPhaseReduce(dyn, phiD, phiM, phi);
+    STRUCTFREE(dynVec, REAL8Vector);
+    return CEV_SUCCESS;
+}
 
 /**
  * This function computes all extended dynamics values at a given time by
@@ -4515,6 +4542,30 @@ QUIT:
     return CEV_SUCCESS;
 }
 
+void OrbitalPhaseReduceSA(SEOBSAdynamics *dyn, REAL8 phi)
+{
+    INT i, length = dyn->length;
+    for (i=0; i<length; i++)
+    {
+        dyn->phiVec[i] -= phi;
+    }
+    return;
+}
+
+INT SetZeroPhaseAtTimeSA(SEOBSAdynamics *dyn, REAL8 t, REAL8 *ret_dphi)
+{
+    REAL8 phiD, phiM, phi;
+    REAL8Vector *dynVec = NULL;
+    INT status;
+    status = SEOBInterpolateSADynamicsAtTime(&dynVec, t, dyn);
+    if (status != CEV_SUCCESS)
+        return CEV_FAILURE;
+    *ret_dphi = phi = dynVec->data[2];
+    OrbitalPhaseReduceSA(dyn, phi);
+    STRUCTFREE(dynVec, REAL8Vector);
+    return CEV_SUCCESS;
+}
+
 int SEOBInterpolateSADynamicsAtTime(
     REAL8Vector **seobdynamics_values, /**<< Output: pointer to vector for
                                           seobdynamics interpolated values */
@@ -4526,7 +4577,7 @@ int SEOBInterpolateSADynamicsAtTime(
     int is_failed = 0;
     UINT j;
     /* Create output vector */
-    if (!((*seobdynamics_values) = CreateREAL8Vector(5))) 
+    if (!((*seobdynamics_values) = CreateREAL8Vector(v4SAdynamicsVariables))) 
     {
         PRINT_LOG_INFO(LOG_CRITICAL, "failed to allocate REAL8Vector ");
         return CEV_FAILURE;

@@ -40,6 +40,7 @@ typedef struct tagHyperParams
     INT is_coframe;
     REAL8  Mf_min;
     REAL8  Mf_ref;
+    INT    zero_dyncoaphase;
 }HyperParams;
 
 typedef struct {

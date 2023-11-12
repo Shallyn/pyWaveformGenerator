@@ -40,6 +40,8 @@ INT SEOBIntegrateDynamics_prec_inverse(REAL8Array **dynamics,
 void SEOBConcactInverseDynToAdaSDynPrec(REAL8Array **dyn_out, REAL8Array *dyn_inv, 
         INT *retLen_out, INT retLen_inv);
 INT CutSEOBPrecdynamics(SEOBPrecdynamics **eobdyn, REAL8 MfMin);
+void OrbitalPhaseReducePrec(SEOBPrecdynamics *dyn, REAL8 phiD, REAL8 phiM, REAL8 phi);
+INT SetZeroPhaseAtTimePrec(SEOBPrecdynamics *dyn, REAL8 t, REAL8 *ret_dphiD, REAL8 *ret_dphiM, REAL8 *ret_dphi);
 
 
 INT SEOBComputeExtendedSEOBPrecdynamics(SEOBPrecdynamics **seobdynamics,
