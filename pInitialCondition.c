@@ -4050,8 +4050,11 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     /* Given this, we can start to calculate the initial conditions */
     /* for spherical coords in the new basis */
     REAL8 x_lo, x_hi, root;
-    x_lo = GET_MAX(-0.9, pr0 - 0.02);
-    x_hi = GET_MIN(pr0 + 0.02, 0.9);
+    REAL8 x_lo_min, x_hi_max;
+    if (pr0 < 0.0) x_hi_max = 0.0;
+    else x_lo_min = 0.0;
+    x_lo = GET_MAX(x_lo_min, pr0 - 0.02);
+    x_hi = GET_MIN(pr0 + 0.02, x_hi_max);
 #if 1
 
     // print_debug("x_lo = %.16e, x_hi = %.16e\n", x_lo, x_hi);
@@ -4063,12 +4066,12 @@ GSL_START;
     gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
     if (gslStatus != GSL_SUCCESS)
     {
-        PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
+        PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr, now we try more initial setting");
         int i_try = 100;
         while(i_try > 0)
         {
-            x_lo = x_lo - 0.02;
-            x_hi = x_hi + 0.02;
+            x_lo = GET_MAX(x_lo_min, x_lo - 0.02);
+            x_hi = GET_MIN(x_hi + 0.02, x_hi_max);
             gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
             if (gslStatus == GSL_SUCCESS)
                 break;
@@ -4078,6 +4081,7 @@ GSL_START;
         if (i_try == 0)
         {
             *pr = pr0;
+            PRINT_LOG_INFO(LOG_WARNING, "try %d times, cannot find initial condition for pr", 100-i_try);
             return CEV_FAILURE;
         }
         // print_debug("x_lo, x_hi, root = (%.5e, %.5e), %.5e\n", x_lo, x_hi, root);
@@ -4091,7 +4095,7 @@ GSL_START;
         gslStatus = gsl_root_fsolver_iterate( rootSolver1D );
         if ( gslStatus != GSL_SUCCESS )
         {
-            PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
+            PRINT_LOG_INFO(LOG_WARNING, "in the iteration, we cannot find initial condition for pr");
             //print_debug("cannot find initial condition for pr0\n");
             gsl_root_fsolver_free( rootSolver1D );
             *pr = pr0;
