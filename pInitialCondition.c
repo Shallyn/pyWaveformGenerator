@@ -4050,11 +4050,11 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     /* Given this, we can start to calculate the initial conditions */
     /* for spherical coords in the new basis */
     REAL8 x_lo, x_hi, root;
-    REAL8 x_lo_min, x_hi_max;
+    REAL8 x_lo_min = -0.9, x_hi_max = 0.9;
     if (pr0 < 0.0) x_hi_max = 0.0;
     else x_lo_min = 0.0;
-    x_lo = GET_MAX(x_lo_min, pr0 - 0.02);
-    x_hi = GET_MIN(pr0 + 0.02, x_hi_max);
+    x_lo = GET_MAX(x_lo_min, pr0 - 0.01);
+    x_hi = GET_MIN(pr0 + 0.01, x_hi_max);
 #if 1
 
     // print_debug("x_lo = %.16e, x_hi = %.16e\n", x_lo, x_hi);
@@ -4070,8 +4070,8 @@ GSL_START;
         int i_try = 100;
         while(i_try > 0)
         {
-            x_lo = GET_MAX(x_lo_min, x_lo - 0.02);
-            x_hi = GET_MIN(x_hi + 0.02, x_hi_max);
+            x_lo = GET_MAX(x_lo_min, x_lo - 0.01);
+            x_hi = GET_MIN(x_hi + 0.01, x_hi_max);
             gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
             if (gslStatus == GSL_SUCCESS)
                 break;
@@ -5456,12 +5456,12 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
     F.function = &EOBSolvingInitialPr_from_ezetaPrec;
     F.params = &fparams2;
     REAL8 x_lo, x_hi;
-    REAL8 x_lo_min, x_hi_max;
+    REAL8 x_lo_min = -0.9, x_hi_max = 0.9;
     INT search_pr_failed = 0;
     if (tmp_px < 0.0) x_hi_max = 0.0;
     else x_lo_min = 0.0;
-    x_lo = GET_MAX(x_lo_min, tmp_px - 0.2);
-    x_hi = GET_MIN(tmp_px + 0.2, x_hi_max);
+    x_lo = GET_MAX(x_lo_min, tmp_px - 0.01);
+    x_hi = GET_MIN(tmp_px + 0.01, x_hi_max);
     /* Initialise the gsl stuff */
     GSL_START;
     gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
@@ -5471,8 +5471,8 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
         int i_try = 100;
         while(i_try > 0)
         {
-            x_lo = GET_MAX(x_lo_min, x_lo - 0.02);
-            x_hi = GET_MIN(x_hi + 0.02, x_hi_max);
+            x_lo = GET_MAX(x_lo_min, x_lo - 0.01);
+            x_hi = GET_MIN(x_hi + 0.01, x_hi_max);
             gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
             if (gslStatus == GSL_SUCCESS)
                 break;

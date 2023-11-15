@@ -337,6 +337,7 @@ static int PrecStopConditionBasedOnPR_inverse(double t,
     cross_product3d(values, dvalues, omega_xyz);
     omega = sqrt(inner_product3d(omega_xyz, omega_xyz)) / r2;
     REAL8 omega0 = CST_PI * params->hParams->Mf_min;
+    // print_debug("omega, omega0 = %.16e, %.16e\n", omega, omega0);
     if (omega < omega0)
         return 1;
     return GSL_SUCCESS;

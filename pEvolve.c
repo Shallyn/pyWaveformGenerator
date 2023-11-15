@@ -3878,7 +3878,6 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
         if (ecc > 0.0 && get_egw_flag()) {
             //status = SEOBInitialConditions_egw(ICvalues, MfMin, ecc, core);
             status = SEOBInitialConditions_e_anomaly(ICvalues, Mf_ref, ecc, zeta, xi, core);
-            print_debug("here\n");
         } else
             status = SEOBInitialConditions(ICvalues, Mf_ref, ecc, core);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
@@ -3932,6 +3931,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
         EPS_ABS = hparams->inEPS_ABS;
     if (MfMin < Mf_ref)
     {
+        // print_debug("MfMin, Mfref = %.16e, %.16e\n", MfMin, Mf_ref);
         status = SEOBIntegrateDynamics_prec_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
            deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
