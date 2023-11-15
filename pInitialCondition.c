@@ -4081,6 +4081,8 @@ GSL_START;
         if (i_try == 0)
         {
             *pr = pr0;
+            gsl_root_fsolver_free( rootSolver1D );
+            GSL_END;
             PRINT_LOG_INFO(LOG_WARNING, "try %d times, cannot find initial condition for pr", 100-i_try);
             return CEV_FAILURE;
         }
@@ -4099,6 +4101,7 @@ GSL_START;
             //print_debug("cannot find initial condition for pr0\n");
             gsl_root_fsolver_free( rootSolver1D );
             *pr = pr0;
+            GSL_END;
             return CEV_SUCCESS;
         }
         x_lo = gsl_root_fsolver_x_lower (rootSolver1D);
@@ -5453,45 +5456,75 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
     F.function = &EOBSolvingInitialPr_from_ezetaPrec;
     F.params = &fparams2;
     REAL8 x_lo, x_hi;
-    x_lo = GET_MAX(-0.9, tmp_px - 0.2);
-    x_hi = GET_MIN(tmp_px + 0.2, 0.9);
-    gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
+    REAL8 x_lo_min, x_hi_max;
+    INT search_pr_failed = 0;
+    if (tmp_px < 0.0) x_hi_max = 0.0;
+    else x_lo_min = 0.0;
+    x_lo = GET_MAX(x_lo_min, tmp_px - 0.2);
+    x_hi = GET_MIN(tmp_px + 0.2, x_hi_max);
     /* Initialise the gsl stuff */
     GSL_START;
+    gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
+    if (gslStatus != GSL_SUCCESS)
+    {
+        PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr, now we try more initial setting");
+        int i_try = 100;
+        while(i_try > 0)
+        {
+            x_lo = GET_MAX(x_lo_min, x_lo - 0.02);
+            x_hi = GET_MIN(x_hi + 0.02, x_hi_max);
+            gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
+            if (gslStatus == GSL_SUCCESS)
+                break;
+            else
+                i_try--;
+        }
+        if (i_try == 0)
+        {
+            search_pr_failed = 1;
+            PRINT_LOG_INFO(LOG_WARNING, "try %d times, cannot find initial condition for pr", 100-i_try);
+        }
+        // print_debug("x_lo, x_hi, root = (%.5e, %.5e), %.5e\n", x_lo, x_hi, root);
+    }
+
     REAL8 res_pr;
     INT status;
-    /* We are now ready to iterate to find the solution */
-    i = 0;
-    do
-    {
-        gslStatus = gsl_root_fsolver_iterate( rootSolver1D );
-        if ( gslStatus != GSL_SUCCESS )
-        {
-            // PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
-            print_debug("cannot find initial condition for pr0\n");
-            gsl_root_fsolver_free( rootSolver1D );
-            res_pr = tmp_px;
-            return CEV_SUCCESS;
-        }
-        x_lo = gsl_root_fsolver_x_lower (rootSolver1D);
-        x_hi = gsl_root_fsolver_x_upper (rootSolver1D);
-        gslStatus = gsl_root_test_interval (x_lo, x_hi, 1e-9, 1e-9);
-        // print_debug ("%5d [%.7f, %.7f] %.7f %+.7f\n",
-        //     i, x_lo, x_hi,
-        //     gsl_root_fsolver_root (rootSolver1D),
-        //     x_hi - x_lo);
-        i++;
-    }
-    while ( gslStatus == GSL_CONTINUE && i <= maxIter );
-
-    if ( i > maxIter && gslStatus != GSL_SUCCESS )
-    {
-        PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
-        // print_debug("cannot find initial condition for pr0\n");
+    if (search_pr_failed) {
         res_pr = tmp_px;
+    } else {
+        /* We are now ready to iterate to find the solution */
+        i = 0;
+        do
+        {
+            gslStatus = gsl_root_fsolver_iterate( rootSolver1D );
+            if ( gslStatus != GSL_SUCCESS )
+            {
+                // PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
+                print_debug("cannot find initial condition for pr0\n");
+                gsl_root_fsolver_free( rootSolver1D );
+                res_pr = tmp_px;
+            }
+            x_lo = gsl_root_fsolver_x_lower (rootSolver1D);
+            x_hi = gsl_root_fsolver_x_upper (rootSolver1D);
+            gslStatus = gsl_root_test_interval (x_lo, x_hi, 1e-9, 1e-9);
+            // print_debug ("%5d [%.7f, %.7f] %.7f %+.7f\n",
+            //     i, x_lo, x_hi,
+            //     gsl_root_fsolver_root (rootSolver1D),
+            //     x_hi - x_lo);
+            i++;
+        }
+        while ( gslStatus == GSL_CONTINUE && i <= maxIter );
+
+        if ( i > maxIter && gslStatus != GSL_SUCCESS )
+        {
+            PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr");
+            // print_debug("cannot find initial condition for pr0\n");
+            res_pr = tmp_px;
+        }
+        else 
+            res_pr = gsl_root_fsolver_root (rootSolver1D);
+
     }
-    else 
-        res_pr = gsl_root_fsolver_root (rootSolver1D);
     pCart[0] = res_pr;
 	CartesianToSpherical(qSph, pSph, qCart, pCart);
     GSL_END;
