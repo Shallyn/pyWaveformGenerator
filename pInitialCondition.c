@@ -18,6 +18,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_roots.h>
+#include <gsl/gsl_min.h>
 
 #define GSL_START \
           gsl_error_handler_t *saveGSLErrorHandler_; \
@@ -3812,6 +3813,7 @@ typedef struct {
     REAL8 cartvalues[12];
 }RootParams_SolPr;
 
+#define USE_ROOTSOLVER1D 0
 // calculate dH/dpr - rDot == 0
 static REAL8 EOBSolvingInitialPr_from_ezeta(REAL8 pr, void *params)
 {
@@ -3889,7 +3891,11 @@ static REAL8 EOBSolvingInitialPr_from_ezeta(REAL8 pr, void *params)
     //     pr, ham, flux, 
     //     d2Hdrdpphi, d2Hdr2, 
     //     rDot0, rDot1, dHdpr);
+#if USE_ROOTSOLVER1D
     return 100*eq;
+#else
+    return 100*fabs(eq);
+#endif
 }
 
 int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams *params, REAL8 *r, REAL8 *pr, REAL8 *pphi)
@@ -4050,13 +4056,13 @@ int calc_rpphi_from_eanomaly(REAL8 e, REAL8 anomaly, REAL8 omega, SpinEOBParams 
     /* Given this, we can start to calculate the initial conditions */
     /* for spherical coords in the new basis */
     REAL8 x_lo, x_hi, root;
-    REAL8 x_lo_min = -0.9, x_hi_max = 0.9;
+    REAL8 x_lo_min = -fabs(pr0)*2, x_hi_max = fabs(pr0)*2;
     if (pr0 < 0.0) x_hi_max = 0.0;
     else x_lo_min = 0.0;
-    x_lo = GET_MAX(x_lo_min, pr0 - 0.01);
-    x_hi = GET_MIN(pr0 + 0.01, x_hi_max);
-#if 1
-
+#if USE_ROOTSOLVER1D
+    REAL8 dx_step = fabs(pr0)*0.1;
+    x_lo = GET_MAX(x_lo_min, pr0 - dx_step);
+    x_hi = GET_MIN(pr0 + dx_step, x_hi_max);
     // print_debug("x_lo = %.16e, x_hi = %.16e\n", x_lo, x_hi);
     // print_debug("tmpeq(x_lo) = %.16e, tmpeq(x_hi) = %.16e\n", 
     //     EOBSolvingInitialPr_from_ezeta(x_lo, &fparams2), 
@@ -4067,11 +4073,11 @@ GSL_START;
     if (gslStatus != GSL_SUCCESS)
     {
         PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr, now we try more initial setting");
-        int i_try = 100;
+        int i_try = 8;
         while(i_try > 0)
         {
-            x_lo = GET_MAX(x_lo_min, x_lo - 0.01);
-            x_hi = GET_MIN(x_hi + 0.01, x_hi_max);
+            x_lo = GET_MAX(x_lo_min, x_lo - dx_step);
+            x_hi = GET_MIN(x_hi + dx_step, x_hi_max);
             gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
             if (gslStatus == GSL_SUCCESS)
                 break;
@@ -4131,9 +4137,36 @@ GSL_START;
     // print_debug("pr0 = %.16e, eq(pr0) = %.16e\n", pr0, EOBSolvingInitialPr_from_ezeta(pr0, &fparams2));
     // print_debug("root = %.16e, eq(root) = %.16e\n", root, EOBSolvingInitialPr_from_ezeta(root, &fparams2));
 #else
+    x_lo = GET_MAX(x_lo_min, pr0 - fabs(pr0));
+    x_hi = GET_MIN(pr0 + fabs(pr0), x_hi_max);
+    REAL8 thresh = 0.0;
+GSL_START;
+    const gsl_min_fminimizer_type *TM = gsl_min_fminimizer_brent;
+    gsl_min_fminimizer *s = gsl_min_fminimizer_alloc (TM);
+    gsl_min_fminimizer_set (s, &F, pr0, x_lo, x_hi);
+    do
+    {
+        i++;
+        gslStatus = gsl_min_fminimizer_iterate (s);
+        if ( gslStatus != GSL_SUCCESS )
+        {
+            PRINT_LOG_INFO(LOG_WARNING, "in the iteration, we cannot find initial condition for pr");
+            //print_debug("cannot find initial condition for pr0\n");
+            gsl_root_fsolver_free( rootSolver1D );
+            gsl_min_fminimizer_free (s);
+            *pr = pr0;
+            GSL_END;
+            return CEV_SUCCESS;
+        }
+        root = gsl_min_fminimizer_x_minimum (s);
+        x_lo = gsl_min_fminimizer_x_lower (s);
+        x_hi = gsl_min_fminimizer_x_upper (s);
+        gslStatus = gsl_min_test_interval (x_lo, x_hi, 1e-9, 1e-9);
+    }  while ( gslStatus == GSL_CONTINUE && i <= maxIter );
+    gsl_min_fminimizer_free (s);
+GSL_END;
     *pr = pr0;
 #endif
-
     gsl_root_fsolver_free(rootSolver1D);
     return CEV_SUCCESS;
 }
@@ -4838,8 +4871,11 @@ static REAL8 EOBSolvingInitialPr_from_ezetaPrec(REAL8 pr, void *params)
     eq = dHdpr - (rDot0 + rDot1);
 // #if 0
 // #endif
-
+#if USE_ROOTSOLVER1D
     return 100*eq;
+#else
+    return 100*fabs(eq);
+#endif 
 }
 
 INT Calculate_rpypz_from_ezeta(SEOBRootParams *rootParams, REAL8 e0, REAL8 zeta, 
@@ -5456,23 +5492,26 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
     F.function = &EOBSolvingInitialPr_from_ezetaPrec;
     F.params = &fparams2;
     REAL8 x_lo, x_hi;
-    REAL8 x_lo_min = -0.9, x_hi_max = 0.9;
-    INT search_pr_failed = 0;
+    // REAL8 x_lo_min = -0.9, x_hi_max = 0.9;
+    REAL8 x_lo_min = -fabs(tmp_px)*2, x_hi_max = fabs(tmp_px)*2;
     if (tmp_px < 0.0) x_hi_max = 0.0;
     else x_lo_min = 0.0;
-    x_lo = GET_MAX(x_lo_min, tmp_px - 0.01);
-    x_hi = GET_MIN(tmp_px + 0.01, x_hi_max);
+#if USE_ROOTSOLVER1D
+    REAL8 dx_step = fabs(tmp_px)*0.1;
+    INT search_pr_failed = 0;
+    x_lo = GET_MAX(x_lo_min, tmp_px - dx_step);
+    x_hi = GET_MIN(tmp_px + dx_step, x_hi_max);
     /* Initialise the gsl stuff */
     GSL_START;
     gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
     if (gslStatus != GSL_SUCCESS)
     {
         PRINT_LOG_INFO(LOG_WARNING, "cannot find initial condition for pr, now we try more initial setting");
-        int i_try = 100;
+        int i_try = 8;
         while(i_try > 0)
         {
-            x_lo = GET_MAX(x_lo_min, x_lo - 0.01);
-            x_hi = GET_MIN(x_hi + 0.01, x_hi_max);
+            x_lo = GET_MAX(x_lo_min, x_lo - dx_step);
+            x_hi = GET_MIN(x_hi + dx_step, x_hi_max);
             gslStatus = gsl_root_fsolver_set (rootSolver1D, &F, x_lo, x_hi);
             if (gslStatus == GSL_SUCCESS)
                 break;
@@ -5526,8 +5565,36 @@ INT EOBInitialConditionsPrec_e_anomaly(REAL8Vector    *initConds,
 
     }
     pCart[0] = res_pr;
-	CartesianToSpherical(qSph, pSph, qCart, pCart);
     GSL_END;
+#else
+    REAL8 res_pr;
+    x_lo = GET_MAX(x_lo_min, tmp_px - fabs(tmp_px));
+    x_hi = GET_MIN(tmp_px + fabs(tmp_px), x_hi_max);
+GSL_START;
+    const gsl_min_fminimizer_type *TM = gsl_min_fminimizer_brent;
+    gsl_min_fminimizer *s = gsl_min_fminimizer_alloc (TM);
+    gsl_min_fminimizer_set (s, &F, tmp_px, x_lo, x_hi);
+    do
+    {
+        i++;
+        gslStatus = gsl_min_fminimizer_iterate (s);
+        if ( gslStatus != GSL_SUCCESS )
+        {
+            PRINT_LOG_INFO(LOG_WARNING, "in the iteration, we cannot find initial condition for pr");
+            //print_debug("cannot find initial condition for pr0\n");
+            res_pr = tmp_px;
+            break;
+        }
+        res_pr = gsl_min_fminimizer_x_minimum (s);
+        x_lo = gsl_min_fminimizer_x_lower (s);
+        x_hi = gsl_min_fminimizer_x_upper (s);
+        gslStatus = gsl_min_test_interval (x_lo, x_hi, 1e-9, 1e-9);
+    }  while ( gslStatus == GSL_CONTINUE && i <= maxIter );
+    gsl_min_fminimizer_free (s);
+GSL_END;
+    pCart[0] = res_pr;
+#endif
+	CartesianToSpherical(qSph, pSph, qCart, pCart);
 
 
 	/*
