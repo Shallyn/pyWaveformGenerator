@@ -15,7 +15,7 @@ newFactorizedWaveformPrec.c pInitialConditionExact.c \
 pPrec.c pPrecHam.c pPrecUtils.c pPrecRRForce.c pPrecWaveform.c pDebug.c interface.c
 
 
-libEOB_la_LIBADD = -lgsl -lgslcblas -lgthread-2.0 -lhdf5
+libEOB_la_LIBADD = -lgsl -lgslcblas #-lgthread-2.0
 libEOB_la_LDFLAGS = -module -avoid-version
 #MAIN_SOURCES = main.c
 #MAIN_LDADD = libEOB.la
