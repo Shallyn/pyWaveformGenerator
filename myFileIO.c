@@ -197,6 +197,8 @@ INT read_waveform(REAL8Vector **time,
     return CEV_SUCCESS;
 }
 
+
+#if 0
 INT DumpREAL8VectorTohdf5(CHAR *fname, CHAR *dname, REAL8Vector *vec, INT is_delete)
 {
     hid_t       file, group, subgroup, gcpl;        /* Handles */
@@ -668,3 +670,4 @@ INT dump_to_extendible_H5_2D(const char* FILENAME, char *dname, REAL8Array *arr)
     } 
     return CEV_SUCCESS;
 }
+#endif
