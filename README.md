@@ -122,7 +122,10 @@ chi2y = -0.3
 chi2x = chi2z = 0
 e0 = 0.2
 dL = 100
-zeta_rad = 60 * np.pi/180
+zeta_rad = 0 * np.pi/180 
+# Warning: Here we assumed that the period of spin precession 
+#			is much greater than the period of eccentric precession.
+#     We suggest you set zeta_rad = 0 here.
 iota_rad = beta_rad = Phic_rad = 0
 fMin = 20
 Mf_ref = 0.002
