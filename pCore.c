@@ -9219,6 +9219,8 @@ INT SEOBInitialConditions_e_anomaly(REAL8Vector *ICvalues,
         //     return CEV_FAILURE;
         if (EOBInitialConditionsSA_e_anomaly(ICvalues, m1, m2, fMin, ecc, zeta, 0, mSpin1data, mSpin2data, seobParams) != CEV_SUCCESS)
             return CEV_FAILURE;
+        // if (EOBInitialConditionsSA_e_anomaly_v240228(ICvalues, m1, m2, fMin, ecc, zeta, 0, mSpin1data, mSpin2data, seobParams) != CEV_SUCCESS)
+        //     return CEV_FAILURE;
     }
     else
     {
