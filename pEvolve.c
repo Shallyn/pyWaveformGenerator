@@ -301,13 +301,133 @@ if(1) {failed = 1; goto QUIT;}
     if (hparams->inEPS_ABS > 0.)
         EPS_ABS = hparams->inEPS_ABS;
     // inv integrate dynamics
-    // CODING
     if (MfMin < Mf_ref)
     {
         status = SEOBIntegrateDynamics_inverse(&dynamicsInverse, &retLenInverse, ICvalues, EPS_ABS, EPS_REL,
            deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     }
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    if (MfMin < hparams->Mf_max)
+    {
+        /**
+         * @brief 20240304 by X.L.:
+         *          if Mf_max > MfMin,
+         *              let integrate stops at omega = pi*Mf_max
+         */
+        status = SEOBIntegrateDynamics_withfMax(&dynamicsAdaS, &retLenAdaS, 
+            ICvalues, EPS_ABS, EPS_REL, 
+            deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        if (dynamicsInverse)
+            SEOBConcactInverseDynToAdaSDyn(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
+        status = SEOBComputeExtendedSEOBdynamics(&seobdynamicsAdaSHiS, dynamicsAdaS, retLenAdaS, core);    
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        if (MfMin > Mf_ref)
+        {
+            status = CutSEOBdynamics(&seobdynamicsAdaSHiS, MfMin);
+            retLenAdaS = seobdynamicsAdaSHiS->length;
+            if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        }
+        PRINT_LOG_INFO(LOG_DEBUG, "Get retLenAdaS = %d", retLenAdaS);
+        tVecPmodes = CreateREAL8Vector(retLenAdaS);
+        memcpy(tVecPmodes->data, seobdynamicsAdaSHiS->tVec, retLenAdaS*sizeof(REAL8));
+        REAL8 tEndAtFMax = seobdynamicsAdaSHiS->tVec[retLenAdaS-1];
+        PRINT_LOG_INFO(LOG_INFO, "Step %d_ Get final J/L/spins from HiS dynamics at peak of Omega, compute constant angles EulerI2J.", this_step);
+        status = SEOBInterpolateDynamicsAtTime(&seobvalues_tPeakOmega, tEndAtFMax, seobdynamicsAdaSHiS);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        SEOBLFrameVectors(&chi1L_tPeakOmega, &chi2L_tPeakOmega, 
+            seobvalues_tPeakOmega, m1, m2, core->hParams->flagZframe);
+        PRINT_LOG_INFO(LOG_DEBUG, "chi1L_tPeakOmega = (%.16e, %.16e, %.16e)\n", 
+            chi1L_tPeakOmega->data[0], chi1L_tPeakOmega->data[1], chi1L_tPeakOmega->data[2]);
+        PRINT_LOG_INFO(LOG_DEBUG, "chi2L_tPeakOmega = (%.16e, %.16e, %.16e)\n",
+            chi2L_tPeakOmega->data[0], chi2L_tPeakOmega->data[1], chi2L_tPeakOmega->data[2]);
+        /* Compute final J from dynamics quantities */
+        SEOBJfromDynamics(&Jfinal, seobvalues_tPeakOmega, core);
+        /*Compute the L-hat vector. Note that it has unit norm */
+        // SEOBLhatfromDynamics(&Lhatfinal, seobvalues_tPeakOmega, core);
+        PRINT_LOG_INFO(LOG_DEBUG, "Jfinal = (%.16e, %.16e, %.16e)", Jfinal->data[0], Jfinal->data[1], Jfinal->data[2]);
+        // PRINT_LOG_INFO(LOG_DEBUG, "Lhatfinal = (%.16e, %.16e, %.16e)", Lhatfinal->data[0], Lhatfinal->data[1], Lhatfinal->data[2]);
+
+        REAL8Vector e1J_fmax, e2J_fmax, e3J_fmax;
+        e1J_fmax.length = e2J_fmax.length = e3J_fmax.length = 3;
+        REAL8 e1Jdata_fmax[3] = {0.};
+        REAL8 e2Jdata_fmax[3] = {0.};
+        REAL8 e3Jdata_fmax[3] = {0.};
+        e1J_fmax.data = e1Jdata_fmax;
+        e2J_fmax.data = e2Jdata_fmax;
+        e3J_fmax.data = e3Jdata_fmax;
+        SEOBBuildJframeVectors(&e1J_fmax, &e2J_fmax, &e3J_fmax, Jfinal);
+        PRINT_LOG_INFO(LOG_DEBUG, "e1J = (%.16e, %.16e, %.16e)", e1J_fmax.data[0], e1J_fmax.data[1], e1J_fmax.data[2]);
+        PRINT_LOG_INFO(LOG_DEBUG, "e2J = (%.16e, %.16e, %.16e)", e2J_fmax.data[0], e2J_fmax.data[1], e2J_fmax.data[2]);
+        PRINT_LOG_INFO(LOG_DEBUG, "e2J = (%.16e, %.16e, %.16e)", e3J_fmax.data[0], e3J_fmax.data[1], e3J_fmax.data[2]);
+
+        /* Compute Euler angles from initial I-frame to final-J-frame */
+        /* Note: if spins are aligned, the function SEOBEulerI2JFromJframeVectors */
+        /* becomes ill-defined - just keep these Euler angles to zero then */
+        REAL8 alphaI2J_fmax = 0., betaI2J_fmax = 0., gammaI2J_fmax = 0.;
+        if (!core->alignedSpins) 
+            SEOBEulerI2JFromJframeVectors(&alphaI2J_fmax, &betaI2J_fmax, &gammaI2J_fmax, &e1J_fmax, &e2J_fmax, &e3J_fmax);
+
+        SEOBCalculateSphHarmListhlmAmpPhase(&listhPlm_AdaS, modes, nmodes,
+                                            seobdynamicsAdaSHiS, NULL,
+                                            core, 0);
+        PRINT_LOG_INFO(LOG_DEBUG, "Calculate hPlms done");
+        status = SEOBEulerJ2PFromDynamics(&alphaJ2P, &betaJ2P, &gammaJ2P, 
+                    &e1J_fmax, &e2J_fmax, &e3J_fmax,
+                    retLenAdaS, retLenAdaS-1,
+                    seobdynamicsAdaSHiS, core);
+        PRINT_LOG_INFO(LOG_DEBUG, "Calculate Euler J2P done");
+        UINT retLenTS_fmax = floor(((tVecPmodes)->data[retLenAdaS - 1] - (tVecPmodes)->data[0]) / deltaT);
+        status = SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
+            &hJlm, &listhClm, modes, nmodes, modes_lmax, deltaT, retLenTS_fmax, tVecPmodes,
+            listhPlm_AdaS, alphaJ2P, betaJ2P, gammaJ2P);
+        if ( status == CEV_FAILURE) 
+        {
+            PRINT_LOG_INFO(LOG_CRITICAL, "failure in SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase for mode (l,m) = (2,2).");
+            failed = 1;
+            goto QUIT;
+        }
+        PRINT_LOG_INFO(LOG_DEBUG, "Calculate hJlm done");
+        status = SEOBRotatehIlmFromhJlm(&hIlm, hJlm, modes_lmax, alphaI2J_fmax, betaI2J_fmax, gammaI2J_fmax, deltaT);
+        if (status != CEV_SUCCESS)
+        {failed = 1; goto QUIT;}
+        PRINT_LOG_INFO(LOG_DEBUG, "Calculate hIlm done");
+        hplusTS = CreateREAL8TimeSeries(-mTScaled * tEndAtFMax, INdeltaT, retLenTS_fmax);
+        hcrossTS = CreateREAL8TimeSeries(-mTScaled * tEndAtFMax, INdeltaT, retLenTS_fmax);
+        status = SEOBComputehplushcrossFromhIlm(hplusTS, hcrossTS, modes_lmax, hIlm, amp0,
+            inc, phi0, is_only22);
+        if (status != CEV_SUCCESS)
+        {failed = 1; goto QUIT;}
+
+        (*hPlusOut) = hplusTS;
+        (*hCrossOut) = hcrossTS;
+        seobdynamicsAdaSHiS->th22Peak = tEndAtFMax;
+        all->dyn = seobdynamicsAdaSHiS;
+        all->hLM = hIlm;
+        all->Plm = listhClm;
+        PRINT_LOG_INFO(LOG_DEBUG, "Finished");
+        goto QUIT;
+    }
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
     status = SEOBIntegrateDynamics(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
@@ -2877,6 +2997,76 @@ if(1) {failed = 1; goto QUIT;}
            deltaT, deltaT_min, tstartAdaS, tendAdaS, core);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     }
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    if (MfMin < hparams->Mf_max)
+    {
+        /**
+         * @brief 20240304 by X.L.:
+         *          if Mf_max > MfMin,
+         *              let integrate stops at omega = pi*Mf_max
+         */
+        status = SEOBIntegrateDynamics_SA_withFMax(&dynamicsAdaS, &retLenAdaS, 
+            ICvalues_SA, EPS_ABS, EPS_REL, 
+            deltaT, deltaT_min, tstartAdaS, tendAdaS, core);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        if (dynamicsInverse)
+            SEOBConcactInverseDynToAdaSDyn_SA(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
+        status = SEOBComputeExtendedSEOBSAdynamics(&seobdynamicsAdaSHiS, dynamicsAdaS, retLenAdaS, core);    
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        if (MfMin > Mf_ref)
+        {
+            status = CutSEOBSAdynamics(&seobdynamicsAdaSHiS, MfMin);
+            retLenAdaS = seobdynamicsAdaSHiS->length;
+            if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        }
+        PRINT_LOG_INFO(LOG_DEBUG, "Get retLenAdaS = %d", retLenAdaS);
+        tVecPmodes = CreateREAL8Vector(retLenAdaS);
+        memcpy(tVecPmodes->data, seobdynamicsAdaSHiS->tVec, retLenAdaS*sizeof(REAL8));
+
+        SEOBSACalculateSphHarmListhlmAmpPhase(&listhPlm, modes, nmodes,
+                                            seobdynamicsAdaSHiS, NULL,
+                                            core, 0);
+        
+        *tRetVec = tVecPmodes;
+        *hlm = listhPlm;
+        if (is_dyn_debug)
+        {
+            PRINT_LOG_INFO(LOG_INFO, "STEP %d_ Concact Dynamics", this_step);
+            *dyn_debug = seobdynamicsAdaSHiS;
+            // *dyn_debug = CreateSEOBSAdynamics(seobdynamicsAdaSHiS->length);
+            // for (int j = 0; j < v4SAdynamicsVariables; j++) 
+            // {
+            //     // print_debug("Copy truncated dynamics 1 - v4PdynamicsVariables data fields: %d\n", j);
+            //     memcpy(&((*dyn_debug)->array->data[j * seobdynamicsAdaSHiS->length]),
+            //         &(seobdynamicsAdaSHiS->array->data[j * seobdynamicsAdaSHiS->length]),
+            //         seobdynamicsAdaSHiS->length * sizeof(REAL8));
+            // }
+            // status = SEOBSAJoinDynamics(dyn_debug, seobdynamicsAdaS, seobdynamicsHiS,
+            //             indexJoinHiS, indexJoinAttach);
+        }
+
+        PRINT_LOG_INFO(LOG_DEBUG, "Finished");
+        goto QUIT;
+    }
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
     status = SEOBIntegrateDynamics_SA(&dynamicsAdaS, &retLenAdaS, 
         ICvalues_SA, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core);
@@ -3936,6 +4126,118 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
            deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
     }
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    if (MfMin < hparams->Mf_max)
+    {
+        /**
+         * @brief 20240304 by X.L.:
+         *          if Mf_max > MfMin,
+         *              let integrate stops at omega = pi*Mf_max
+         */
+        status = SEOBIntegrateDynamics_prec_withFMax(&dynamicsAdaS, &retLenAdaS, 
+            ICvalues, EPS_ABS, EPS_REL, 
+            deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        if (dynamicsInverse)
+            SEOBConcactInverseDynToAdaSDynPrec(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
+        status = SEOBComputeExtendedSEOBPrecdynamics(&seobdynamicsAdaSHiS, dynamicsAdaS, retLenAdaS, core);    
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        if (MfMin > Mf_ref)
+        {
+            status = CutSEOBPrecdynamics(&seobdynamicsAdaSHiS, MfMin);
+            retLenAdaS = seobdynamicsAdaSHiS->length;
+            if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        }
+        PRINT_LOG_INFO(LOG_DEBUG, "Get retLenAdaS = %d", retLenAdaS);
+        tVecPmodes = CreateREAL8Vector(retLenAdaS);
+        memcpy(tVecPmodes->data, seobdynamicsAdaSHiS->tVec, retLenAdaS*sizeof(REAL8));
+        REAL8 tEndAtFMax = seobdynamicsAdaSHiS->tVec[retLenAdaS-1];
+        PRINT_LOG_INFO(LOG_INFO, "Step %d_ Get final J/L/spins from HiS dynamics at peak of Omega, compute constant angles EulerI2J.", this_step);
+        status = SEOBInterpolatePrecDynamicsAtTime(&seobvalues_tPeakOmega, tEndAtFMax, seobdynamicsAdaSHiS);
+        if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
+        SEOBLFrameVectors(&chi1L_tPeakOmega, &chi2L_tPeakOmega, 
+            seobvalues_tPeakOmega, m1, m2, core->hParams->flagZframe);
+        PRINT_LOG_INFO(LOG_DEBUG, "chi1L_tPeakOmega = (%.16e, %.16e, %.16e)\n", 
+            chi1L_tPeakOmega->data[0], chi1L_tPeakOmega->data[1], chi1L_tPeakOmega->data[2]);
+        PRINT_LOG_INFO(LOG_DEBUG, "chi2L_tPeakOmega = (%.16e, %.16e, %.16e)\n",
+            chi2L_tPeakOmega->data[0], chi2L_tPeakOmega->data[1], chi2L_tPeakOmega->data[2]);
+        /* Compute final J from dynamics quantities */
+        SEOBJfromDynamics(&Jfinal, seobvalues_tPeakOmega, core);
+        /*Compute the L-hat vector. Note that it has unit norm */
+        // SEOBLhatfromDynamics(&Lhatfinal, seobvalues_tPeakOmega, core);
+        PRINT_LOG_INFO(LOG_DEBUG, "Jfinal = (%.16e, %.16e, %.16e)", Jfinal->data[0], Jfinal->data[1], Jfinal->data[2]);
+        // PRINT_LOG_INFO(LOG_DEBUG, "Lhatfinal = (%.16e, %.16e, %.16e)", Lhatfinal->data[0], Lhatfinal->data[1], Lhatfinal->data[2]);
+
+        REAL8Vector e1J_fmax, e2J_fmax, e3J_fmax;
+        e1J_fmax.length = e2J_fmax.length = e3J_fmax.length = 3;
+        REAL8 e1Jdata_fmax[3] = {0.};
+        REAL8 e2Jdata_fmax[3] = {0.};
+        REAL8 e3Jdata_fmax[3] = {0.};
+        e1J_fmax.data = e1Jdata_fmax;
+        e2J_fmax.data = e2Jdata_fmax;
+        e3J_fmax.data = e3Jdata_fmax;
+        SEOBBuildJframeVectors(&e1J_fmax, &e2J_fmax, &e3J_fmax, Jfinal);
+        PRINT_LOG_INFO(LOG_DEBUG, "e1J = (%.16e, %.16e, %.16e)", e1J_fmax.data[0], e1J_fmax.data[1], e1J_fmax.data[2]);
+        PRINT_LOG_INFO(LOG_DEBUG, "e2J = (%.16e, %.16e, %.16e)", e2J_fmax.data[0], e2J_fmax.data[1], e2J_fmax.data[2]);
+        PRINT_LOG_INFO(LOG_DEBUG, "e2J = (%.16e, %.16e, %.16e)", e3J_fmax.data[0], e3J_fmax.data[1], e3J_fmax.data[2]);
+
+        /* Compute Euler angles from initial I-frame to final-J-frame */
+        /* Note: if spins are aligned, the function SEOBEulerI2JFromJframeVectors */
+        /* becomes ill-defined - just keep these Euler angles to zero then */
+        REAL8 alphaI2J_fmax = 0., betaI2J_fmax = 0., gammaI2J_fmax = 0.;
+        SEOBEulerI2JFromJframeVectors(&alphaI2J_fmax, &betaI2J_fmax, &gammaI2J_fmax, &e1J_fmax, &e2J_fmax, &e3J_fmax);
+
+        SEOBPrecCalculateSphHarmListhlmAmpPhase(&listhPlm, modes, nmodes,
+                                            seobdynamicsAdaSHiS, NULL,
+                                            core, 0);
+        PRINT_LOG_INFO(LOG_DEBUG, "Calculate hPlms done");
+        status = SEOBPrecEulerJ2PFromDynamics(&alphaJ2P, &betaJ2P, &gammaJ2P, 
+                    &e1J_fmax, &e2J_fmax, &e3J_fmax,
+                    retLenAdaS, retLenAdaS-1,
+                    seobdynamicsAdaSHiS, core);
+        PRINT_LOG_INFO(LOG_DEBUG, "Calculate Euler J2P done");
+        UINT retLenTS_fmax = floor(((tVecPmodes)->data[retLenAdaS - 1] - (tVecPmodes)->data[0]) / deltaT);
+        status = SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase(
+            &hJlm, &listhClm, modes, nmodes, modes_lmax, deltaT, retLenTS_fmax, tVecPmodes,
+            listhPlm, alphaJ2P, betaJ2P, gammaJ2P);
+        if ( status == CEV_FAILURE) 
+        {
+            PRINT_LOG_INFO(LOG_CRITICAL, "failure in SEOBRotateInterpolatehJlmReImFromSphHarmListhPlmAmpPhase for mode (l,m) = (2,2).");
+            failed = 1;
+            goto QUIT;
+        }
+        PRINT_LOG_INFO(LOG_DEBUG, "Calculate hJlm done");
+        status = SEOBRotatehIlmFromhJlm(&hIlm, hJlm, modes_lmax, alphaI2J_fmax, betaI2J_fmax, gammaI2J_fmax, deltaT);
+        if (status != CEV_SUCCESS)
+        {failed = 1; goto QUIT;}
+        PRINT_LOG_INFO(LOG_DEBUG, "Calculate hIlm done");
+        seobdynamicsAdaSHiS->th22Peak = tEndAtFMax;
+        all->dyn = seobdynamicsAdaSHiS;
+        all->hLM = hIlm;
+        all->tVec = tVecPmodes;
+        all->Plm = listhClm;
+        PRINT_LOG_INFO(LOG_DEBUG, "Finished");
+        goto QUIT;
+    }
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
+    /******************************************/
     status = SEOBIntegrateDynamics_prec(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);

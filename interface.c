@@ -143,6 +143,7 @@ typedef struct {
     REAL8 xi;
     REAL8 Mf_ref;
     INT zero_dyncoaphase;
+    REAL8 f_max;
 }pyInputParams_t;
 
 typedef struct {
@@ -335,6 +336,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     hparams.inEPS_ABS = params->inEPS_ABS;
     hparams.is_coframe = params->is_coframe;
     hparams.Mf_min = (params->m1+params->m2) * CST_MTSUN_SI * params->f_min;
+    hparams.Mf_max = (params->m1+params->m2) * CST_MTSUN_SI * params->f_max;
     hparams.Mf_ref = params->Mf_ref;
     hparams.zero_dyncoaphase = params->zero_dyncoaphase;
     set_egw_flag(params->egw_flag);

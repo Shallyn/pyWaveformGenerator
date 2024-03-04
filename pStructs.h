@@ -41,6 +41,7 @@ typedef struct tagHyperParams
     REAL8  Mf_min;
     REAL8  Mf_ref;
     INT    zero_dyncoaphase;
+    REAL8  Mf_max;
 }HyperParams;
 
 typedef struct {

@@ -769,7 +769,8 @@ class pyInputParams(ctypes.Structure):
                 ('zeta', ctypes.c_double),
                 ('xi', ctypes.c_double),
                 ('Mf_ref', ctypes.c_double),
-                ('zero_dyncoaphase', ctypes.c_int))
+                ('zero_dyncoaphase', ctypes.c_int),
+                ('f_max', ctypes.c_double))
 
 
 class pyOutputStruct(ctypes.Structure):

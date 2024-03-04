@@ -73,6 +73,18 @@ INT SEOBIntegrateDynamics(REAL8Array **dynamics,
                           SpinEOBParams *seobParams,
                           INT flagConstantSampling);
 
+INT SEOBIntegrateDynamics_withfMax(REAL8Array **dynamics,
+                          INT *retLenOut,
+                          REAL8Vector *ICvalues,
+                          REAL8 EPS_ABS,
+                          REAL8 EPS_REL,
+                          REAL8 deltaT,
+                          REAL8 deltaT_min,
+                          REAL8 tstart,
+                          REAL8 tend ,
+                          SpinEOBParams *seobParams,
+                          INT flagConstantSampling);
+
 INT SEOBIntegrateDynamics_inverse(REAL8Array **dynamics,
                           INT *retLenOut,
                           REAL8Vector *ICvalues,
@@ -133,6 +145,18 @@ INT SEOBIntegrateDynamics_SA(REAL8Array **dynamics,
                           REAL8 tstart,
                           REAL8 tend ,
                           SpinEOBParams *seobParams);
+
+INT SEOBIntegrateDynamics_SA_withFMax(REAL8Array **dynamics,
+                          INT *retLenOut,
+                          REAL8Vector *ICvalues,
+                          REAL8 EPS_ABS,
+                          REAL8 EPS_REL,
+                          REAL8 deltaT,
+                          REAL8 deltaT_min,
+                          REAL8 tstart,
+                          REAL8 tend ,
+                          SpinEOBParams *seobParams);
+
 INT CutSEOBdynamics(SEOBdynamics **eobdyn, REAL8 MfMin);
 INT CutSEOBSAdynamics(SEOBSAdynamics **eobdyn, REAL8 MfMin);
 void OrbitalPhaseReduce(SEOBdynamics *dyn, REAL8 phiD, REAL8 phiM, REAL8 phi);

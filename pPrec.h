@@ -14,6 +14,18 @@
 #include "pUtils.h"
 #include "pCore.h"
 
+INT SEOBIntegrateDynamics_prec_withFMax(REAL8Array **dynamics,
+                          INT *retLenOut,
+                          REAL8Vector *ICvalues,
+                          REAL8 EPS_ABS,
+                          REAL8 EPS_REL,
+                          REAL8 deltaT,
+                          REAL8 deltaT_min,
+                          REAL8 tstart,
+                          REAL8 tend ,
+                          SpinEOBParams *seobParams,
+                          INT flagConstantSampling);
+
 INT SEOBIntegrateDynamics_prec(REAL8Array **dynamics,
                           INT *retLenOut,
                           REAL8Vector *ICvalues,

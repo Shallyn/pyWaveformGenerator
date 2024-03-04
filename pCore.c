@@ -1374,7 +1374,7 @@ static int SEOBCalculatehlmAmpPhase(
     REAL8 tPeakOmega = seobParams->tPeakOmega;
 
     /* Calibration parameter */
-    if (includeNQC == 0) 
+    if (includeNQC == 0 && seobParams->hParams->Mf_max < seobParams->hParams->Mf_min) 
     {
         if (((l == 2) && (m == 1)) || ((l == 5) && (m == 5))) 
         {
@@ -1572,7 +1572,7 @@ static int SEOBSACalculatehlmAmpPhase(
     REAL8 tPeakOmega = seobParams->tPeakOmega;
 
     /* Calibration parameter */
-    if (includeNQC == 0) 
+    if (includeNQC == 0 && seobParams->hParams->Mf_max < seobParams->hParams->Mf_min) 
     {
         if (((l == 2) && (m == 1)) || ((l == 5) && (m == 5))) 
         {
@@ -1946,6 +1946,28 @@ static int XLALEOBSpinPrecAlignedStopCondition(
     return GSL_SUCCESS;
 }
 
+static int XLALEOBSpinPrecAlignedStopCondition_withFMax(
+    double t,       /**< UNUSED */
+    const double values[], /**< dynamical variable values */
+    double dvalues[],      /**< dynamical variable time derivative values */
+    void *funcParams       /**< physical parameters */
+) 
+{
+    REAL8 omega, r;
+    SpinEOBParams *params = (SpinEOBParams *)funcParams;
+    REAL8 omegaMax = params->hParams->Mf_max*CST_PI;
+    r = values[0];
+    omega = dvalues[1];
+    if (omega > omegaMax)
+        return 1;
+    if (r < 6. && omega < params->omega) 
+    {
+        return 1;
+    }
+    params->omega = omega;
+    return GSL_SUCCESS;
+}
+
 static int XLALEOBSpinPrecAlignedStopCondition_inverse(
     double t,       /**< UNUSED */
     const double values[], /**< dynamical variable values */
@@ -2038,6 +2060,67 @@ static int EOBHighSRStopConditionEcc(double t,
     return GSL_SUCCESS;
 }
 
+static int EOBHighSRStopConditionEcc_withFMax(double t,
+                                  const double values[],
+                                  double dvalues[],
+                                  void *funcParams)
+{
+    REAL8 r = values[0];
+    SpinEOBParams *params = (SpinEOBParams *) funcParams;
+    if(r > g_h_rISCO)
+    {
+        params->omegaPeaked = 0;
+        return GSL_SUCCESS;
+    }
+    REAL8 eta, ham, omega;
+    REAL8 omegaMax = CST_PI*params->hParams->Mf_max;
+    if (omega > omegaMax)
+        return 1;
+    eta = params->eta;
+    REAL8Vector xVec, pVec;
+    REAL8 xVal[3] = {0,0,0}, pVal[3] = {0,0,0};
+    xVal[0] = values[0];
+    pVal[0] = values[2];
+    pVal[1] = values[3] / values[0];
+    xVec.length = pVec.length = 3;
+    xVec.data = xVal;
+    pVec.data = pVal;
+    omega = dvalues[1];
+    ham = EOBHamiltonian(eta, &xVec, &pVec,
+                    params->s1Vec, params->s2Vec,
+                    params->sigmaKerr, params->sigmaStar,
+                    params->tortoise, params->seobCoeffs);
+
+    UINT counter = params->omegaPeaked;
+    if (omega < params->omega)
+    {
+        params->omegaPeaked = counter + 1;
+    }
+
+    if( isnan(ham) || isnan (dvalues[3]) || isnan (dvalues[2])
+        || isnan (dvalues[1]) || isnan (dvalues[0]) || 
+        (dvalues[2] >= 0.&& dvalues[0] >=0.) || params->omegaPeaked >= 5 )
+    {
+        if (dvalues[2] >= 0.&& dvalues[0] >=0. && r>g_h_rISCO-1.)
+        {
+            params->omegaPeaked = 0;
+            return GSL_SUCCESS;
+        }
+        // if (isnan(ham) || isnan (dvalues[3]) || isnan (dvalues[2])
+        // || isnan (dvalues[1]) || isnan (dvalues[0]))
+        //     print_debug("The integration stopped because of nan (%f/)\n", r);
+        // else if (dvalues[2] >= 0.&& dvalues[0] >=0. )
+        //     print_debug("The integration stopped because of dr&ddr > 0 (%f)\n", r);
+        // else
+        //     print_debug("The integration stopped because of omegaPeaked > 5 (%f)\n", r);
+        // print_log("ham = %e, dvalues = (%e, %e, %e, %e)\n", ham, dvalues[0], dvalues[1], dvalues[2], dvalues[3]);
+        return 1;
+    }
+    params->omega = omega;
+    return GSL_SUCCESS;
+}
+
+
 /**
  * Stopping condition for the high resolution SEOBNRv4.
  */
@@ -2055,6 +2138,36 @@ static int XLALSpinPrecAlignedHiSRStopCondition(
     omega = dvalues[1];
     counter = params->omegaPeaked;
 
+    if (r < 6. && omega < params->omega) 
+    {
+        params->omegaPeaked = counter + 1;
+    }
+    if (dvalues[2] >= 0. || params->omegaPeaked == 5 ||
+        isnan(dvalues[3]) || isnan(dvalues[2]) || isnan(dvalues[1]) ||
+        isnan(dvalues[0])) 
+    {
+        return 1;
+    }
+    params->omega = omega;
+    return GSL_SUCCESS;
+}
+
+static int XLALSpinPrecAlignedHiSRStopCondition_withFMax(
+    double t,              /**< UNUSED */
+    const double values[], /**< dynamical variable values */
+    double dvalues[],       /**< dynamical variable time derivative values */
+    void *funcParams /**< physical parameters */
+) 
+{
+    REAL8 omega, r;
+    UINT counter;
+    SpinEOBParams *params = (SpinEOBParams *)funcParams;
+    REAL8 omegaMax = params->hParams->Mf_max*CST_PI;
+    r = values[0];
+    omega = dvalues[1];
+    counter = params->omegaPeaked;
+    if (omega > omegaMax)
+        return 1;
     if (r < 6. && omega < params->omega) 
     {
         params->omegaPeaked = counter + 1;
@@ -2115,6 +2228,256 @@ XLALEOBSpinPrecStopConditionBasedOnPR(double t,
     cross_product3d(values, dvalues, omega_xyz);
     omega = sqrt(inner_product3d(omega_xyz, omega_xyz)) / r2;
     pDotr = inner_product3d(p, r) / sqrt(r2);
+    // if (debugPK) {
+    //     XLAL_PRINT_INFO("XLALEOBSpinPrecStopConditionBasedOnPR:: r = %e %e\n",
+    //                     sqrt(r2), omega);
+    // }
+    // if (debugPK) {
+    //     XLAL_PRINT_INFO(
+    //         "XLALEOBSpinPrecStopConditionBasedOnPR:: values = %e %e %e %e %e %e\n",
+    //         values[6], values[7], values[8], values[9], values[10], values[11]);
+    // }
+    // if (debugPK) {
+    //     XLAL_PRINT_INFO(
+    //         "XLALEOBSpinPrecStopConditionBasedOnPR:: dvalues = %e %e %e %e %e %e\n",
+    //         dvalues[6], dvalues[7], dvalues[8], dvalues[9], dvalues[10],
+    //         dvalues[11]);
+    // }
+    REAL8 rdot;
+    // this is d(r)/dt obtained by differentiating r2 (see above)
+    rdot = inner_product3d(rdotVec, r) / sqrt(r2);
+    // This is d/dt(pDotr) see pDotr above.
+    double prDot = -inner_product3d(p, r) * rdot / r2 +
+                    inner_product3d(pdotVec, r) / sqrt(r2) +
+                    inner_product3d(rdotVec, p) / sqrt(r2);
+
+    cross_product3d(r, pdotVec, dLdt1);
+    cross_product3d(rdotVec, p, dLdt2);
+    cross_product3d(r, p, L);
+
+    /* ********************************************************** */
+    /* *******  Different termination conditions Follow  ******** */
+    /* ********************************************************** */
+
+    /* Table of termination conditions
+
+        Value                   Reason
+        -1                   Any of the derivatives are Nan
+        0                    r < 8 and pDotr >= 0 (outspiraling)
+        1                    r < 8 and rdot >= 0 (outspiraling)
+        2                    r < 2 and prDot > 0 (dp_r/dt is growing)
+        3                    r < 8 and |p_vec| > 10 (the momentum vector is large)
+        4                    r < 8 and |p_vec| < 1e-10 (momentum vector is small)
+        5                    r < 2 and omega has a another peak
+        6                    r < 8 and omega < 0.04 or (r < 2. and  omega < 0.14 and
+        omega has a peak) 7                    r < 8 and omega > 1 (unphysical
+        omega) 8                    r < 5 and any of  |dp_i/dt| > 10 9 r < 8 and
+        pphi > 10
+        10                   r < 3 and rdot increases
+    */
+
+    /* Terminate if any derivative is Nan */
+    for (i = 0; i < 12; i++) {
+        if (isnan(dvalues[i]) || isnan(values[i])) {
+        // if (debugPK) {
+        //     XLAL_PRINT_INFO("\n  isnan reached. r2 = %f\n", r2);
+        //     fflush(NULL);
+        // }
+            PRINT_LOG_INFO(LOG_CRITICAL, "nan reached at r2 = %f \n", r2);
+            params->termination_reason = -1;
+            return 1;
+        }
+    }
+
+    /* ********************************************************** */
+    /* *******  Unphysical orbital conditions  ******** */
+    /* ********************************************************** */
+
+    /* Terminate if p_r points outwards */
+    if (r2 < 16 && pDotr >= 0) 
+    {
+        // if (debugPK) {
+        // XLAL_PRINT_INFO(
+        //     "\n Integration stopping, p_r pointing outwards -- out-spiraling!\n");
+        // fflush(NULL);
+        // }
+        params->termination_reason = 0;
+        return 1;
+    }
+
+    /* Terminate if rdot is >0 (OUTspiraling) for separation <4M */
+    if (r2 < 16 && rdot >= 0) 
+    {
+        // if (debugPK) {
+        // XLAL_PRINT_INFO("\n Integration stopping, dr/dt>0 -- out-spiraling!\n");
+        // fflush(NULL);
+        // }
+        params->termination_reason = 1;
+        return 1;
+    }
+
+    /* Terminate if dp_R/dt > 0, i.e. radial momentum is increasing for separation
+    * <2M */
+    if (r2 < 4. && prDot > 0.) 
+    {
+        // if (debugPK) {
+        // XLAL_PRINT_INFO("\n Integration stopping as prDot = %lf at r = %lf\n",
+        //                 prDot, sqrt(r2));
+        // fflush(NULL);
+        // }
+        params->termination_reason = 2;
+        return 1;
+    }
+
+    if (r2 < 16. && (sqrt(values[3] * values[3] + values[4] * values[4] +
+                            values[5] * values[5]) > 10.)) 
+    {
+        // if (debugPK)
+        // XLAL_PRINT_INFO("\n Integration stopping |pvec|> 10\n");
+        fflush(NULL);
+        params->termination_reason = 3;
+        return 1;
+    }
+
+    if (r2 < 16. && (sqrt(values[3] * values[3] + values[4] * values[4] +
+                            values[5] * values[5]) < 1.e-10)) 
+    {
+        // if (debugPK)
+        // XLAL_PRINT_INFO("\n Integration stopping |pvec|<1e-10\n");
+        fflush(NULL);
+        params->termination_reason = 4;
+        return 1;
+    }
+
+    /* **************************************************************** */
+    /*                         Omega related                            */
+    /* **************************************************************** */
+    /* Terminate when omega reaches peak, and separation is < 4M */
+    if (r2 < 16. && omega < params->omega)
+        params->omegaPeaked = 1;
+
+    /* If omega has gone through a second extremum, break */
+    if (r2 < 4. && params->omegaPeaked == 1 &&
+        omega > params->omega) 
+    {
+        // if (debugPK) {
+        // XLAL_PRINT_INFO(
+        //     "\n Integration stopping, omega reached second extremum\n");
+        // fflush(NULL);
+        // }
+        params->termination_reason = 5;
+
+        return 1;
+    }
+
+    /* If Momega did not evolve above 0.01 even though r < 4 or omega<0.14 for
+    * r<2, break */
+    if ((r2 < 16. && omega < 0.04) ||
+        (r2 < 4. && omega < 0.14 && params->omegaPeaked == 1)) 
+    {
+        // if (debugPK) {
+        // XLAL_PRINT_INFO("\n Integration stopping for omega below threshold, "
+        //                 "omega=%f at r = %f\n",
+        //                 omega, sqrt(r2));
+        // fflush(NULL);
+        // }
+        params->termination_reason = 6;
+
+        return 1;
+    }
+
+    if (r2 < 16. && omega > 1.) 
+    {
+        // if (debugPK) {
+        // XLAL_PRINT_INFO("\n Integration stopping, omega>1 at r = %f\n", sqrt(r2));
+        // fflush(NULL);
+        // }
+        params->termination_reason = 7;
+
+        return 1;
+    }
+    params->omega = omega;
+
+    /* **************************************************************** */
+    /*              related to Numerical values of x/p/derivatives      */
+    /* **************************************************************** */
+
+    /* If momentum derivatives are too large numerically, break */
+    if (r2 < 25 && (fabs(dvalues[3]) > 10 || fabs(dvalues[4]) > 10 ||
+                    fabs(dvalues[5]) > 10)) 
+    {
+        // if (debugPK) {
+        // XLAL_PRINT_INFO("\n Integration stopping, dpdt > 10 -- too large!\n");
+        // fflush(NULL);
+        // }
+        params->termination_reason = 8;
+        return 1;
+    }
+
+    /* If p_\Phi is too large numerically, break */
+    if (r2 < 16. && values[5] > 10) 
+    {
+        // if (debugPK) {
+        // XLAL_PRINT_INFO("Integration stopping, Pphi > 10 now\n\n");
+        // fflush(NULL);
+        // }
+        params->termination_reason = 9;
+        return 1;
+    }
+    /* If rdot inclreases, break */
+    if (r2 < 9. && rdot > params->prev_dr) 
+    {
+        // if (debugPK) {
+        // XLAL_PRINT_INFO("\n Integration stopping, dr/dt increasing!\n");
+        // fflush(NULL);
+        // }
+        params->prev_dr = rdot;
+        params->termination_reason = 10;
+
+        return 1;
+    }
+    params->prev_dr = rdot;
+
+    /* **************************************************************** */
+    /*              Last resort conditions                              */
+    /* **************************************************************** */
+
+    /* Very verbose output */
+    // if (debugPKverbose && r2 < 16.) {
+    //     XLAL_PRINT_INFO("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", t,
+    //                     values[0], values[1], values[2], values[3], values[4],
+    //                     values[5], values[6], values[7], values[8], values[9],
+    //                     values[10], values[11], values[12], values[13], omega);
+    // }
+    return GSL_SUCCESS;
+}
+
+static int
+XLALEOBSpinPrecStopConditionBasedOnPR_withFMax(double t, 
+                                      const double values[],
+                                      double dvalues[],
+                                      void *funcParams) 
+{
+    int debugPK = 0;
+    int debugPKverbose = 0;
+    INT i;
+    SpinEOBParams *params = (SpinEOBParams *)funcParams;
+    REAL8 omegaMax = params->hParams->Mf_max*CST_PI;
+    REAL8 r2, pDotr = 0;
+    REAL8 p[3], r[3], pdotVec[3], rdotVec[3];
+    REAL8 omega, omega_xyz[3], L[3], dLdt1[3], dLdt2[3];
+
+    memcpy(r, values, 3 * sizeof(REAL8));
+    memcpy(p, values + 3, 3 * sizeof(REAL8));
+    memcpy(rdotVec, dvalues, 3 * sizeof(REAL8));
+    memcpy(pdotVec, dvalues + 3, 3 * sizeof(REAL8));
+
+    r2 = inner_product3d(r, r);
+    cross_product3d(values, dvalues, omega_xyz);
+    omega = sqrt(inner_product3d(omega_xyz, omega_xyz)) / r2;
+    pDotr = inner_product3d(p, r) / sqrt(r2);
+    if (omega > omegaMax)
+        return 1;
     // if (debugPK) {
     //     XLAL_PRINT_INFO("XLALEOBSpinPrecStopConditionBasedOnPR:: r = %e %e\n",
     //                     sqrt(r2), omega);
@@ -3141,6 +3504,166 @@ QUIT:
     return CEV_SUCCESS;
 }
 
+INT SEOBIntegrateDynamics_withfMax(REAL8Array **dynamics,
+                          INT *retLenOut,
+                          REAL8Vector *ICvalues,
+                          REAL8 EPS_ABS,
+                          REAL8 EPS_REL,
+                          REAL8 deltaT,
+                          REAL8 deltaT_min,
+                          REAL8 tstart,
+                          REAL8 tend ,
+                          SpinEOBParams *seobParams,
+                          INT flagConstantSampling)
+{
+    INT retLen;
+    UINT i;
+    REAL8Array *dynamics_spinaligned = NULL;
+    INT status, failed = 0;
+    /* Dimensions of vectors of dynamical variables to be integrated */
+    UINT nb_Hamiltonian_variables = 14;
+    UINT nb_Hamiltonian_variables_spinsaligned = 4;
+
+    REAL8Vector *values = CreateREAL8Vector(nb_Hamiltonian_variables);
+    if (!values) {failed = 1; goto QUIT;}
+    memcpy(values->data, ICvalues->data, values->length * sizeof(REAL8));
+
+    REAL8Vector *values_spinaligned = CreateREAL8Vector(nb_Hamiltonian_variables_spinsaligned);
+    if (!values_spinaligned) {failed = 1; goto QUIT;}
+    memset(values_spinaligned->data, 0, values_spinaligned->length * sizeof(REAL8));
+
+    ARKIntegrator *integrator = NULL;
+    if (seobParams->alignedSpins)
+    {
+        // Spin Aligned
+        REAL8 temp_r = sqrt(ICvalues->data[0] * ICvalues->data[0] +
+                            ICvalues->data[1] * ICvalues->data[1] +
+                            ICvalues->data[2] * ICvalues->data[2]);
+        REAL8 temp_phi = ICvalues->data[12];
+
+        values_spinaligned->data[0] = temp_r;   // General form of r
+        values_spinaligned->data[1] = temp_phi; // phi
+        values_spinaligned->data[2] = 
+            ICvalues->data[3] * cos(temp_phi) +
+            ICvalues->data[4] * sin(temp_phi); // p_r^*
+        values_spinaligned->data[3] =
+            temp_r * (ICvalues->data[4] * cos(temp_phi) -
+                    ICvalues->data[3] * sin(temp_phi)); // p_phi
+
+        /* We have to use different stopping conditions depending
+        we are in the low-sampling or high-sampling portion
+        of the waveform. We can tell this apart because for the low-sampling (or
+        ada sampling) we always start at t=0
+        */
+        if (tstart > 0) 
+        {
+            // High sampling
+            if (seobParams->e0 != 0)
+                integrator = XLALAdaptiveRungeKutta4Init(
+                    nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative,
+                    EOBHighSRStopConditionEcc_withFMax, EPS_ABS, EPS_REL);
+            else
+                integrator = XLALAdaptiveRungeKutta4Init(
+                    nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative,
+                    XLALSpinPrecAlignedHiSRStopCondition_withFMax, EPS_ABS, EPS_REL);
+        } else {
+            // Low sampling
+            integrator = XLALAdaptiveRungeKutta4Init(
+                nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative,
+                XLALEOBSpinPrecAlignedStopCondition_withFMax, EPS_ABS, EPS_REL);
+        }
+    }
+    else
+    {
+        // Prec
+        if (tstart > 0) 
+        {
+            integrator = XLALAdaptiveRungeKutta4Init(
+                nb_Hamiltonian_variables, XLALSpinPrecHcapNumericalDerivative,
+                XLALEOBSpinPrecStopConditionBasedOnPR_withFMax, EPS_ABS, EPS_REL);
+        } else {
+            integrator = XLALAdaptiveRungeKutta4Init(
+                nb_Hamiltonian_variables, XLALSpinPrecHcapNumericalDerivative,
+                XLALEOBSpinPrecStopConditionBasedOnPR_withFMax, EPS_ABS, EPS_REL);
+        }
+    }
+
+    if (!integrator) {failed = 1; goto QUIT;}
+
+    /* Ensure that integration stops ONLY when the stopping condition is True */
+    integrator->stopontestonly = 1;
+    /* When this option is set to 0, the integration can be exceedingly slow for
+    * spin-aligned systems */
+    integrator->retries = 1;
+    /* Computing the dynamical evolution of the system */
+    if (seobParams->alignedSpins)
+    {
+        // Spin Aligned
+        // flagConstantSampling = seobParams->alignedSpins
+        // EOBversion = 2
+        PRINT_LOG_INFO(LOG_INFO, "Adaptive RungeKutta4 No Interpolation");
+        if (!flagConstantSampling)
+            retLen = XLALAdaptiveRungeKutta4NoInterpolate(
+                integrator, seobParams, values_spinaligned->data, 0., tend - tstart,
+                deltaT, deltaT_min, &dynamics_spinaligned);
+        else
+            retLen = XLALAdaptiveRungeKutta4(integrator, seobParams, 
+                values_spinaligned->data, 0., tend - tstart, 
+                deltaT, &dynamics_spinaligned);
+
+        if (retLen < 0)
+        {
+            PRINT_LOG_INFO(LOG_CRITICAL, "Integration Failed!!!");
+            failed = 1;
+            goto QUIT;
+        }
+        /* Convert the spin-aligned dynamics to a generic-spins dynamics */
+        PRINT_LOG_INFO(LOG_INFO, "Convert Spin Aligned Dynamics to Generic Spins");
+        status = SEOBConvertSpinAlignedDynamicsToGenericSpins(
+            dynamics, dynamics_spinaligned, retLen, 
+            seobParams->chi1, seobParams->chi2, seobParams);
+        if (status != CEV_SUCCESS)
+        {
+            PRINT_LOG_INFO(LOG_CRITICAL, "Failure in dynamics transformation.");
+            failed = 1;
+            goto QUIT;
+        }
+    } 
+    else 
+    {
+        // Prec
+        if (!flagConstantSampling)
+            retLen = XLALAdaptiveRungeKutta4NoInterpolate(integrator, seobParams, 
+                values->data, 0., tend-tstart, 
+                deltaT, deltaT_min, dynamics);
+        else
+            retLen = XLALAdaptiveRungeKutta4(integrator, seobParams, values->data, 0.,
+                                            tend - tstart, deltaT, dynamics);
+        if (retLen < 0)
+        {
+            PRINT_LOG_INFO(LOG_CRITICAL, "Integration Failed!!!");
+            failed = 1;
+            goto QUIT;
+        }
+    }
+    PRINT_LOG_INFO(LOG_INFO, "Integration End");
+    // NOTE: functions like XLALAdaptiveRungeKutta4 would give nans if the times
+    // do not start at 0 -- we have to adjust the starting time after integration
+    /* Adjust starting time */
+    for ( i = 0; i < retLen; i++)
+        (*dynamics)->data[i] += tstart;
+
+QUIT:
+    STRUCTFREE(values, REAL8Vector);
+    STRUCTFREE(values_spinaligned, REAL8Vector);
+    STRUCTFREE(integrator, ARKIntegrator);
+    STRUCTFREE(dynamics_spinaligned, REAL8Array);
+    *retLenOut = retLen;
+    if (failed)
+        return CEV_FAILURE;
+    return CEV_SUCCESS;
+}
+
 void SortSEOBDynamicsArray_SA(REAL8Array **ret_dyn, INT length, REAL8Array *dyn_inv)
 {
     INT i,j;
@@ -3345,6 +3868,117 @@ INT SEOBIntegrateDynamics_SA(REAL8Array **dynamics,
         integrator = XLALAdaptiveRungeKutta4Init(
             nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SA,
             XLALEOBSpinPrecAlignedStopCondition, EPS_ABS, EPS_REL);
+    }
+
+    if (!integrator) {failed = 1; goto QUIT;}
+
+    /* Ensure that integration stops ONLY when the stopping condition is True */
+    integrator->stopontestonly = 1;
+    /* When this option is set to 0, the integration can be exceedingly slow for
+    * spin-aligned systems */
+    integrator->retries = 1;
+    /* Computing the dynamical evolution of the system */
+    // Spin Aligned
+    // flagConstantSampling = seobParams->alignedSpins
+    // EOBversion = 2
+    if (tstart > 0) 
+    {
+        PRINT_LOG_INFO(LOG_INFO, "Adaptive RungeKutta4");
+            retLen = XLALAdaptiveRungeKutta4WithDeriv(
+                integrator, seobParams, values_spinaligned->data, 0., tend - tstart,
+                deltaT, &dynamics_spinaligned);
+    } else {
+        PRINT_LOG_INFO(LOG_INFO, "Adaptive RungeKutta4 No Interpolation");
+            retLen = XLALAdaptiveRungeKutta4NoInterpolateWithDeriv(
+                integrator, seobParams, values_spinaligned->data, 0., tend - tstart,
+                deltaT, deltaT_min, &dynamics_spinaligned);
+            // retLen = XLALAdaptiveRungeKutta4NoInterpolate(
+            //     integrator, seobParams, values_spinaligned->data, 0., tend-tstart,
+            //     deltaT, deltaT_min, &dynamics_spinaligned);
+    }
+    
+    if (retLen < 0)
+    {
+        PRINT_LOG_INFO(LOG_CRITICAL, "Integration Failed!!!");
+        failed = 1;
+        goto QUIT;
+    }
+    PRINT_LOG_INFO(LOG_INFO, "Integration End, retLen = %d", retLen);
+
+    // NOTE: functions like XLALAdaptiveRungeKutta4 would give nans if the times
+    // do not start at 0 -- we have to adjust the starting time after integration
+    /* Adjust starting time */
+    for ( i = 0; i < retLen; i++)
+        dynamics_spinaligned->data[i] += tstart;
+    *dynamics = dynamics_spinaligned;
+QUIT:
+    STRUCTFREE(values_spinaligned, REAL8Vector);
+    STRUCTFREE(integrator, ARKIntegrator);
+    *retLenOut = retLen;
+    if (failed)
+        return CEV_FAILURE;
+    return CEV_SUCCESS;
+}
+
+INT SEOBIntegrateDynamics_SA_withFMax(REAL8Array **dynamics,
+                          INT *retLenOut,
+                          REAL8Vector *ICvalues,
+                          REAL8 EPS_ABS,
+                          REAL8 EPS_REL,
+                          REAL8 deltaT,
+                          REAL8 deltaT_min,
+                          REAL8 tstart,
+                          REAL8 tend ,
+                          SpinEOBParams *seobParams)
+{
+    INT retLen;
+    UINT i;
+    REAL8Array *dynamics_spinaligned = NULL;
+    INT status, failed = 0;
+    /* Dimensions of vectors of dynamical variables to be integrated */
+    // UINT nb_Hamiltonian_variables = 14;
+    UINT nb_Hamiltonian_variables_spinsaligned = 4;
+
+    REAL8Vector *values_spinaligned = CreateREAL8Vector(nb_Hamiltonian_variables_spinsaligned);
+    if (!values_spinaligned) {failed = 1; goto QUIT;}
+    memcpy(values_spinaligned->data, ICvalues->data, values_spinaligned->length * sizeof(REAL8));
+
+    ARKIntegrator *integrator = NULL;
+
+    // REAL8 temp_r = sqrt(ICvalues->data[0] * ICvalues->data[0] +
+    //                     ICvalues->data[1] * ICvalues->data[1] +
+    //                     ICvalues->data[2] * ICvalues->data[2]);
+    // REAL8 temp_phi = ICvalues->data[12];
+
+    // values_spinaligned->data[0] = temp_r;   // General form of r
+    // values_spinaligned->data[1] = temp_phi; // phi
+    // values_spinaligned->data[2] = 
+    //     ICvalues->data[3] * cos(temp_phi) +
+    //     ICvalues->data[4] * sin(temp_phi); // p_r^*
+    // values_spinaligned->data[3] =
+    //     temp_r * (ICvalues->data[4] * cos(temp_phi) -
+    //             ICvalues->data[3] * sin(temp_phi)); // p_phi
+
+    /* We have to use different stopping conditions depending
+    we are in the low-sampling or high-sampling portion
+    of the waveform. We can tell this apart because for the low-sampling (or
+    ada sampling) we always start at t=0 */
+    if (tstart > 0) 
+    {
+        // High sampling
+        if (seobParams->e0 != 0)
+            integrator = XLALAdaptiveRungeKutta4Init(
+                nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SA,
+                EOBHighSRStopConditionEcc_withFMax, EPS_ABS, EPS_REL);
+        else
+            integrator = XLALAdaptiveRungeKutta4Init(
+                nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SA,
+                XLALSpinPrecAlignedHiSRStopCondition_withFMax, EPS_ABS, EPS_REL);
+    } else {
+        // Low sampling
+        integrator = XLALAdaptiveRungeKutta4Init(
+            nb_Hamiltonian_variables_spinsaligned, XLALSpinAlignedHcapDerivative_SA,
+            XLALEOBSpinPrecAlignedStopCondition_withFMax, EPS_ABS, EPS_REL);
     }
 
     if (!integrator) {failed = 1; goto QUIT;}
@@ -5412,9 +6046,9 @@ int SEOBCalculateSphHarmListhlmAmpPhase(
                                 SpinAlignedEOBversion==3 */
         } else
             includeNQC = flagNQC;
-
-        EOBNonQCCoeffs *nqcCoeffs =
-            SphHarmListEOBNonQCCoeffs_GetMode(listnqcCoeffs, l, m)->nqcCoeffs;
+        EOBNonQCCoeffs *nqcCoeffs = NULL;
+        if (flagNQC)
+            nqcCoeffs = SphHarmListEOBNonQCCoeffs_GetMode(listnqcCoeffs, l, m)->nqcCoeffs;
 
         CAmpPhaseSequence *hlm = NULL;
         SEOBCalculatehlmAmpPhase(&hlm, l, m, seobdynamics, nqcCoeffs, seobParams,
@@ -5458,8 +6092,9 @@ int SEOBSACalculateSphHarmListhlmAmpPhase(
         } else
             includeNQC = flagNQC;
 
-        EOBNonQCCoeffs *nqcCoeffs =
-            SphHarmListEOBNonQCCoeffs_GetMode(listnqcCoeffs, l, m)->nqcCoeffs;
+        EOBNonQCCoeffs *nqcCoeffs = NULL;
+        if (includeNQC)
+            nqcCoeffs = SphHarmListEOBNonQCCoeffs_GetMode(listnqcCoeffs, l, m)->nqcCoeffs;
 
         CAmpPhaseSequence *hlm = NULL;
         SEOBSACalculatehlmAmpPhase(&hlm, l, m, seobdynamics, nqcCoeffs, seobParams,
