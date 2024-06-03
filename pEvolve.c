@@ -204,7 +204,7 @@ if(1) {failed = 1; goto QUIT;}
     UINT ell_max = 5;
     REAL8 INchi1[3] = {s1x, s1y, s1z};
     REAL8 INchi2[3] = {s2x, s2y, s2z};
-    if (hparams->Mf_min > hparams->Mf_max) {
+    if (hparams->Mf_min > hparams->Mf_max && hparams->t_max < 0) {
         status = XLALEOBCheckNyquistFrequency(m1, m2, INchi1, INchi2, INdeltaT, ell_max);
         if (status != CEV_SUCCESS)
         {failed = 1; goto QUIT;}
@@ -319,7 +319,7 @@ if(1) {failed = 1; goto QUIT;}
     /******************************************/
     /******************************************/
     /******************************************/
-    if (MfMin < hparams->Mf_max)
+    if (MfMin < hparams->Mf_max || hparams->t_max>0.0)
     {
         /**
          * @brief 20240304 by X.L.:
@@ -1431,7 +1431,7 @@ INT evolve_conserv(REAL8 m1,  REAL8 m2,
     UINT ell_max = 4;
     REAL8 INchi1[3] = {s1x, s1y, s1z};
     REAL8 INchi2[3] = {s2x, s2y, s2z};
-    if (hparams->Mf_min > hparams->Mf_max) {
+    if (hparams->Mf_min > hparams->Mf_max && hparams->t_max < 0) {
         status = XLALEOBCheckNyquistFrequency(m1, m2, INchi1, INchi2, INdeltaT, ell_max);
         if (status != CEV_SUCCESS)
         {failed = 1; goto QUIT;}
@@ -1828,7 +1828,7 @@ INT evolve_adaptive(REAL8 m1,  REAL8 m2,
     UINT ell_max = 4;
     REAL8 INchi1[3] = {s1x, s1y, s1z};
     REAL8 INchi2[3] = {s2x, s2y, s2z};
-    if (hparams->Mf_min > hparams->Mf_max) {
+    if (hparams->Mf_min > hparams->Mf_max && hparams->t_max < 0) {
         status = XLALEOBCheckNyquistFrequency(m1, m2, INchi1, INchi2, INdeltaT, ell_max);
         if (status != CEV_SUCCESS)
         {failed = 1; goto QUIT;}
@@ -2835,7 +2835,7 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
     UINT ell_max = 4;
     REAL8 INchi1[3] = {0, 0, s1z};
     REAL8 INchi2[3] = {0, 0, s2z};
-    if (hparams->Mf_min > hparams->Mf_max) {
+    if (hparams->Mf_min > hparams->Mf_max && hparams->t_max < 0) {
         status = XLALEOBCheckNyquistFrequency(m1, m2, INchi1, INchi2, INdeltaT, ell_max);
         if (status != CEV_SUCCESS)
         {failed = 1; goto QUIT;}
@@ -3015,7 +3015,7 @@ if(1) {failed = 1; goto QUIT;}
     /******************************************/
     /******************************************/
     /******************************************/
-    if (MfMin < hparams->Mf_max)
+    if (MfMin < hparams->Mf_max || hparams->t_max > 0.0)
     {
         /**
          * @brief 20240304 by X.L.:
@@ -4028,7 +4028,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     REAL8 INchi2[3] = {s2x, s2y, s2z};
     // print_debug("m1 = %.16e, m2 = %.16e\nINchi1 = (%.16e, %.16e, %.16e)\nINchi2 = (%.16e, %.16e, %.16e)\nINdeltaT = %.16e\n",
     //     m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, INdeltaT);
-    if (hparams->Mf_min > hparams->Mf_max) {
+    if (hparams->Mf_min > hparams->Mf_max && hparams->t_max < 0) {
         status = XLALEOBCheckNyquistFrequency(m1, m2, INchi1, INchi2, INdeltaT, ell_max);
         if (status != CEV_SUCCESS)
         {failed = 1; goto QUIT;}
@@ -4146,7 +4146,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     /******************************************/
     /******************************************/
     /******************************************/
-    if (MfMin < hparams->Mf_max)
+    if (MfMin < hparams->Mf_max || hparams->t_max > 0.0)
     {
         /**
          * @brief 20240304 by X.L.:

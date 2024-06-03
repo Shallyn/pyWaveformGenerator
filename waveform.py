@@ -7,7 +7,7 @@ Created on Wed, 29 Mar 2023 13:50:54 +0000
 """
 import sys, os
 import numpy as np
-from . import SEOBNRWaveformCaller
+from . import SEOBNRWaveformCaller, npWaveformData
 from .psd import GWDetector
 from .pyUtils import rTimeSeries
 
@@ -31,8 +31,10 @@ def calculate_waveform(params, f_min, Mf_ref = 0.002, srate = 16384, code_versio
               you need to set prec_flag=3 (see arxiv:2310.04552). 
               However, in this case the initial conditions are limited to the periapsis of the equatorial plane,
               which means that zeta_rad is not supported (and also egw_flag=1 doesn't work in this case). 
-        f_min: initial (angular) frequency
+        f_min: initial (angular) frequency [Hz]
         Mf_ref: reference (angular) frequency
+        f_max: maximal (angular) frequency [Hz], the computation will end here.
+        t_max: maximal time [s]
         srate: the output sample rate
             NOTE: Lowering this value does not significantly improve computational speed, 
                 as the time consuming part of the code is the numerical solution of the dynamic system, 
@@ -80,7 +82,23 @@ def calculate_waveform(params, f_min, Mf_ref = 0.002, srate = 16384, code_versio
     if waveform is None:
         return None, None
     return waveform, dynamics
-    
+
+def waveform_to_strain(time, hp, hc, theta, phi, psi, det_names:list[str], gps0 = 1356566418, tpeak = 0, t_c = 0):
+    detectors = []
+    for det in det_names:
+        detectors.append(GWDetector(det))
+    # hp = waveform.hpc.real
+    # hc = -waveform.hpc.imag
+    # tpeak = waveform.hpc.time[waveform.h22.argpeak]
+    ret = []
+    for detector in detectors:
+        dt = detector.time_delay(phi, np.pi-theta, t_c + gps0)
+        Fplus, Fcross = detector.antenna_pattern_gps(psi, phi, np.pi-theta, t_c + gps0 + dt)
+        h = Fplus * hp + Fcross * hc
+        t = time - tpeak
+        ret.append(rTimeSeries(t, h, t0 = t_c + dt, gps0=gps0))
+    return ret
+
 # unused
 def calculate_strain(params, f_min, Mf_ref = 0.002, gps0 = 1356566418, detectors = None, is_only22 = False, log_level = 1, code_version = 2, ret_dyn = False, **kwargs) -> rTimeSeries:
     m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, e0, dL, theta, phi, iota, psi, t_c, beta_c, Phi_c = params

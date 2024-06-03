@@ -144,6 +144,7 @@ typedef struct {
     REAL8 Mf_ref;
     INT zero_dyncoaphase;
     REAL8 f_max;
+    REAL8 t_max;
 }pyInputParams_t;
 
 typedef struct {
@@ -339,6 +340,8 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     hparams.Mf_max = (params->m1+params->m2) * CST_MTSUN_SI * params->f_max;
     hparams.Mf_ref = params->Mf_ref;
     hparams.zero_dyncoaphase = params->zero_dyncoaphase;
+    hparams.t_max = params->t_max;
+    hparams.tM_max = params->t_max / ((params->m1+params->m2) * CST_MTSUN_SI);
     set_egw_flag(params->egw_flag);
     SET_CODE_VERSION(params->code_version);
     set_PrecFlag(params->prec_flag);
@@ -664,6 +667,7 @@ void convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(SEOBPrecCoreOutputs *All
 
 void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec, pyOutputStruct_t **ret)
 {
+    PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i;
     REAL8 mT, amp0;
     mT = mtot * CST_MTSUN_SI;
@@ -781,6 +785,7 @@ void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coap
 
 void convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(SEOBCoreOutputs *All, pyDynOutputStruct_t **ret)
 {
+    PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i, length;
     length = All->dyn->length;
     pyDynOutputStruct_t *output = CreatepyDynOutputStruct_t(length);
@@ -808,10 +813,12 @@ void convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(SEOBCoreOutputs *All, pyDynO
 
 void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBCoreOutputs *All, pyOutputStruct_t **ret)
 {
+    PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i;
     REAL8 mT, amp0;
     mT = mtot * CST_MTSUN_SI;
     amp0 = mtot * CST_MRSUN_SI / dL / 1e6 / CST_PC_SI;
+    // print_debug("Mtot = %e, dL = %e\n", mtot, dL);
     COMPLEX16TimeSeries *h22 = XLALSphHarmTimeSeriesGetMode(All->hLM, 2, 2);
     COMPLEX16TimeSeries *h21 = XLALSphHarmTimeSeriesGetMode(All->hLM, 2, 1);
     COMPLEX16TimeSeries *h33 = XLALSphHarmTimeSeriesGetMode(All->hLM, 3, 3);
@@ -907,15 +914,22 @@ void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase
             if (is_only22 && (l != 2 || abs(m) != 2))
                 continue;
             SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+            // print_debug("Ylm = %f + i%f\n", creal(sYlm), cimag(sYlm));
             COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
             for (i = 0; i < length; i++) 
             {
+                // print_debug("hIlm->data->data[%d] = %f + i%f\n", i, creal(hIlm->data->data[i]), cimag(hIlm->data->data[i]));
                 hpc_contrib = sYlm * hIlm->data->data[i];
                 output->hplus->data[i] += amp0 * creal(hpc_contrib);
                 output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+                // print_debug("hpc_contrib[%d] = %e + i%e\n", i, amp0*creal(hpc_contrib), -amp0*cimag(hpc_contrib));
             }
         }
     }
+    // for (i=0; i<length; i++)
+    // {
+    //     print_debug("hp, hc [%d] = %f, %f\n", output->hplus->data[i], output->hcross->data[i]);
+    // }
     if (use_coaphase)
     {
         INT ipeak22 = find_exact_amp_peak(output->timeM, amp22);
@@ -928,6 +942,7 @@ void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase
 
 void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, REAL8 m1, REAL8 m2, REAL8 chi1, REAL8 chi2, pyDynOutputStruct_t **ret)
 {
+    PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i, length;
     length = dyn_debug->length;
     REAL8 r, phi, vr, vf, prT, pphi;
@@ -973,6 +988,7 @@ void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, RE
 
 void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *PLM, pyOutputStruct_t **ret)
 {
+    PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i;
     REAL8 mT, amp0;
     mT = mtot * CST_MTSUN_SI;
@@ -1104,6 +1120,7 @@ void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22,
 
 void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *hLM, SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret)
 {
+    PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i;
     REAL8 mT, amp0;
     mT = mtot * CST_MTSUN_SI;

@@ -1958,7 +1958,7 @@ static int XLALEOBSpinPrecAlignedStopCondition_withFMax(
     REAL8 omegaMax = params->hParams->Mf_max*CST_PI;
     r = values[0];
     omega = dvalues[1];
-    if (omega > omegaMax)
+    if (omega > omegaMax || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
         return 1;
     if (r < 6. && omega < params->omega) 
     {
@@ -2074,7 +2074,7 @@ static int EOBHighSRStopConditionEcc_withFMax(double t,
     }
     REAL8 eta, ham, omega;
     REAL8 omegaMax = CST_PI*params->hParams->Mf_max;
-    if (omega > omegaMax)
+    if (omega > omegaMax || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
         return 1;
     eta = params->eta;
     REAL8Vector xVec, pVec;
@@ -2166,7 +2166,7 @@ static int XLALSpinPrecAlignedHiSRStopCondition_withFMax(
     r = values[0];
     omega = dvalues[1];
     counter = params->omegaPeaked;
-    if (omega > omegaMax)
+    if (omega > omegaMax || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
         return 1;
     if (r < 6. && omega < params->omega) 
     {
@@ -2476,7 +2476,7 @@ XLALEOBSpinPrecStopConditionBasedOnPR_withFMax(double t,
     cross_product3d(values, dvalues, omega_xyz);
     omega = sqrt(inner_product3d(omega_xyz, omega_xyz)) / r2;
     pDotr = inner_product3d(p, r) / sqrt(r2);
-    if (omega > omegaMax)
+    if (omega > omegaMax || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
         return 1;
     // if (debugPK) {
     //     XLAL_PRINT_INFO("XLALEOBSpinPrecStopConditionBasedOnPR:: r = %e %e\n",

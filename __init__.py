@@ -388,6 +388,7 @@ class SEOBNRWaveformCaller(object):
         self.Mf_ref = 0.002
         self.zero_dyncoaphase = 0
         self.f_max = -1.
+        self.t_max = -1.
     def set_params(self, **kwargs):
         self.__parse_params(**kwargs)
     
@@ -469,6 +470,7 @@ class SEOBNRWaveformCaller(object):
         if 'zero_dyncoaphase' in kwargs:
             self.zero_dyncoaphase = 0 if kwargs['zero_dyncoaphase'] == False else 1
         self.f_max = self.f_max if 'f_max' not in kwargs else kwargs['f_max']
+        self.t_max = self.t_max if 't_max' not in kwargs else kwargs['t_max']
 
     def calculate_hcorrections(self, l:int, m:int, dyn:npDynamicData):
         hparams = pyHyperParams()
@@ -602,7 +604,8 @@ class SEOBNRWaveformCaller(object):
                       ctypes.c_double(self.xi),
                       ctypes.c_double(self.Mf_ref),
                       ctypes.c_int(self.zero_dyncoaphase),
-                      ctypes.c_double(self.f_max)
+                      ctypes.c_double(self.f_max),
+                      ctypes.c_double(self.t_max)
                       ]
         input_pms = pyInputParams(*value_list)
         ret_struct = ctypes.POINTER(pyOutputStruct)()
