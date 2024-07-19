@@ -914,7 +914,7 @@ void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase
             if (is_only22 && (l != 2 || abs(m) != 2))
                 continue;
             SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-            // print_debug("Ylm = %f + i%f\n", creal(sYlm), cimag(sYlm));
+            // print_debug("Y%d%d = %f + i%f\n", l, m, creal(sYlm), cimag(sYlm));
             COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
             for (i = 0; i < length; i++) 
             {

@@ -196,7 +196,7 @@ if(1) {failed = 1; goto QUIT;}
     XLALEOBHighestInitialFreq(&freqMinRad, mTotal);
     if (f_min > freqMinRad)
     {
-        PRINT_LOG_INFO(LOG_CRITICAL, "Initial frequency is too high, the limit is %4.10f", freqMinRad);
+        PRINT_LOG_INFO(LOG_WARNING, "Initial frequency is too high, the limit is %4.10f", freqMinRad);
         // failed = 1;
         // goto QUIT;
     }
@@ -1423,7 +1423,7 @@ INT evolve_conserv(REAL8 m1,  REAL8 m2,
     XLALEOBHighestInitialFreq(&freqMinRad, mTotal);
     if (f_min > freqMinRad)
     {
-        PRINT_LOG_INFO(LOG_CRITICAL, "Initial frequency is too high, the limit is %4.10f", freqMinRad);
+        PRINT_LOG_INFO(LOG_WARNING, "Initial frequency is too high, the limit is %4.10f", freqMinRad);
         // failed = 1;
         // goto QUIT;
     }
@@ -1820,7 +1820,7 @@ INT evolve_adaptive(REAL8 m1,  REAL8 m2,
     XLALEOBHighestInitialFreq(&freqMinRad, mTotal);
     if (f_min > freqMinRad)
     {
-        PRINT_LOG_INFO(LOG_CRITICAL, "Initial frequency is too high, the limit is %4.10f", freqMinRad);
+        PRINT_LOG_INFO(LOG_WARNING, "Initial frequency is too high, the limit is %4.10f", freqMinRad);
         // failed = 1;
         // goto QUIT;
     }
@@ -2827,7 +2827,7 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
     XLALEOBHighestInitialFreq(&freqMinRad, mTotal);
     if (f_min > freqMinRad)
     {
-        PRINT_LOG_INFO(LOG_CRITICAL, "Initial frequency is too high, the limit is %4.10f", freqMinRad);
+        PRINT_LOG_INFO(LOG_WARNING, "Initial frequency is too high, the limit is %4.10f", freqMinRad);
         // failed = 1;
         // goto QUIT;
     }
@@ -4017,7 +4017,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     XLALEOBHighestInitialFreq(&freqMinRad, mTotal);
     if (f_min > freqMinRad)
     {
-        PRINT_LOG_INFO(LOG_CRITICAL, "Initial frequency = %.16e is too high, the limit is %4.10f", f_min, freqMinRad);
+        PRINT_LOG_INFO(LOG_WARNING, "Initial frequency = %.16e is too high, the limit is %4.10f", f_min, freqMinRad);
         // failed = 1;
         // goto QUIT;
     }
