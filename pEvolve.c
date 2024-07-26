@@ -4342,8 +4342,10 @@ HISR:
     // FindClosestIndex requires an *increasing* function of time, so we use -r
     // instead of r
     UINT index_10M = FindClosestIndex(m1rVec, -10.0);
+    // UINT index_10M = 1;
     REAL8 time_10M = timeVec.data[index_10M];
-
+    PRINT_LOG_INFO(LOG_DEBUG, "Get r = 10M position at %d in (%.5f, %.5f)", index_10M,
+        m1rVec->data[0], m1rVec->data[retLenAdaS-1]);
     status = SEOBInterpolatePrecDynamicsAtTime(&seobvalues_test, time_10M, seobdynamicsAdaS);
     if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
 

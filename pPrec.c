@@ -1052,12 +1052,14 @@ int SEOBInterpolatePrecDynamicsAtTime(
 
     /* Get the start and end indices that we will use to interpolate */
     /* indext max index such that tVec[indext] <= t */
-    UINT indext = 0;
+    INT indext = 0;
     while ((indext < retLen - 1) && (tVec[indext + 1] <= t))
         indext++;
     INT4 indexstart = indext - 20 > 0 ? indext - 20 : 0;
     INT4 indexend = indext + 20 < retLen - 1 ? indext + 20 : retLen - 1;
     INT4 interp_length = indexend - indexstart + 1;
+    // print_debug("indext = %d, indexstart = %d, indexend = %d, interp_length = %d, retLen = %d\n",
+        // indext, indexstart, indexend, interp_length, retLen);
     if (interp_length <= 0) 
     {
         PRINT_LOG_INFO(LOG_CRITICAL, "not finding a strictly positive number of ");
@@ -1070,12 +1072,19 @@ int SEOBInterpolatePrecDynamicsAtTime(
     int status;
     /* Interpolate all quantities */
     (*seobdynamics_values)->data[0] = t;
+
+    // for (int i=0; i< interp_length; i++)
+    // {
+    //     print_debug("[%d|%d]t, r = %f, %f\n", i, indexstart, tVec[indexstart+i], seobdynamics->array->data[1 * retLen + indexstart]);
+    // }
+
     for ( j = 1; j < v4PrecdynamicsVariables; j++) {
         status = gsl_spline_init(spline, &(tVec[indexstart]),
                         &(seobdynamics->array->data[j * retLen + indexstart]),
                         interp_length);
         if (status != GSL_SUCCESS)
         {
+            PRINT_LOG_INFO(LOG_DEBUG, "GSL failed at j = %d, status = %d", j, status);
             is_failed = 1;
             goto QUIT;
         }
