@@ -1,6 +1,6 @@
-# pyWaveformGenerator
+# pyWaveformGenerator of SEOBNRE
 
-calculate GW waveform
+Python module calculate GW waveform
 
 Installation && compile
 ```
