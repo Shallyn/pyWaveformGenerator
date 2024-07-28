@@ -38,9 +38,11 @@ void prec_SetSEOBPrecVariables(SEOBPrecVariables *vars,
     vars->pTS2 = inner_product3d(pTVec, s2Vec);
     vars->S1S1 = inner_product3d(s1Vec, s1Vec);
     vars->S1S2 = inner_product3d(s1Vec, s2Vec);
-    vars->S2S2 = inner_product3d(s2Vec, s2Vec);
+    vars->S2S2 = inner_product3d(s2Vec, s2Vec);    
 	vars->LVec[0] = xVec[1] * pTVec[2] - xVec[2] * pTVec[1];
 	vars->LVec[1] = xVec[2] * pTVec[0] - xVec[0] * pTVec[2];
 	vars->LVec[2] = xVec[0] * pTVec[1] - xVec[1] * pTVec[0];
+    vars->xpS1 = inner_product3d(vars->LVec, s1Vec);
+    vars->xpS2 = inner_product3d(vars->LVec, s2Vec);
     return;
 }

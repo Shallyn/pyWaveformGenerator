@@ -4153,6 +4153,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
          *          if Mf_max > MfMin,
          *              let integrate stops at omega = pi*Mf_max
          */
+        PRINT_LOG_INFO(LOG_INFO, "Integrate dynamics with fmax");
         status = SEOBIntegrateDynamics_prec_withFMax(&dynamicsAdaS, &retLenAdaS, 
             ICvalues, EPS_ABS, EPS_REL, 
             deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
@@ -4248,6 +4249,7 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     /******************************************/
     /******************************************/
     /******************************************/
+    PRINT_LOG_INFO(LOG_INFO, "Integrate dynamics");
     status = SEOBIntegrateDynamics_prec(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
         deltaT, deltaT_min, tstartAdaS, tendAdaS, core, 0);

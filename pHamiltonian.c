@@ -2704,12 +2704,12 @@ REAL8 XLALSimIMRSpinPrecEOBHamiltonian(
 
     /* Dump out inputs when debug flag is set */
     // if(IS_DEBUG){
-    //     PRINT_LOG_INFO(LOG_DEBUG, "In Hamiltonian: tortoise flag = %d\n", (int) tortoise );
-    //     PRINT_LOG_INFO(LOG_DEBUG, "x = %.16e\t%.16e\t%.16e\n", x->data[0], x->data[1], x->data[2] );
-    //     PRINT_LOG_INFO(LOG_DEBUG, "p = %.16e\t%.16e\t%.16e\n", p->data[0], p->data[1], p->data[2] );
-    //     PRINT_LOG_INFO(LOG_DEBUG, "sStar = %.16e\t%.16e\t%.16e\n", sigmaStar->data[0],
+    //     PRINT_LOG_INFO(LOG_CRITICAL, "In Hamiltonian: tortoise flag = %d\n", (int) tortoise );
+    //     PRINT_LOG_INFO(LOG_CRITICAL, "x = %.16e\t%.16e\t%.16e\n", x->data[0], x->data[1], x->data[2] );
+    //     PRINT_LOG_INFO(LOG_CRITICAL, "p = %.16e\t%.16e\t%.16e\n", p->data[0], p->data[1], p->data[2] );
+    //     PRINT_LOG_INFO(LOG_CRITICAL, "sStar = %.16e\t%.16e\t%.16e\n", sigmaStar->data[0],
     //         sigmaStar->data[1], sigmaStar->data[2] );
-    //     PRINT_LOG_INFO(LOG_DEBUG, "sKerr = %.16e\t%.16e\t%.16e\n", sigmaKerr->data[0],
+    //     PRINT_LOG_INFO(LOG_CRITICAL, "sKerr = %.16e\t%.16e\t%.16e\n", sigmaKerr->data[0],
     //         sigmaKerr->data[1], sigmaKerr->data[2] );
     // }
 
@@ -3184,7 +3184,8 @@ REAL8 XLALSimIMRSpinPrecEOBHamiltonian(
 
         PRINT_LOG_INFO(LOG_DEBUG ,"Done printing components.");
         PRINT_LOG_INFO(LOG_CRITICAL, "Hreal = %.16e in Hamiltonian", Hreal);
-        return REAL8_FAIL_NAN;
+        print_err("\n\n\n");
+        // return REAL8_FAIL_NAN;
     }
 
     return Hreal;

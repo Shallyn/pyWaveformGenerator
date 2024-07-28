@@ -344,7 +344,9 @@ int PrecHcapNumericalDerivative(double t,
 	for (i = 0; i < 3; i++)
 		for (j = 0, dvalues[i] = 0.; j < 3; j++)
 			dvalues[i] += tmpDValues[j + 3] * Tmatrix[i][j];
-
+// print_debug("dvalues = (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e)\n", 
+// 		dvalues[0], dvalues[1], dvalues[2],
+// 		dvalues[3], dvalues[4], dvalues[5]);
 	/* Calculate the orbital angular momentum */
 	// Lx = values[1] * values[5] - values[2] * values[4];
 	// Ly = values[2] * values[3] - values[0] * values[5];
@@ -480,7 +482,6 @@ int PrecHcapNumericalDerivative(double t,
 	// 	XLALSimIMRCalculateSpinPrecEOBHCoeffs(params.params->seobCoeffs, eta, a,
 	// 										  SpinAlignedEOBversion);
 	// }
-
 	H = XLALSimIMRSpinPrecEOBHamiltonian(eta, &rVec, &pVec, &s1norm, &s2norm,
 					     &sKerr, &sStar, params.params->tortoise, params.params->seobCoeffs, params.params->hParams);
     params.params->cache[0] = H;
@@ -511,7 +512,6 @@ int PrecHcapNumericalDerivative(double t,
 	 * flux by eta
 	 */
 	flux = flux / eta;
-
 
 #if 0
 	pDotS1 = pData[0] * s1.data[0] + pVec.data[1] * s1.data[1] + pVec.data[2] * s1.data[2];

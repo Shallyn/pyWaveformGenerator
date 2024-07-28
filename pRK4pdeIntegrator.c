@@ -650,7 +650,8 @@ int XLALAdaptiveRungeKutta4NoInterpolateWithDerivPrec(ARKIntegrator * integrator
     buffers->data[0] = t;
     for ( i = 1; i <= dim; i++)
         buffers->data[i * bufferlength] = y[i - 1];
-
+// print_debug("y0 = (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e)\n", 
+//     y[0], y[1], y[2], y[3], y[4], y[5]);
     /* compute derivatives at the initial time (dydt_in), bail out if impossible */
     if ((status = integrator->dydt(t, y, dydt_in, params)) != GSL_SUCCESS) 
     {
@@ -658,7 +659,6 @@ int XLALAdaptiveRungeKutta4NoInterpolateWithDerivPrec(ARKIntegrator * integrator
         errnum = CEV_FAILURE;
         goto bail_out;
     }
-
     for (i = 1; i <= nderiv; i++)
         buffers->data[(dim+i)*bufferlength] = dydt_in[i-1];
 
@@ -706,12 +706,13 @@ try_step:
         memcpy(y0, y, dim * sizeof(REAL8));     /* save y to y0, dydt_in to dydt_in0 */
         memcpy(dydt_in0, dydt_in, dim * sizeof(REAL8));
 
+// DEBUG_START;
         /* call the GSL stepper function */
         status = gsl_odeiv_step_apply(integrator->step, t, h0, y, yerr, dydt_in, dydt_out, integrator->sys);
         /* note: If the user-supplied functions defined in the system dydt return a status other than GSL_SUCCESS,
             * the step will be aborted. In this case, the elements of y will be restored to their pre-step values,
             * and the error code from the user-supplied function will be returned. */
-
+// DEBUG_END;
         /* did the stepper report a derivative-evaluation error? */
         if (status != GSL_SUCCESS) 
         {

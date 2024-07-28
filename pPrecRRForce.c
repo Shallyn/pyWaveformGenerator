@@ -14,7 +14,7 @@ void prec_CalculateRRForce(SEOBPrecVariables *vars,
     REAL8 eta, REAL8 prTDot,
     REAL8 fRRVec[], REAL8 fRRs1Vec[], REAL8 fRRs2Vec[])
 {
-    REAL8 dm = sqrt(1. - 3.*eta);
+    REAL8 dm = sqrt(1. - 4.*eta);
     REAL8 eta2, eta3, eta4;
     eta2 = eta*eta;
     eta3 = eta2*eta;
@@ -119,6 +119,7 @@ void prec_CalculateRRForce(SEOBPrecVariables *vars,
         3*(-90*y4 + y2*(20 + 254*z3 - 145*z5) + 2*(22 + 6*z3 - 55*z5 + 2*z6 + 25*z8))) + xpS2*(-4*eta*(-22 + 45*y4 - 119*z3 + 198*z5 + 
         y2*(-14 - 267*z3 + 261*z5) + 33*z6 - 90*z8) + 3*(-90*y4 + y2*(20 + 254*z3 - 145*z5) + 2*(22 + 6*z3 - 55*z5 + 2*z6 + 25*z8)) + 
         3*dm*(-90*y4 + y2*(20 + 254*z3 - 145*z5) + 2*(22 + 6*z3 - 55*z5 + 2*z6 + 25*z8))))))/(288.*eta*z5);
+
     fpVec4 = (x2*(10584*z3*(3168*x6*xS12 - 3168*dm*x6*xS12 + 3168*x6*xS22 + 3168*dm*x6*xS22 + 
         4176*x6*xS12*y2 - 4176*dm*x6*xS12*y2 + 4176*x6*xS22*y2 + 4176*dm*x6*xS22*y2 - 3600*x6*xS12*z10 + 
         3600*dm*x6*xS12*z10 - 3600*x6*xS22*z10 - 3600*dm*x6*xS22*z10 + 876*pS12*z3 - 876*dm*pS12*z3 + 876*pS22*z3 + 
@@ -172,8 +173,15 @@ void prec_CalculateRRForce(SEOBPrecVariables *vars,
     }
     cross_product3d(tmpfRRs1, vars->s1Vec, fRRs1Vec);
     cross_product3d(tmpfRRs2, vars->s2Vec, fRRs2Vec);
-    // print_debug("fRRs1Vec = (%.5e, %.5e, %.5e), fRRs2Vec = (%.5e, %.5e, %.5e)\n", 
-    //     fRRs1Vec[0], fRRs1Vec[1], fRRs1Vec[2],
-    //     fRRs2Vec[0], fRRs2Vec[1], fRRs2Vec[2]);
+// print_debug("fxVec0, fxVec2, fxVec3, fxVec4 = %.5e, %.5e, %.5e, %.5e\n",
+//     fxVec0, fxVec2, fxVec3, fxVec4);
+// print_debug("fpVec0, fpVec2, fpVec3, fpVec4 = %.5e, %.5e, %.5e, %.5e\n",
+//     fpVec0, fpVec2, fpVec3, fpVec4);
+// print_debug("fLVec3, fLVec4 = %.5e, %.5e\n",
+//     fLVec3, fLVec4);
+
+// print_debug("fRRs1Vec = (%.5e, %.5e, %.5e), fRRs2Vec = (%.5e, %.5e, %.5e)\n", 
+//     fRRs1Vec[0], fRRs1Vec[1], fRRs1Vec[2],
+//     fRRs2Vec[0], fRRs2Vec[1], fRRs2Vec[2]);
     return;
 }
