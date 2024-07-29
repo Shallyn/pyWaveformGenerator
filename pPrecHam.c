@@ -344,9 +344,25 @@ int PrecHcapNumericalDerivative(double t,
 	for (i = 0; i < 3; i++)
 		for (j = 0, dvalues[i] = 0.; j < 3; j++)
 			dvalues[i] += tmpDValues[j + 3] * Tmatrix[i][j];
-// print_debug("dvalues = (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e)\n", 
-// 		dvalues[0], dvalues[1], dvalues[2],
-// 		dvalues[3], dvalues[4], dvalues[5]);
+// if (fabs(dvalues[0]) > 100)
+// {
+	// print_debug("values = (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e)\n", 
+	// 		values[0], values[1], values[2],
+	// 		values[3], values[4], values[5],
+	// 		values[6], values[7], values[8],
+	// 		values[9], values[10], values[11]);
+	// print_debug("dvalues = (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e)\n", 
+	// 		dvalues[0], dvalues[1], dvalues[2],
+	// 		dvalues[3], dvalues[4], dvalues[5],
+	// 		dvalues[6], dvalues[7], dvalues[8],
+	// 		dvalues[9], dvalues[10], dvalues[11]);
+// 	print_debug("tmpDValues = (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e), (%.5e, %.5e, %.5e)\n", 
+// 			tmpDValues[0], tmpDValues[1], tmpDValues[2],
+// 			tmpDValues[3], tmpDValues[4], tmpDValues[5],
+// 			tmpDValues[6], tmpDValues[7], tmpDValues[8],
+// 			tmpDValues[9], tmpDValues[10], tmpDValues[11]);
+// 	print_debug("tmpP = (%.5e, %.5e, %.5e)\n", tmpP[0], tmpP[1], tmpP[2]);
+// }
 	/* Calculate the orbital angular momentum */
 	// Lx = values[1] * values[5] - values[2] * values[4];
 	// Ly = values[2] * values[3] - values[0] * values[5];
@@ -606,7 +622,12 @@ int PrecHcapNumericalDerivative(double t,
 	/* Add them to obtain pDot */
 	for (i = 0; i < 3; i++)
 		dvalues[i + 3] = tmpPdotT1[i] + tmpPdotT2[i] + tmpPdotT3[i];
-
+// if (isnan(dvalues[3]) || isnan(dvalues[4]) || isnan(dvalues[5])) {
+	// print_debug("tmpPdotT1 = (%.5e, %.5e, %.5e)\n", tmpPdotT1[0], tmpPdotT1[1], tmpPdotT1[2]);
+	// print_debug("tmpPdotT2 = (%.5e, %.5e, %.5e)\n", tmpPdotT2[0], tmpPdotT2[1], tmpPdotT2[2]);
+	// print_debug("tmpPdotT3 = (%.5e, %.5e, %.5e)\n", tmpPdotT3[0], tmpPdotT3[1], tmpPdotT3[2]);
+	// print_debug("prTDot, fRRVec = %.5e, (%.5e, %.5e, %.5e)\n\n", prTDot, fRRVec[0], fRRVec[1], fRRVec[2]);
+// }
     /* Eqs. 11c-11d of PRD 89, 084006 (2014) */
 	/* spin1 */
      /* The factor eta is there becasue Hreal is normalized by eta */
