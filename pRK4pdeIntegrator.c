@@ -801,6 +801,13 @@ try_step:
 #endif
 
     } // End loop
+
+    // some thing wrong happens during the integratioin
+    if (integrator->returncode == GSL_ERANGE)
+    {
+        errnum = CEV_FAILURE;
+        goto bail_out;
+    }
     /* copy the final state into yinit */
     PRINT_LOG_INFO(LOG_DEBUG, "dim = %zu, OutputLen = %zu", dim, outputlength);
     memcpy(yinit, y, dim * sizeof(REAL8));

@@ -131,11 +131,12 @@ static int PrecStopConditionBasedOnPR(double t,
         3                    r < 8 and |p_vec| > 10 (the momentum vector is large)
         4                    r < 8 and |p_vec| < 1e-10 (momentum vector is small)
         5                    r < 2 and omega has a another peak
-        6                    r < 8 and omega < 0.04 or (r < 2. and  omega < 0.14 and
-        omega has a peak) 7                    r < 8 and omega > 1 (unphysical
-        omega) 8                    r < 5 and any of  |dp_i/dt| > 10 9 r < 8 and
-        pphi > 10
+        6                    r < 8 and omega < 0.04 or (r < 2. and  omega < 0.14 and omega has a peak) 
+        7                    r < 8 and omega > 1 (unphysical omega) 
+        8                    r < 5 and any of |dp_i/dt| > 10 
+        9                    r < 8 and pphi > 10
         10                   r < 3 and rdot increases
+        11                   r < 3 and |dp/dt| > 10
     */
 
     /* Terminate if any derivative is Nan */
@@ -147,7 +148,7 @@ static int PrecStopConditionBasedOnPR(double t,
         // }
             PRINT_LOG_INFO(LOG_CRITICAL, "nan reached at r2 = %f \n", r2);
             params->termination_reason = -1;
-            return 1;
+            return GSL_ERANGE;
         }
     }
 

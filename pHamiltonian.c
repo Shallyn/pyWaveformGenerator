@@ -3123,7 +3123,7 @@ REAL8 XLALSimIMRSpinPrecEOBHamiltonian(
     // if(debugPK)
     //     XLAL_PRINT_INFO( "Hreal = %.16e\n", Hreal );
 
-    if(isnan(Hreal) || IS_DEBUG) 
+    if(isnan(Hreal)) 
     {
 // print_debug("tmp1 = %.16e, tmp2 = %.16e, tmp3 = %.16e, tmp4 = %.16e\n",(invexpMU*invexpMU*invexpMU*invexpnu)*sqrtdeltaR*inv2B1psqrtQsqrtQ*invxi2,
 //     ((expMU*expMU)*(expnu*expnu)*(pxir*pxir)*sv), (- B*(expMU*expnu)*pvr*pxir*sxi),(B*B*xi2*((expMU*expMU)*(sqrtQ + Q)*sv + pn*pvr*sn*sqrtdeltaR - pn*pn*sv*deltaR)));
@@ -5942,8 +5942,8 @@ static double GSLSpinPrecHamiltonianWrapperForRvecDerivs( double x, void *params
     if( isnan(SpinEOBH) )
     {
         PRINT_LOG_INFO(LOG_CRITICAL, "H is nan in GSLSpinPrecHamiltonianWrapperForRvecDerivs.");
-        PRINT_LOG_INFO(LOG_CRITICAL, "GSLSpinPrecHamiltonianWrapperForRvecDerivs (JUST inputs)::tmpVec %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f %3.10f", tmpVec[0], tmpVec[1], tmpVec[2], tmpVec[3], tmpVec[4], tmpVec[5], tmpVec[6], tmpVec[7], tmpVec[8], tmpVec[9], tmpVec[10], tmpVec[11]);
-        PRINT_LOG_INFO(LOG_CRITICAL, " R = %3.10f", sqrt(magR));
+        PRINT_LOG_INFO(LOG_CRITICAL, "GSLSpinPrecHamiltonianWrapperForRvecDerivs (JUST inputs)::tmpVec %.10e %.10e %.10e %.10e %.10e %.10e %.10e %.10e %.10e %.10e %.10e %.10e", tmpVec[0], tmpVec[1], tmpVec[2], tmpVec[3], tmpVec[4], tmpVec[5], tmpVec[6], tmpVec[7], tmpVec[8], tmpVec[9], tmpVec[10], tmpVec[11]);
+        PRINT_LOG_INFO(LOG_CRITICAL, " R = %.10e", sqrt(magR));
         PRINT_LOG_INFO(LOG_CRITICAL, "H = nan");
         return CEV_FAILURE;
     }

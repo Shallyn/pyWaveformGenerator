@@ -4249,6 +4249,8 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     /******************************************/
     /******************************************/
     /******************************************/
+// THIS IS FOR DEBUG
+
     PRINT_LOG_INFO(LOG_INFO, "Integrate dynamics");
     status = SEOBIntegrateDynamics_prec(&dynamicsAdaS, &retLenAdaS, 
         ICvalues, EPS_ABS, EPS_REL, 
