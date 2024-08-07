@@ -126,6 +126,7 @@ zeta_rad = 0 * np.pi/180
 # Warning: Here we assumed that the period of spin precession 
 #			is much greater than the period of eccentric precession.
 #     We suggest you set zeta_rad = 0 here.
+#		 	If you need non-zero zeta, you need to set egw_flag=True
 iota_rad = beta_rad = Phic_rad = 0
 fMin = 20
 Mf_ref = 0.002
@@ -134,7 +135,7 @@ waveform, dynamics = calculate_waveform_ep((m1, m2,
 	chi2x, chi2y, chi2z, 
 	e0, dL, 
 	zeta_rad, iota_rad, 
-  beta_rad, Phic_rad), fMin, Mf_ref = Mf_ref, srate=16384, is_coframe=False)
+  beta_rad, Phic_rad), fMin, Mf_ref = Mf_ref, srate=16384, is_coframe=False, egw_flag = False)
 
 ```
 
