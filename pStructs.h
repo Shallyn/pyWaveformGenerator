@@ -44,6 +44,7 @@ typedef struct tagHyperParams
     REAL8  Mf_max;
     REAL8  t_max;
     REAL8  tM_max;
+    REAL8Vector  *initValues;
 }HyperParams;
 
 typedef struct {

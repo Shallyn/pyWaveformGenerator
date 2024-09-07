@@ -235,8 +235,9 @@ if(1) {failed = 1; goto QUIT;}
     REAL8 MfMin = mTScaled * f_min;
     // print_debug("f_min = %.16e, MfMin = %.16e, mTScaled = %.16e, mTotal = %.16e, CST_MTSUN_SI = %.16e\n",
     //      f_min, MfMin, mTScaled, mTotal, CST_MTSUN_SI);
-    if (core->hParams && core->hParams->d_ini > 0.0)
-    {
+    if (core->hParams->initValues) {
+        memcpy(ICvalues->data, core->hParams->initValues->data, 14*sizeof(REAL8));
+    } else if (core->hParams && core->hParams->d_ini > 0.0) {
         REAL8 d_ini = core->hParams->d_ini; //initial seperation
         REAL8 pr_ini = core->hParams->pr_ini;
         REAL8 pphi_ini = core->hParams->pphi_ini;
@@ -326,9 +327,12 @@ if(1) {failed = 1; goto QUIT;}
          *          if Mf_max > MfMin,
          *              let integrate stops at omega = pi*Mf_max
          */
+        REAL8 tM_max = hparams->t_max * mTScaled;
+        if (tM_max < 0)
+            tM_max = tendAdaS;
         status = SEOBIntegrateDynamics_withfMax(&dynamicsAdaS, &retLenAdaS, 
             ICvalues, EPS_ABS, EPS_REL, 
-            deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
+            deltaT, deltaT_min, tstartAdaS, tM_max + tstartAdaS, core, core->alignedSpins);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
         if (dynamicsInverse)
             SEOBConcactInverseDynToAdaSDyn(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
@@ -1460,7 +1464,9 @@ INT evolve_conserv(REAL8 m1,  REAL8 m2,
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Solve Initial Conditions (conserved).", this_step);
     ICvalues = CreateREAL8Vector(14);
     REAL8 MfMin = mTScaled * f_min;
-    if (core->hParams && core->hParams->d_ini > 0.0)
+    if (core->hParams->initValues)
+        memcpy(ICvalues->data, core->hParams->initValues->data, 14*sizeof(REAL8));
+    else if (core->hParams && core->hParams->d_ini > 0.0)
     {
         REAL8 d_ini = core->hParams->d_ini; //initial seperation
         REAL8 pr_ini = core->hParams->pr_ini;
@@ -1857,7 +1863,9 @@ INT evolve_adaptive(REAL8 m1,  REAL8 m2,
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Solve Initial Conditions.", this_step);
     ICvalues = CreateREAL8Vector(14);
     REAL8 MfMin = mTScaled * f_min;
-    if (core->hParams && core->hParams->d_ini > 0.0)
+    if (core->hParams->initValues)
+        memcpy(ICvalues->data, core->hParams->initValues->data, 14*sizeof(REAL8));
+    else if (core->hParams && core->hParams->d_ini > 0.0)
     {
         REAL8 d_ini = core->hParams->d_ini; //initial seperation
         REAL8 pr_ini = core->hParams->pr_ini;
@@ -2863,7 +2871,9 @@ INT evolve_SA(REAL8 m1,  REAL8 m2,
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Solve Initial Conditions.", this_step);
     ICvalues = CreateREAL8Vector(14);
     REAL8 MfMin = mTScaled * f_min;
-    if (core->hParams && core->hParams->d_ini > 0.0)
+    if (core->hParams->initValues)
+        memcpy(ICvalues->data, core->hParams->initValues->data, 14*sizeof(REAL8));
+    else if (core->hParams && core->hParams->d_ini > 0.0)
     {
         REAL8 d_ini = core->hParams->d_ini; //initial seperation
         REAL8 pr_ini = core->hParams->pr_ini;
@@ -3022,9 +3032,12 @@ if(1) {failed = 1; goto QUIT;}
          *          if Mf_max > MfMin,
          *              let integrate stops at omega = pi*Mf_max
          */
+        REAL8 tM_max = hparams->t_max * mTScaled;
+        if (tM_max < 0)
+            tM_max = tendAdaS;
         status = SEOBIntegrateDynamics_SA_withFMax(&dynamicsAdaS, &retLenAdaS, 
             ICvalues_SA, EPS_ABS, EPS_REL, 
-            deltaT, deltaT_min, tstartAdaS, tendAdaS, core);
+            deltaT, deltaT_min, tstartAdaS, tM_max + tstartAdaS, core);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
         if (dynamicsInverse)
             SEOBConcactInverseDynToAdaSDyn_SA(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);
@@ -4058,7 +4071,9 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
     PRINT_LOG_INFO(LOG_INFO, "Step %d_ Solve Initial Conditions.", this_step);
     ICvalues = CreateREAL8Vector(14);
     REAL8 MfMin = mTScaled * f_min;
-    if (core->hParams && core->hParams->d_ini > 0.0)
+    if (core->hParams->initValues)
+        memcpy(ICvalues->data, core->hParams->initValues->data, 14*sizeof(REAL8));
+    else if (core->hParams && core->hParams->d_ini > 0.0)
     {
         REAL8 d_ini = core->hParams->d_ini; //initial seperation
         REAL8 pr_ini = core->hParams->pr_ini;
@@ -4091,6 +4106,8 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
             ICvalues->data[6], ICvalues->data[7], ICvalues->data[8]);
     PRINT_LOG_INFO(LOG_DEBUG, "(S2x,S2y,S2z) = (%.16e %.16e %.16e)",
             ICvalues->data[9], ICvalues->data[10], ICvalues->data[11]);
+    PRINT_LOG_INFO(LOG_DEBUG, "(phiD, phi) = (%.16e %.16e)",
+            ICvalues->data[12], ICvalues->data[13]);
     PRINT_LOG_INFO(LOG_DEBUG, "MfMin = %f, MfMax = %f, deltaT = %f\n", MfMin, core->hParams->Mf_max, deltaT);
     PRINT_LOG_INFO(LOG_DEBUG, "e0 = %f\n", ecc);
     REAL8 L0Vec[3] = {0,0,0};
@@ -4153,10 +4170,13 @@ INT evolve_prec(REAL8 m1,  REAL8 m2,
          *          if Mf_max > MfMin,
          *              let integrate stops at omega = pi*Mf_max
          */
+        REAL8 tM_max = hparams->t_max * mTScaled;
+        if (tM_max < 0)
+            tM_max = tendAdaS;
         PRINT_LOG_INFO(LOG_INFO, "Integrate dynamics with fmax");
         status = SEOBIntegrateDynamics_prec_withFMax(&dynamicsAdaS, &retLenAdaS, 
             ICvalues, EPS_ABS, EPS_REL, 
-            deltaT, deltaT_min, tstartAdaS, tendAdaS, core, core->alignedSpins);
+            deltaT, deltaT_min, tstartAdaS, tM_max + tstartAdaS, core, core->alignedSpins);
         if (status != CEV_SUCCESS) {failed = 1; goto QUIT;}
         if (dynamicsInverse)
             SEOBConcactInverseDynToAdaSDynPrec(&dynamicsAdaS, dynamicsInverse, &retLenAdaS, retLenInverse);

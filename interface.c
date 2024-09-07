@@ -145,6 +145,7 @@ typedef struct {
     INT zero_dyncoaphase;
     REAL8 f_max;
     REAL8 t_max;
+    REAL8Vector *initValues;
 }pyInputParams_t;
 
 typedef struct {
@@ -187,6 +188,8 @@ typedef struct {
     REAL8Vector *s2xVec;
     REAL8Vector *s2yVec;
     REAL8Vector *s2zVec;
+    REAL8Vector *phiDModVec;
+    REAL8Vector *phiModVec;
     REAL8Vector *prTDotVec;
     REAL8Vector *hamVec;
 }pyDynOutputStruct_t;
@@ -241,8 +244,13 @@ pyDynOutputStruct_t *CreatepyDynOutputStruct_t(INT length)
     output->s2xVec = CreateREAL8Vector(length);
     output->s2yVec = CreateREAL8Vector(length);
     output->s2zVec = CreateREAL8Vector(length);
+
+    output->phiDModVec = CreateREAL8Vector(length);
+    output->phiModVec = CreateREAL8Vector(length);
+
     output->prTDotVec = CreateREAL8Vector(length);
     output->hamVec = CreateREAL8Vector(length);
+
     return output;
 }
 
@@ -294,6 +302,9 @@ void DestroypyDynOutputStruct_t(pyDynOutputStruct_t *out)
     STRUCTFREE(out->s2xVec, REAL8Vector);
     STRUCTFREE(out->s2yVec, REAL8Vector);
     STRUCTFREE(out->s2zVec, REAL8Vector);
+    STRUCTFREE(out->phiDModVec, REAL8Vector);
+    STRUCTFREE(out->phiModVec, REAL8Vector);
+
     STRUCTFREE(out->prTDotVec, REAL8Vector);
     STRUCTFREE(out->hamVec, REAL8Vector);
     MYFree(out);
@@ -342,6 +353,11 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     hparams.zero_dyncoaphase = params->zero_dyncoaphase;
     hparams.t_max = params->t_max;
     hparams.tM_max = params->t_max / ((params->m1+params->m2) * CST_MTSUN_SI);
+    hparams.initValues = NULL;
+    if (params->initValues) {
+        hparams.initValues = CreateREAL8Vector(14);
+        memcpy(hparams.initValues->data, params->initValues->data, 14*sizeof(REAL8));
+    }
     set_egw_flag(params->egw_flag);
     SET_CODE_VERSION(params->code_version);
     set_PrecFlag(params->prec_flag);
@@ -491,6 +507,8 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
             STRUCTFREE(hcross, REAL8TimeSeries);
         }
     }
+    if (hparams.initValues)
+        STRUCTFREE(hparams.initValues, REAL8Vector);
     tend = clock();
     PRINT_LOG_INFO(LOG_INFO, "Time Cost: %fs\n", ((REAL8)(tend-tstart)/CLOCKS_PER_SEC));  
     if (is_failed) return CEV_FAILURE;
@@ -659,6 +677,8 @@ void convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(SEOBPrecCoreOutputs *All
     memcpy(output->s2xVec->data, All_prec->dyn->s2Vecx, length*sizeof(REAL8));
     memcpy(output->s2yVec->data, All_prec->dyn->s2Vecy, length*sizeof(REAL8));
     memcpy(output->s2zVec->data, All_prec->dyn->s2Vecz, length*sizeof(REAL8));
+    memcpy(output->phiDModVec->data, All_prec->dyn->phiDMod, length*sizeof(REAL8));
+    memcpy(output->phiModVec->data, All_prec->dyn->phiMod, length*sizeof(REAL8));
     memcpy(output->prTDotVec->data, All_prec->dyn->prTDotVec, length*sizeof(REAL8));
     memcpy(output->hamVec->data, All_prec->dyn->HamVec, length*sizeof(REAL8));
     *ret = output;
@@ -805,6 +825,8 @@ void convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(SEOBCoreOutputs *All, pyDynO
     memcpy(output->s2xVec->data, All->dyn->s2Vecx, length*sizeof(REAL8));
     memcpy(output->s2yVec->data, All->dyn->s2Vecy, length*sizeof(REAL8));
     memcpy(output->s2zVec->data, All->dyn->s2Vecz, length*sizeof(REAL8));
+    memcpy(output->phiDModVec->data, All->dyn->phiDMod, length*sizeof(REAL8));
+    memcpy(output->phiModVec->data, All->dyn->phiMod, length*sizeof(REAL8));
     memcpy(output->prTDotVec->data, All->dyn->polarprDotVec, length*sizeof(REAL8));
     memcpy(output->hamVec->data, All->dyn->hamVec, length*sizeof(REAL8));
     *ret = output;
@@ -957,6 +979,8 @@ void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, RE
     memset(output->s1yVec->data, 0, length*sizeof(REAL8));
     memset(output->s2xVec->data, 0, length*sizeof(REAL8));
     memset(output->s2yVec->data, 0, length*sizeof(REAL8));
+    memset(output->phiDModVec->data, 0, length*sizeof(REAL8));
+    memset(output->phiModVec->data, 0, length*sizeof(REAL8));
     for (i=0; i<length; i++)
     {
         r = dyn_debug->rVec[i];

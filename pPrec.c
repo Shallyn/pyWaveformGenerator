@@ -339,8 +339,9 @@ static int PrecStopConditionBasedOnPR_withfmax(double t,
     omega = sqrt(inner_product3d(omega_xyz, omega_xyz)) / r2;
     pDotr = inner_product3d(p, r) / sqrt(r2);
     REAL8 omegaMax = params->hParams->Mf_max*CST_PI;
-    if (omega > omegaMax || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
+    if ((omega > omegaMax && omegaMax > 0.0) || (t > params->hParams->tM_max && params->hParams->tM_max>0.0)){
         return 1;
+    }
     // if (debugPK) {
     //     XLAL_PRINT_INFO("PrecStopConditionBasedOnPR:: r = %e %e\n",
     //                     sqrt(r2), omega);
@@ -1723,7 +1724,7 @@ static int SEOBPrecCalculatehlmAmpPhase(
     REAL8 tPeakOmega = seobParams->tPeakOmega;
 
     /* Calibration parameter */
-    if (includeNQC == 0 && seobParams->hParams->Mf_max < seobParams->hParams->Mf_min)
+    if (includeNQC == 0 && seobParams->hParams->Mf_max < seobParams->hParams->Mf_min && seobParams->hParams->tM_max < 0)
     {
         if (((l == 2) && (m == 1)) || ((l == 5) && (m == 5))) 
         {

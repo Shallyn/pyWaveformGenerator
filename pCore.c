@@ -1374,7 +1374,7 @@ static int SEOBCalculatehlmAmpPhase(
     REAL8 tPeakOmega = seobParams->tPeakOmega;
 
     /* Calibration parameter */
-    if (includeNQC == 0 && seobParams->hParams->Mf_max < seobParams->hParams->Mf_min) 
+    if (includeNQC == 0 && seobParams->hParams->Mf_max < seobParams->hParams->Mf_min && seobParams->hParams->tM_max < 0) 
     {
         if (((l == 2) && (m == 1)) || ((l == 5) && (m == 5))) 
         {
@@ -1572,7 +1572,7 @@ static int SEOBSACalculatehlmAmpPhase(
     REAL8 tPeakOmega = seobParams->tPeakOmega;
 
     /* Calibration parameter */
-    if (includeNQC == 0 && seobParams->hParams->Mf_max < seobParams->hParams->Mf_min) 
+    if (includeNQC == 0 && seobParams->hParams->Mf_max < seobParams->hParams->Mf_min && seobParams->hParams->tM_max < 0) 
     {
         if (((l == 2) && (m == 1)) || ((l == 5) && (m == 5))) 
         {
@@ -1958,7 +1958,7 @@ static int XLALEOBSpinPrecAlignedStopCondition_withFMax(
     REAL8 omegaMax = params->hParams->Mf_max*CST_PI;
     r = values[0];
     omega = dvalues[1];
-    if (omega > omegaMax || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
+    if ( (omega > omegaMax && omegaMax > 0.0) || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
         return 1;
     if (r < 6. && omega < params->omega) 
     {
@@ -2074,7 +2074,7 @@ static int EOBHighSRStopConditionEcc_withFMax(double t,
     }
     REAL8 eta, ham, omega;
     REAL8 omegaMax = CST_PI*params->hParams->Mf_max;
-    if (omega > omegaMax || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
+    if ( (omega > omegaMax && omegaMax > 0.0) || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
         return 1;
     eta = params->eta;
     REAL8Vector xVec, pVec;
@@ -2476,7 +2476,7 @@ XLALEOBSpinPrecStopConditionBasedOnPR_withFMax(double t,
     cross_product3d(values, dvalues, omega_xyz);
     omega = sqrt(inner_product3d(omega_xyz, omega_xyz)) / r2;
     pDotr = inner_product3d(p, r) / sqrt(r2);
-    if (omega > omegaMax || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
+    if ((omega > omegaMax && omegaMax > 0.0) || (t > params->hParams->tM_max && params->hParams->tM_max>0.0))
         return 1;
     // if (debugPK) {
     //     XLAL_PRINT_INFO("XLALEOBSpinPrecStopConditionBasedOnPR:: r = %e %e\n",
@@ -3628,7 +3628,7 @@ INT SEOBIntegrateDynamics_withfMax(REAL8Array **dynamics,
             failed = 1;
             goto QUIT;
         }
-    } 
+    }
     else 
     {
         // Prec
@@ -9102,7 +9102,7 @@ REAL8 calculate_L_from_omgezeta(REAL8 eta, REAL8 chi1, REAL8 chi2, REAL8 omega, 
 {
     REAL8 eta2, dm;
     eta2 = eta*eta;
-    dm = sqrt(1.-3.*eta);
+    dm = sqrt(1.-4.*eta);
     REAL8 chi12, chi22, chi1Pchi2Sq, chi1Mchi2Sq;
     chi12 = chi1*chi1;
     chi22 = chi2*chi2;

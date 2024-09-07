@@ -147,11 +147,24 @@ class npDynamicData(object):
         self.__s2xVec = convert_REAL8Vector_to_numpy(dyndata.contents.s2xVec)
         self.__s2yVec = convert_REAL8Vector_to_numpy(dyndata.contents.s2yVec)
         self.__s2zVec = convert_REAL8Vector_to_numpy(dyndata.contents.s2zVec)
+        self.__phiDModVec = convert_REAL8Vector_to_numpy(dyndata.contents.phiDModVec)
+        self.__phiModVec = convert_REAL8Vector_to_numpy(dyndata.contents.phiModVec)
         self.__prTDotVec = convert_REAL8Vector_to_numpy(dyndata.contents.prTDotVec)
         self.__hamVec = convert_REAL8Vector_to_numpy(dyndata.contents.hamVec)
-
+    def __getitem__(self, key:int):
+        return np.array([self.__xVec[key], self.__yVec[key], self.__zVec[key], 
+            self.__pTxVec[key], self.__pTyVec[key], self.__pTzVec[key], 
+            self.__s1xVec[key], self.__s1yVec[key], self.__s1zVec[key],
+            self.__s2xVec[key], self.__s2yVec[key], self.__s2zVec[key],
+            self.__phiDModVec[key], self.__phiModVec[key]])
     def __len__(self):
         return len(self.__timeM)
+    @property
+    def phiDMod(self):
+        return self.__phiDModVec
+    @property
+    def phiMod(self):
+        return self.__phiModVec
     @property
     def m1(self):
         return self.__m1
@@ -389,6 +402,8 @@ class SEOBNRWaveformCaller(object):
         self.zero_dyncoaphase = 0
         self.f_max = -1.
         self.t_max = -1.
+        self.ICValues = None
+
     def set_params(self, **kwargs):
         self.__parse_params(**kwargs)
     
@@ -471,7 +486,7 @@ class SEOBNRWaveformCaller(object):
             self.zero_dyncoaphase = 0 if kwargs['zero_dyncoaphase'] == False else 1
         self.f_max = self.f_max if 'f_max' not in kwargs else kwargs['f_max']
         self.t_max = self.t_max if 't_max' not in kwargs else kwargs['t_max']
-
+        self.ICValues = self.ICValues if 'initial_condition' not in kwargs else kwargs['initial_condition']
     def calculate_hcorrections(self, l:int, m:int, dyn:npDynamicData):
         hparams = pyHyperParams()
         hparams.d_ini = self.d_ini
@@ -555,6 +570,12 @@ class SEOBNRWaveformCaller(object):
         return rholm_real_np + 1.j*rholm_imag_np, flm_real_np + 1.j*flm_imag_np
     
     def run(self):
+        if self.ICValues is not None and not isinstance(self.ICValues, np.ndarray):
+            raise TypeError('initial condition must be numpy array with size (14,)')
+        if self.ICValues is None:
+            initValues = ctypes.POINTER(pyREAL8Vector)() # should be a NULL pointer
+        else:
+            initValues = convert_ndarray_to_REAL8Vector(self.ICValues)
         value_list = [ctypes.c_int(self.use_geom),
                       ctypes.c_double(self.m1),
                       ctypes.c_double(self.m2),
@@ -605,12 +626,15 @@ class SEOBNRWaveformCaller(object):
                       ctypes.c_double(self.Mf_ref),
                       ctypes.c_int(self.zero_dyncoaphase),
                       ctypes.c_double(self.f_max),
-                      ctypes.c_double(self.t_max)
+                      ctypes.c_double(self.t_max),
+                      initValues
                       ]
         input_pms = pyInputParams(*value_list)
         ret_struct = ctypes.POINTER(pyOutputStruct)()
         ret_dynstruct = ctypes.POINTER(pyDynOutputStruct)()
         ret = my_waveform_lib.generate_waveform(ctypes.byref(input_pms), ctypes.byref(ret_struct), ctypes.byref(ret_dynstruct))
+        if self.ICValues is not None:
+            my_waveform_lib.DestroyREAL8Vector(initValues)
         npdynstruct = None
         if ret == 0:
             npstruct = npWaveformData(ret_struct, t0 = self.t0)

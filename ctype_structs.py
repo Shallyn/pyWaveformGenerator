@@ -774,7 +774,8 @@ class pyInputParams(ctypes.Structure):
                 ('Mf_ref', ctypes.c_double),
                 ('zero_dyncoaphase', ctypes.c_int),
                 ('f_max', ctypes.c_double),
-                ('t_max', ctypes.c_double))
+                ('t_max', ctypes.c_double),
+                ('initValues', ctypes.POINTER(pyREAL8Vector)))
 
 
 class pyOutputStruct(ctypes.Structure):
@@ -812,6 +813,8 @@ class pyDynOutputStruct(ctypes.Structure):
                 ('s2xVec', ctypes.POINTER(pyREAL8Vector)),
                 ('s2yVec', ctypes.POINTER(pyREAL8Vector)),
                 ('s2zVec', ctypes.POINTER(pyREAL8Vector)),
+                ('phiDModVec', ctypes.POINTER(pyREAL8Vector)),
+                ('phiModVec', ctypes.POINTER(pyREAL8Vector)),
                 ('prTDotVec', ctypes.POINTER(pyREAL8Vector)),
                 ('hamVec', ctypes.POINTER(pyREAL8Vector))
                 )
