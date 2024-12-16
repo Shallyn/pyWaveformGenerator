@@ -1,19 +1,37 @@
 # pyWaveformGenerator of SEOBNRE
-
 Python module calculate GW waveform
 
-Installation && compile
+## Pre-requisites
+```bash
+sudo apt-get update
+sudo apt-get install libgsl-dev
+sudo apt-get install cmake
 ```
-./mkconf.sh
-./configure
+
+
+## Compile C code and install libraries
+```bash
+mkdir build
+cd build
+cmake ..
 make
+make install
+```
+
+## Install Python package
+```bash
+cd ..
+pip install -r requirements.txt
+pip install -e .
 ```
 sometimes the lib cannot use in Apple core macbook.
 
 
-Run in python
+## Run in python
+This is Tutorial in `example/tutorial.ipynb`
 ```python
-from pyWaveformGenerator.waveform import calculate_waveform
+from pySEOBNREPHM.waveform import calculate_waveform
+
 m1 = m2 = 10
 chi1x = chi1y = chi1z = 0
 chi2x = chi2y = chi2z = 0
@@ -35,7 +53,8 @@ Cite this repo via [arXiv:2102.08614](https://arxiv.org/abs/2102.08614)  and [ar
 Generate eccentric-precession waveform, run
 
 ```python
-from pyWaveformGenerator.waveform import calculate_waveform_ep
+from pySEOBNREPHM.waveform import calculate_waveform_ep
+
 m1 = m2 = 10
 chi1x = 0.2
 chi1y = chi1z = 0
@@ -89,7 +108,8 @@ which will looks like
 ## Anomaly and reference frequency
 
 ```python
-from pyWaveformGenerator.waveform import calculate_waveform
+from pySEOBNREPHM.waveform import calculate_waveform
+
 m1 = m2 = 10
 chi1x = chi1y = chi1z = 0
 chi2x = chi2y = chi2z = 0
@@ -110,7 +130,7 @@ waveform, dynamics = calculate_waveform((m1, m2,
 for spin-precession case (on test)
 
 ```python
-from pyWaveformGenerator.waveform import calculate_waveform_ep
+from pySEOBNREPHM.waveform import calculate_waveform_ep
 
 q = 1.3
 mtot = 20
