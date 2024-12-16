@@ -1,29 +1,29 @@
 /**
-* Writer: Xiaolin.liu
-* xiaolin.liu@mail.bnu.edu.cn
-*
-* This module contains basic functions for  calculation.
-* Functions list:
-* Kernel: 
-* 20xx.xx.xx, LOC
-**/
+ * Writer: Xiaolin.liu
+ * xiaolin.liu@mail.bnu.edu.cn
+ *
+ * This module contains basic functions for  calculation.
+ * Functions list:
+ * Kernel:
+ * 20xx.xx.xx, LOC
+ **/
 
 #ifndef __INCLUDE_PSTRUCTS__
 #define __INCLUDE_PSTRUCTS__
 #include "myUtils.h"
 #define VERSION 1
 
-typedef enum tagflagSEOBNRv4P_Zframe {
-  FLAG_SEOBNRv4P_ZFRAME_L = 0, /**< set Z axis of the P-frame along L */
-  FLAG_SEOBNRv4P_ZFRAME_LN = 1 /**< set Z axis of the P-frame along LN */
+typedef enum tagflagSEOBNRv4P_Zframe
+{
+    FLAG_SEOBNRv4P_ZFRAME_L = 0, /**< set Z axis of the P-frame along L */
+    FLAG_SEOBNRv4P_ZFRAME_LN = 1 /**< set Z axis of the P-frame along LN */
 } flagSEOBNRv4P_Zframe;
-
 
 // Other params
 typedef struct tagHyperParams
 {
     REAL8 sl_p; // initial semi-latus
-    REAL8 x0; // initial inclination angle
+    REAL8 x0;   // initial inclination angle
     REAL8 KK;
     REAL8 dSO;
     REAL8 dSS;
@@ -38,16 +38,17 @@ typedef struct tagHyperParams
     REAL8 inEPS_REL;
     REAL8 inEPS_ABS;
     INT is_coframe;
-    REAL8  Mf_min;
-    REAL8  Mf_ref;
-    INT    zero_dyncoaphase;
-    REAL8  Mf_max;
-    REAL8  t_max;
-    REAL8  tM_max;
-    REAL8Vector  *initValues;
-}HyperParams;
+    REAL8 Mf_min;
+    REAL8 Mf_ref;
+    INT zero_dyncoaphase;
+    REAL8 Mf_max;
+    REAL8 t_max;
+    REAL8 tM_max;
+    REAL8Vector *initValues;
+} HyperParams;
 
-typedef struct {
+typedef struct
+{
     REAL8 FrPN1_f21;
     REAL8 FrPN1_f20;
     REAL8 FrPN1_f12;
@@ -112,8 +113,7 @@ typedef struct {
     REAL8 FfPN2Topf0_f03;
     REAL8 FfPN2Topf0_f02;
     REAL8 FfPN2Topf0_f01;
-}EccCorrectionCoeffs;
-
+} EccCorrectionCoeffs;
 
 typedef struct tagFacWaveformCoeffs
 {
@@ -359,7 +359,6 @@ typedef struct tagFacWaveformCoeffs
     REAL8 f55v4;
     REAL8 f55v5c;
 
-
     REAL8 delta54vh3;
     REAL8 delta54vh4;
     REAL8 delta54vh4S;
@@ -591,7 +590,7 @@ typedef struct tagFacWaveformCoeffs
     REAL8 h31T3ff11;
     REAL8 h31T3ff02;
     REAL8 h31T3ff00;
-    
+
     // h44
     REAL8 h44T0ff40;
     REAL8 h44T0ff31;
@@ -667,27 +666,24 @@ typedef struct tagFacWaveformCoeffs
     REAL8 h41T1ff11;
     REAL8 h41T1ff02;
     REAL8 h41T1ff00;
-}
-FacWaveformCoeffs;
+} FacWaveformCoeffs;
 
 typedef struct tagEOBNonQCCoeffs
 {
-  REAL8 a1;
-  REAL8 a2;
-  REAL8 a3;
-  REAL8 a3S;
-  REAL8 a4;
-  REAL8 a5;
-  REAL8 b1;
-  REAL8 b2;
-  REAL8 b3;
-  REAL8 b4;
+    REAL8 a1;
+    REAL8 a2;
+    REAL8 a3;
+    REAL8 a3S;
+    REAL8 a4;
+    REAL8 a5;
+    REAL8 b1;
+    REAL8 b2;
+    REAL8 b3;
+    REAL8 b4;
 } EOBNonQCCoeffs;
 
-
 /* Spin EOBH Coeffs */
-typedef struct
-tagSpinEOBHCoeffs
+typedef struct tagSpinEOBHCoeffs
 {
     double KK;
     double k0;
@@ -704,10 +700,10 @@ tagSpinEOBHCoeffs
     double dheffSS;
     double dheffSSv2;
     int updateHCoeffs;
-}
-SpinEOBHCoeffs;
+} SpinEOBHCoeffs;
 
-typedef struct {
+typedef struct
+{
     REAL8 eta;
     REAL8 a;
     REAL8 a2;
@@ -752,97 +748,94 @@ typedef struct {
 
     REAL8 Peffss;
     REAL8 sign;
-}SpinEOBHSACoeffs;
+} SpinEOBHSACoeffs;
 
-typedef struct
-tagSEOBHCoeffConstants
+typedef struct tagSEOBHCoeffConstants
 {
 
-    double a0k2; //Coefficient of a^0 in k2
-    double a1k2; //Coefficient of a^1 in k2
+    double a0k2; // Coefficient of a^0 in k2
+    double a1k2; // Coefficient of a^1 in k2
 
-    double a0k3; //Coefficient of a^0 in k3
-    double a1k3; //Coefficient of a^1 in k3
+    double a0k3; // Coefficient of a^0 in k3
+    double a1k3; // Coefficient of a^1 in k3
 
-    double a0k4; //Coefficient of a^0 in k4
-    double a1k4; //Coefficient of a^1 in k4
-    double a2k4; //Coefficient of a^2 in k4
+    double a0k4; // Coefficient of a^0 in k4
+    double a1k4; // Coefficient of a^1 in k4
+    double a2k4; // Coefficient of a^2 in k4
 
-    double a0k5; //Coefficient of a^0 in k5
-    double a1k5; //Coefficient of a^1 in k5
-    double a2k5; //Coefficient of a^2 in k5
-}
-SEOBHCoeffConstants;
+    double a0k5; // Coefficient of a^0 in k5
+    double a1k5; // Coefficient of a^1 in k5
+    double a2k5; // Coefficient of a^2 in k5
+} SEOBHCoeffConstants;
 
 typedef struct tagNewtonMultipolePrefixes
 {
     COMPLEX16 values[9][9];
-}
-NewtonMultipolePrefixes;
+} NewtonMultipolePrefixes;
 
 /* Spin EOB Core */
 typedef struct tagSpinEOBParams
 {
     // Intrinsic
-    REAL8                   eta;
-    REAL8                   m1;
-    REAL8                   m2;
-    REAL8                   a;
-    REAL8                   chi1;
-    REAL8                   chi2;
-    REAL8                   p0; // initial semi-latus
-    REAL8                   e0;
-    REAL8                   x0; // initial inclination
+    REAL8 eta;
+    REAL8 m1;
+    REAL8 m2;
+    REAL8 a;
+    REAL8 chi1;
+    REAL8 chi2;
+    REAL8 p0; // initial semi-latus
+    REAL8 e0;
+    REAL8 x0; // initial inclination
     // Numerical Deriv aux
-    REAL8                   omega;
-    UINT                    omegaPeaked;
-    INT                     termination_reason;
-    REAL8                   prev_dr;
-    REAL8                   spin1z_omegaPeak;
-    REAL8                   spin2z_omegaPeak;
-    REAL8                   tPeakOmega;
+    REAL8 omega;
+    UINT omegaPeaked;
+    INT termination_reason;
+    REAL8 prev_dr;
+    REAL8 spin1z_omegaPeak;
+    REAL8 spin2z_omegaPeak;
+    REAL8 tPeakOmega;
 
     // Spin Vectors
-    REAL8Vector             *chi1Vec;
-    REAL8Vector             *chi2Vec;
-    REAL8Vector             *s1Vec;
-    REAL8Vector             *s2Vec;
-    REAL8Vector             *sigmaStar;
-    REAL8Vector             *sigmaKerr;
-    REAL8Vector             *J0Vec;
+    REAL8Vector *chi1Vec;
+    REAL8Vector *chi2Vec;
+    REAL8Vector *s1Vec;
+    REAL8Vector *s2Vec;
+    REAL8Vector *sigmaStar;
+    REAL8Vector *sigmaKerr;
+    REAL8Vector *J0Vec;
     // Structs
-    SpinEOBHCoeffs          *seobCoeffs;
-    SpinEOBHSACoeffs        *saCoeffs;
-    SEOBHCoeffConstants     *seobCoeffConsts;
-    HyperParams             *hParams;
+    SpinEOBHCoeffs *seobCoeffs;
+    SpinEOBHSACoeffs *saCoeffs;
+    SEOBHCoeffConstants *seobCoeffConsts;
+    HyperParams *hParams;
     NewtonMultipolePrefixes *prefixes;
-    FacWaveformCoeffs       *hCoeffs;
+    FacWaveformCoeffs *hCoeffs;
     // FacWaveformCoeffs       *hCoeffs_flux;
-    EccCorrectionCoeffs     *eccCoeffs;
-    EOBNonQCCoeffs          *nqcCoeffs;
+    EccCorrectionCoeffs *eccCoeffs;
+    EOBNonQCCoeffs *nqcCoeffs;
 
     // hCoeffs cal
-    COMPLEX16                   cal21;
-    REAL8                       cal21E;
-    REAL8                       cal21E1;
-    REAL8                       cal21E2;
-    REAL8                       cal21E3;
-    REAL8                       cal21E4;
-    COMPLEX16                   cal55;
+    COMPLEX16 cal21;
+    REAL8 cal21E;
+    REAL8 cal21E1;
+    REAL8 cal21E2;
+    REAL8 cal21E3;
+    REAL8 cal21E4;
+    COMPLEX16 cal55;
 
     // NQC window
-    REAL8                   tWind;
-    REAL8                   wWind;
+    REAL8 tWind;
+    REAL8 wWind;
 
     // Booleans
-    INT                     tortoise;
-    BOOLEAN                 alignedSpins;
-    BOOLEAN                 ignoreflux;
-    BOOLEAN                 use_hm;
+    INT tortoise;
+    BOOLEAN alignedSpins;
+    BOOLEAN ignoreflux;
+    BOOLEAN use_hm;
 
     // cache
-    REAL8                   cache[3];
-}SpinEOBParams;
+    REAL8 cache[3];
+} SpinEOBParams;
 
 typedef struct tagSpinEOBDynamics
 {
@@ -855,35 +848,30 @@ typedef struct tagSpinEOBDynamics
     REAL8Vector *pxVec;
     REAL8Vector *pyVec;
     REAL8Vector *pzVec;
-}SpinEOBDynamics;
+} SpinEOBDynamics;
 
 /* ------------------------ Deriv & Integral struct------------------ */
 /* Hcap */
-typedef
-struct tagHcapDerivParams
+typedef struct tagHcapDerivParams
 {
-    const REAL8   *values;
+    const REAL8 *values;
     SpinEOBParams *params;
-    UINT         varyParam;
-}
-HcapDerivParams;
+    UINT varyParam;
+} HcapDerivParams;
 
-typedef
-struct tagHcapSphDeriv2Params
+typedef struct tagHcapSphDeriv2Params
 {
-    const REAL8     *sphValues;
-    SpinEOBParams   *params;
-    UINT           varyParam1;
-    UINT           varyParam2;
-}
-HcapSphDeriv2Params;
-
+    const REAL8 *sphValues;
+    SpinEOBParams *params;
+    UINT varyParam1;
+    UINT varyParam2;
+} HcapSphDeriv2Params;
 
 /**
  * Structure the EOB dynamics for precessing waveforms.
  */
 #define v4PdynamicsVariables 36
-typedef struct tagSEOBdynamics 
+typedef struct tagSEOBdynamics
 {
     UINT length;
     REAL8 th22Peak;
@@ -941,7 +929,8 @@ typedef struct tagSEOBdynamics
 } SEOBdynamics;
 
 #define v4SAdynamicsVariables 10
-typedef struct {
+typedef struct
+{
     UINT length;
     REAL8 th22Peak;
     REAL8Array *array;
@@ -957,66 +946,70 @@ typedef struct {
     REAL8 *dphiVec;
 
     REAL8 *HVec;
-    
+
     REAL8 *dprTVec;
     REAL8 *dpphiVec;
 
-}SEOBSAdynamics;
+} SEOBSAdynamics;
 
-typedef struct tagSphHarmListEOBNonQCCoeffs {
-    EOBNonQCCoeffs*                        nqcCoeffs; /**< NQC coefficients for this mode. */
-    UINT                                   l; /**< Mode number l. */
-    INT                                    m; /**< Mode number m. */
-    struct tagSphHarmListEOBNonQCCoeffs   *next; /**< Pointer to next element in the list. */
+typedef struct tagSphHarmListEOBNonQCCoeffs
+{
+    EOBNonQCCoeffs *nqcCoeffs;                 /**< NQC coefficients for this mode. */
+    UINT l;                                    /**< Mode number l. */
+    INT m;                                     /**< Mode number m. */
+    struct tagSphHarmListEOBNonQCCoeffs *next; /**< Pointer to next element in the list. */
 } SphHarmListEOBNonQCCoeffs;
 
 /**
- * Structure to represent a data piece (e.g. a mode hlm), either in frequency or time
- * with complex amplitude (enveloppe) and phase.
- * The mode values are camp * exp(I*phase)
+ * Structure to represent a data piece (e.g. a mode hlm), either in frequency
+ * or time with complex amplitude (enveloppe) and phase. The mode values are
+ * camp * exp(I*phase)
  */
-typedef struct tagCAmpPhaseSequence {
-    REAL8Vector*                        xdata; /**< Sequence of times or frequencies on which data is given. */
-    REAL8Vector*                        camp_real; /**< Sequence for the real part of the complex amplitude (enveloppe). */
-    REAL8Vector*                        camp_imag; /**< Sequence for the imag part of the complex amplitude (enveloppe). */
-    REAL8Vector*                        phase; /**< Sequence for the phase. */
+typedef struct tagCAmpPhaseSequence
+{
+    REAL8Vector *xdata;     /**< Sequence of times or frequencies on which data is given. */
+    REAL8Vector *camp_real; /**< Sequence for the real part of the complex
+                               amplitude (enveloppe). */
+    REAL8Vector *camp_imag; /**< Sequence for the imag part of the complex
+                               amplitude (enveloppe). */
+    REAL8Vector *phase;     /**< Sequence for the phase. */
 } CAmpPhaseSequence;
 
 /**
  * Structure to represent linked list of modes
  * with complex amplitude (enveloppe) and phase.
  */
-typedef struct tagSphHarmListCAmpPhaseSequence {
-    CAmpPhaseSequence*                        campphase; /**< Data for this mode. */
-    UINT                                      l; /**< Mode number l. */
-    INT                                       m; /**< Mode number m. */
-    struct tagSphHarmListCAmpPhaseSequence*   next; /**< Pointer to next element in the list. */
+typedef struct tagSphHarmListCAmpPhaseSequence
+{
+    CAmpPhaseSequence *campphase;                 /**< Data for this mode. */
+    UINT l;                                       /**< Mode number l. */
+    INT m;                                        /**< Mode number m. */
+    struct tagSphHarmListCAmpPhaseSequence *next; /**< Pointer to next element in the list. */
 } SphHarmListCAmpPhaseSequence;
 
 /**
- * Structure to carry a collection of spherical harmonic modes in COMPLEX16 
+ * Structure to carry a collection of spherical harmonic modes in COMPLEX16
  * time series. Contains convenience getter and setter functions, as well as
  * a convienence "maximum l mode" function. Implemented as a singly forward
  * linked list.
  */
-typedef struct tagSphHarmTimeSeries {
-    COMPLEX16TimeSeries*            mode; /**< The sequences of sampled data. */
-    UINT                            l; /**< Node mode l  */
-    INT                             m; /**< Node submode m  */
-    REAL8Vector*                  tdata; /**< Timestamp values */
-    REAL8                           tAttach;
-    struct tagSphHarmTimeSeries*    next; /**< next pointer */
+typedef struct tagSphHarmTimeSeries
+{
+    COMPLEX16TimeSeries *mode; /**< The sequences of sampled data. */
+    UINT l;                    /**< Node mode l  */
+    INT m;                     /**< Node submode m  */
+    REAL8Vector *tdata;        /**< Timestamp values */
+    REAL8 tAttach;
+    struct tagSphHarmTimeSeries *next; /**< next pointer */
 } SphHarmTimeSeries;
 
 typedef struct tagSEOBCoreOutputs
 {
-    SphHarmTimeSeries   *hLM;
-    SEOBdynamics        *dyn;
-    REAL8Vector         *flux;
+    SphHarmTimeSeries *hLM;
+    SEOBdynamics *dyn;
+    REAL8Vector *flux;
     SphHarmListCAmpPhaseSequence *Plm;
-}SEOBCoreOutputs;
-
-
+} SEOBCoreOutputs;
 
 typedef struct tagRRForceCoeffs
 {
@@ -1071,8 +1064,7 @@ typedef struct tagRRForceCoeffs
     REAL8 SSf100;
     REAL8 SSf010;
     REAL8 SSf001;
-}RRForceCoeffs;
-
+} RRForceCoeffs;
 
 /*--------------------------------------------------------------*/
 /*                                                              */
@@ -1086,7 +1078,8 @@ typedef struct tagRRForceCoeffs
 #define v4PrecdynamicsVariables 40
 #define v4PrecEvolvedynamicsVariables 21
 
-typedef struct {
+typedef struct
+{
     UINT length;
     REAL8 th22Peak;
     REAL8Array *array;
@@ -1117,7 +1110,7 @@ typedef struct {
     REAL8 *velVecz;
 
     REAL8 *HamVec;
-    REAL8 *fluxVec; // for debug
+    REAL8 *fluxVec;   // for debug
     REAL8 *prTDotVec; // for debug
 
     // other params
@@ -1145,17 +1138,18 @@ typedef struct {
     REAL8 *s1dotZVec;
     REAL8 *s2dotZVec;
 
-}SEOBPrecdynamics;
+} SEOBPrecdynamics;
 
 typedef struct tagSEOBPrecCoreOutputs
 {
-    REAL8Vector         *tVec;
-    SphHarmTimeSeries   *hLM;
-    SEOBPrecdynamics    *dyn;
+    REAL8Vector *tVec;
+    SphHarmTimeSeries *hLM;
+    SEOBPrecdynamics *dyn;
     SphHarmListCAmpPhaseSequence *Plm;
-}SEOBPrecCoreOutputs;
+} SEOBPrecCoreOutputs;
 
-typedef struct {
+typedef struct
+{
     REAL8 xVec[3];
     REAL8 pTVec[3];
     REAL8 s1Vec[3];
@@ -1165,7 +1159,7 @@ typedef struct {
     REAL8 r;
     REAL8 prT;
     REAL8 pT2;
-    
+
     REAL8 xS1;
     REAL8 xS2;
     REAL8 pTS1;
@@ -1176,9 +1170,10 @@ typedef struct {
     REAL8 S1S1;
     REAL8 S1S2;
     REAL8 S2S2;
-}SEOBPrecVariables;
+} SEOBPrecVariables;
 
-typedef struct {
+typedef struct
+{
     REAL8 nchia;
     REAL8 nchis;
     REAL8 lchia;
@@ -1222,7 +1217,6 @@ typedef struct {
     REAL8 z22;
     REAL8 z24;
     REAL8 z30;
-}SEOBPrecWaveformVariables;
+} SEOBPrecWaveformVariables;
 
 #endif
-

@@ -2,10 +2,10 @@
 
 #include "myFileIO.h"
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
-INT get_REAL8TimeSeries(REAL8TimeSeries ** Series, FILE * fp)
+INT get_REAL8TimeSeries(REAL8TimeSeries **Series, FILE *fp)
 {
     const size_t block = 1024;
     REAL8 start;
@@ -17,17 +17,20 @@ INT get_REAL8TimeSeries(REAL8TimeSeries ** Series, FILE * fp)
     CHAR line[LINE_MAX];
     CHAR t0[LINE_MAX];
     CHAR t1[LINE_MAX];
-    
-    for (l = 0, n = 0; fgets(line, sizeof(line), fp); ++l) {
+
+    for (l = 0, n = 0; fgets(line, sizeof(line), fp); ++l)
+    {
         int c;
         if (*line == '#')
             continue;
-        if (n == bufsz) {       /* allocate more memory */
+        if (n == bufsz)
+        { /* allocate more memory */
             bufsz += block;
             data = realloc(data, bufsz * sizeof(*data));
         }
         c = sscanf(line, "%le %le", n ? &end : &start, data + n);
-        if (c != 2) {
+        if (c != 2)
+        {
             print_err("error: format error on line %zd: %s\n", l, line);
             exit(1);
         }
@@ -36,16 +39,14 @@ INT get_REAL8TimeSeries(REAL8TimeSeries ** Series, FILE * fp)
 
     data = realloc(data, n * sizeof(*data));
     dt = (end - start) / (n - 1);
-    *Series = CreateREAL8TimeSeries (start, (REAL8)dt, n);
+    *Series = CreateREAL8TimeSeries(start, (REAL8)dt, n);
     memcpy((*Series)->data->data, data, n * sizeof(*data));
-    
+
     free(data);
     return CEV_SUCCESS;
 }
 
-
-
-INT get_REAL8TimeSeries_waveform(REAL8TimeSeries ** hplus, REAL8TimeSeries ** hcross, FILE * fp)
+INT get_REAL8TimeSeries_waveform(REAL8TimeSeries **hplus, REAL8TimeSeries **hcross, FILE *fp)
 {
     const size_t block = 1024;
     REAL8 start;
@@ -56,18 +57,21 @@ INT get_REAL8TimeSeries_waveform(REAL8TimeSeries ** hplus, REAL8TimeSeries ** hc
     size_t bufsz = 0;
     size_t n, l;
     CHAR line[LINE_MAX];
-    
-    for (l = 0, n = 0; fgets(line, sizeof(line), fp); ++l) {
+
+    for (l = 0, n = 0; fgets(line, sizeof(line), fp); ++l)
+    {
         int c;
         if (*line == '#')
             continue;
-        if (n == bufsz) {       /* allocate more memory */
+        if (n == bufsz)
+        { /* allocate more memory */
             bufsz += block;
             hp = realloc(hp, bufsz * sizeof(*hp));
             hc = realloc(hc, bufsz * sizeof(*hc));
         }
         c = sscanf(line, "%le %le %le", n ? &start : &end, hp + n, hc + n);
-        if (c != 3) {
+        if (c != 3)
+        {
             print_err("error: format error on line %zd: %s\n", l, line);
             exit(1);
         }
@@ -76,17 +80,17 @@ INT get_REAL8TimeSeries_waveform(REAL8TimeSeries ** hplus, REAL8TimeSeries ** hc
     hp = realloc(hp, n * sizeof(*hp));
     hc = realloc(hc, n * sizeof(*hp));
     dt = (end - start) / (n - 1);
-    *hplus = CreateREAL8TimeSeries (start, dt, n);
-    *hcross = CreateREAL8TimeSeries (start, dt, n);
+    *hplus = CreateREAL8TimeSeries(start, dt, n);
+    *hcross = CreateREAL8TimeSeries(start, dt, n);
     memcpy((*hplus)->data->data, hp, n * sizeof(*hp));
     memcpy((*hcross)->data->data, hc, n * sizeof(*hc));
-    
+
     free(hp);
     free(hc);
     return CEV_SUCCESS;
 }
 
-INT get_COMPLEX16TimeSeries_waveform(COMPLEX16TimeSeries ** hout, FILE * fp)
+INT get_COMPLEX16TimeSeries_waveform(COMPLEX16TimeSeries **hout, FILE *fp)
 {
     const size_t block = 1024;
     REAL8 start;
@@ -98,18 +102,21 @@ INT get_COMPLEX16TimeSeries_waveform(COMPLEX16TimeSeries ** hout, FILE * fp)
     size_t n, l;
     CHAR line[LINE_MAX];
     COMPLEX16TimeSeries *hLM;
-    
-    for (l = 0, n = 0; fgets(line, sizeof(line), fp); ++l) {
+
+    for (l = 0, n = 0; fgets(line, sizeof(line), fp); ++l)
+    {
         int c;
         if (*line == '#')
             continue;
-        if (n == bufsz) {       /* allocate more memory */
+        if (n == bufsz)
+        { /* allocate more memory */
             bufsz += block;
             hp = realloc(hp, bufsz * sizeof(*hp));
             hc = realloc(hc, bufsz * sizeof(*hc));
         }
         c = sscanf(line, "%le %le %le", n ? &start : &end, hp + n, hc + n);
-        if (c != 3) {
+        if (c != 3)
+        {
             print_err("error: format error on line %zd: %s\n", l, line);
             exit(1);
         }
@@ -119,16 +126,15 @@ INT get_COMPLEX16TimeSeries_waveform(COMPLEX16TimeSeries ** hout, FILE * fp)
     hc = realloc(hc, n * sizeof(*hp));
     dt = (end - start) / (n - 1);
     hLM = CreateCOMPLEX16TimeSeries(0, dt, n);
-    for (l=0; l < n; l++)
+    for (l = 0; l < n; l++)
     {
-        hLM->data->data[l] = hp[l] + I*hc[l];
-    }    
+        hLM->data->data[l] = hp[l] + I * hc[l];
+    }
     free(hp);
     free(hc);
     *hout = hLM;
     return CEV_SUCCESS;
 }
-
 
 INT cmd_mkdir(CHAR *folderName)
 {
@@ -141,10 +147,7 @@ INT cmd_mkdir(CHAR *folderName)
     return CEV_SUCCESS;
 }
 
-INT read_waveform(REAL8Vector **time, 
-                  REAL8Vector **hreal, 
-                  REAL8Vector **himag,
-                  FILE *file)
+INT read_waveform(REAL8Vector **time, REAL8Vector **hreal, REAL8Vector **himag, FILE *file)
 {
     const size_t block = 1024;
     REAL8 start;
@@ -156,13 +159,13 @@ INT read_waveform(REAL8Vector **time,
     size_t n, l;
     char line[LINE_MAX];
 
-    for (l = 0, n = 0; fgets(line, sizeof(line), file); ++l) 
+    for (l = 0, n = 0; fgets(line, sizeof(line), file); ++l)
     {
         int c;
         if (*line == '#')
             continue;
-        if (n == bufsz) 
-        {       
+        if (n == bufsz)
+        {
             /* allocate more memory */
             bufsz += block;
             t = realloc(t, bufsz * sizeof(*t));
@@ -170,7 +173,8 @@ INT read_waveform(REAL8Vector **time,
             hc = realloc(hc, bufsz * sizeof(*hc));
         }
         c = sscanf(line, "%le %le %le", t + n, hp + n, hc + n);
-        if (c != 3) {
+        if (c != 3)
+        {
             fprintf(stderr, "error: format error on line %zd: %s\n", l, line);
             free(t);
             free(hp);
@@ -185,7 +189,7 @@ INT read_waveform(REAL8Vector **time,
     REAL8Vector *tVec = CreateREAL8Vector(n);
     REAL8Vector *hrVec = CreateREAL8Vector(n);
     REAL8Vector *hiVec = CreateREAL8Vector(n);
-    memcpy(tVec->data, t, n*sizeof(*t));
+    memcpy(tVec->data, t, n * sizeof(*t));
     memcpy(hrVec->data, hp, n * sizeof(*hp));
     memcpy(hiVec->data, hc, n * sizeof(*hc));
     free(t);
@@ -197,7 +201,6 @@ INT read_waveform(REAL8Vector **time,
     return CEV_SUCCESS;
 }
 
-
 #if 0
 INT DumpREAL8VectorTohdf5(CHAR *fname, CHAR *dname, REAL8Vector *vec, INT is_delete)
 {
@@ -205,7 +208,7 @@ INT DumpREAL8VectorTohdf5(CHAR *fname, CHAR *dname, REAL8Vector *vec, INT is_del
     hid_t       datatype, dataspace, dataset;
     herr_t      status;
     H5G_info_t  ginfo;
-    
+
     if (!vec)
         return CEV_FAILURE;
     // for(i=0; i<3; i++)
@@ -274,7 +277,7 @@ INT DumpREAL8ArrayTohdf5(CHAR *fname, CHAR *dname, REAL8Array *array, INT is_del
     hid_t       datatype, dataspace, dataset;
     herr_t      status;
     H5G_info_t  ginfo;
-    
+
     if (!array)
         return CEV_FAILURE;
     // for(i=0; i<3; i++)
@@ -553,7 +556,7 @@ INT dump_to_extendible_H5_2D(const char* FILENAME, char *dname, REAL8Array *arr)
     hsize_t nrows = arr->dimLength->data[0];
     hsize_t ncols = arr->dimLength->data[1];
 
-    /* Create a memory dataspace to indicate the 
+    /* Create a memory dataspace to indicate the
         size of our buffer to be written in memory. */
 
     hsize_t mbuff_dims[2];
@@ -580,8 +583,8 @@ INT dump_to_extendible_H5_2D(const char* FILENAME, char *dname, REAL8Array *arr)
         hid_t file_space = H5Screate_simple(ndims, dims, max_dims);
         // print_debug("- Dataspace created\n");
 
-        // Then create a dataset creation property list.  
-            
+        // Then create a dataset creation property list.
+
         hid_t plist = H5Pcreate(H5P_DATASET_CREATE);
         H5Pset_layout(plist, H5D_CHUNKED);
         hsize_t chunk_dims[2] = {nrows, ncols};
@@ -625,7 +628,7 @@ INT dump_to_extendible_H5_2D(const char* FILENAME, char *dname, REAL8Array *arr)
     }
     else
     {
-        /* Dataset already exists. Extend it and write 
+        /* Dataset already exists. Extend it and write
         the next buffer. */
 
         // Open the dataset and get the dimensions of the existing dataset.
@@ -667,7 +670,7 @@ INT dump_to_extendible_H5_2D(const char* FILENAME, char *dname, REAL8Array *arr)
         H5Dclose(dset);
         H5Sclose(file_space);
         H5Fclose(file);
-    } 
+    }
     return CEV_SUCCESS;
 }
 #endif

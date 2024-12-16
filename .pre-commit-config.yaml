@@ -1,0 +1,52 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        language_version: python3.9
+        args: [
+          "--profile=black",
+          "--line-length=248",
+          "--multi-line=3",
+          "--force-grid-wrap=0",
+          "--use-parentheses",
+          "--ensure-newline-before-comments"
+        ]
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-bugbear==23.3.23]
+        args:
+          - --ignore=E203,W503,B950,F401,F403,F405,E731,B001,B006,B007,F841,E741,E266,F541,E722,F821
+          - --max-line-length=248
+          - --extend-ignore=E501
+
+  - repo: https://github.com/adamchainz/blacken-docs
+    rev: 1.19.1
+    hooks:
+      - id: blacken-docs
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3.9
+        args:
+          - --line-length=248
+          - --skip-string-normalization
+          - --exclude=/(\.eggs|\.git|\.hg|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist)/
+
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v19.1.5
+    hooks:
+    - id: clang-format

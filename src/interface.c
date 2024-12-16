@@ -1,19 +1,19 @@
 /**
-* Writer: Xiaolin.liu
-* xiaolin.liu@mail.bnu.edu.cn
-*
-* This module contains basic functions for  calculation.
-* Functions list:
-* Kernel: 
-* 20xx.xx.xx, LOC
-**/
+ * Writer: Xiaolin.liu
+ * xiaolin.liu@mail.bnu.edu.cn
+ *
+ * This module contains basic functions for  calculation.
+ * Functions list:
+ * Kernel:
+ * 20xx.xx.xx, LOC
+ **/
 
-#include "pCore.h"
-#include <time.h>
-#include <sys/time.h>
-#include <stdlib.h>
-#include "myLog.h"
 #include "myFileIO.h"
+#include "myLog.h"
+#include "pCore.h"
+#include <stdlib.h>
+#include <sys/time.h>
+#include <time.h>
 
 int debug();
 
@@ -23,77 +23,57 @@ void set_PrecFlag(INT flag);
 INT set_egw_flag(INT flag);
 
 INT4 XLALSimIMREOBGenerateQNMFreqV2Prec(
-  COMPLEX16Vector *modefreqs, /**<< OUTPUT, complex freqs of overtones in unit of Hz */
-  const REAL8      mass1,     /**<< The mass of the 1st component (in Solar masses) */
-  const REAL8      mass2,     /**<< The mass of the 2nd component (in Solar masses) */
-  const REAL8      spin1[3],  /**<< The spin of the 1st object; only needed for spin waveforms */
-  const REAL8      spin2[3],  /**<< The spin of the 2nd object; only needed for spin waveforms */
-  UINT            l,         /**<< The l value of the mode in question */
-  INT             m,         /**<< The m value of the mode in question */
-  UINT            nmodes    /**<< The number of overtones that should be included (max 8) */
+    COMPLEX16Vector *modefreqs, /**<< OUTPUT, complex freqs of overtones in unit of Hz */
+    const REAL8 mass1,          /**<< The mass of the 1st component (in Solar masses) */
+    const REAL8 mass2,          /**<< The mass of the 2nd component (in Solar masses) */
+    const REAL8 spin1[3],       /**<< The spin of the 1st object; only needed for
+                                   spin waveforms */
+    const REAL8 spin2[3],       /**<< The spin of the 2nd object; only needed for
+                                   spin waveforms */
+    UINT l,                     /**<< The l value of the mode in question */
+    INT m,                      /**<< The m value of the mode in question */
+    UINT nmodes                 /**<< The number of overtones that should be included (max 8) */
 );
 
 INT XLALSimIMREOBGenerateQNMFreqV2FromFinalPrec(
-  COMPLEX16Vector *modefreqs, /**<< OUTPUT, complex freqs of overtones in unit of Hz */
-  const REAL8      mass1,     /**<< The mass of the 1st component (in Solar masses) */
-  const REAL8      mass2,     /**<< The mass of the 2nd component (in Solar masses) */
-  const REAL8 	   finalMass, /**<< The mass of the final BH (scaled by original total mass) */
-  REAL8 	   finalSpin, /**<< The dimensionless spin of the final BH */
-  UINT            l,         /**<< The l value of the mode in question */
-  INT              m,         /**<< The m value of the mode in question */
-  UINT            nmodes     /**<< The number of overtones that should be included (max 8) */
-  );
+    COMPLEX16Vector *modefreqs, /**<< OUTPUT, complex freqs of overtones in unit of Hz */
+    const REAL8 mass1,          /**<< The mass of the 1st component (in Solar masses) */
+    const REAL8 mass2,          /**<< The mass of the 2nd component (in Solar masses) */
+    const REAL8 finalMass,      /**<< The mass of the final BH (scaled by original
+                                   total mass) */
+    REAL8 finalSpin,            /**<< The dimensionless spin of the final BH */
+    UINT l,                     /**<< The l value of the mode in question */
+    INT m,                      /**<< The m value of the mode in question */
+    UINT nmodes                 /**<< The number of overtones that should be included (max 8) */
+);
 
-INT evolve(REAL8 m1,  REAL8 m2, 
-           REAL8 s1x, REAL8 s1y, REAL8 s1z, 
-           REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
-           INT is_only22,
-           HyperParams *hparams, 
-           REAL8TimeSeries **hPlusOut,
-           REAL8TimeSeries **hCrossOut,
+INT evolve(REAL8 m1, REAL8 m2, REAL8 s1x, REAL8 s1y, REAL8 s1z, REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0,
+           REAL8 distance, REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
+           INT is_only22, HyperParams *hparams, REAL8TimeSeries **hPlusOut, REAL8TimeSeries **hCrossOut,
            SEOBCoreOutputs *all);
 
-INT evolve_adaptive(REAL8 m1,  REAL8 m2, 
-           REAL8 s1x, REAL8 s1y, REAL8 s1z, 
-           REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
-           INT is_only22,
-           HyperParams *hparams, 
-           REAL8TimeSeries **hPlusOut,
-           REAL8TimeSeries **hCrossOut,
-           SEOBCoreOutputs *all);
+INT evolve_adaptive(REAL8 m1, REAL8 m2, REAL8 s1x, REAL8 s1y, REAL8 s1z, REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0,
+                    REAL8 distance, REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT,
+                    REAL8 inc, INT is_only22, HyperParams *hparams, REAL8TimeSeries **hPlusOut,
+                    REAL8TimeSeries **hCrossOut, SEOBCoreOutputs *all);
 
-INT evolve_conserv(REAL8 m1,  REAL8 m2, 
-           REAL8 s1x, REAL8 s1y, REAL8 s1z, 
-           REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
-           HyperParams *hparams, 
-           SEOBCoreOutputs *all);
+INT evolve_conserv(REAL8 m1, REAL8 m2, REAL8 s1x, REAL8 s1y, REAL8 s1z, REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0,
+                   REAL8 distance, REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT,
+                   REAL8 inc, HyperParams *hparams, SEOBCoreOutputs *all);
 
-INT evolve_SA(REAL8 m1,  REAL8 m2, 
-           REAL8 s1z, 
-           REAL8 s2z,
-           REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT,
-           HyperParams *hparams, 
-           REAL8Vector **tRetVec,
-           SphHarmListCAmpPhaseSequence **hlm,
-           int is_noringdown, int is_dyn_debug,
-           SEOBSAdynamics **dyn_debug);
-INT evolve_prec(REAL8 m1,  REAL8 m2, 
-           REAL8 s1x, REAL8 s1y, REAL8 s1z, 
-           REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-           REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
-           HyperParams *hparams, 
-           SEOBPrecCoreOutputs *all);
+INT evolve_SA(REAL8 m1, REAL8 m2, REAL8 s1z, REAL8 s2z, REAL8 ecc, REAL8 zeta, REAL8 f_min, REAL8 Mf_ref,
+              REAL8 INdeltaT, HyperParams *hparams, REAL8Vector **tRetVec, SphHarmListCAmpPhaseSequence **hlm,
+              int is_noringdown, int is_dyn_debug, SEOBSAdynamics **dyn_debug);
+INT evolve_prec(REAL8 m1, REAL8 m2, REAL8 s1x, REAL8 s1y, REAL8 s1z, REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0,
+                REAL8 distance, REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc,
+                HyperParams *hparams, SEOBPrecCoreOutputs *all);
 
-INT choose_debug(INT debug_id,
-    REAL8 m1,  REAL8 m2, 
-    REAL8 s1x, REAL8 s1y, REAL8 s1z, 
-    REAL8 s2x, REAL8 s2y, REAL8 s2z, REAL8 phi0, REAL8 distance,
-    REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT, REAL8 inc, HyperParams *hparams);
+INT choose_debug(INT debug_id, REAL8 m1, REAL8 m2, REAL8 s1x, REAL8 s1y, REAL8 s1z, REAL8 s2x, REAL8 s2y, REAL8 s2z,
+                 REAL8 phi0, REAL8 distance, REAL8 ecc, REAL8 zeta, REAL8 xi, REAL8 f_min, REAL8 Mf_ref, REAL8 INdeltaT,
+                 REAL8 inc, HyperParams *hparams);
 
-typedef struct {
+typedef struct
+{
     INT use_geom;
     REAL8 m1;
     REAL8 m2;
@@ -146,9 +126,10 @@ typedef struct {
     REAL8 f_max;
     REAL8 t_max;
     REAL8Vector *initValues;
-}pyInputParams_t;
+} pyInputParams_t;
 
-typedef struct {
+typedef struct
+{
     INT length;
     REAL8Vector *time;
     REAL8Vector *timeM;
@@ -168,9 +149,10 @@ typedef struct {
 
     REAL8Vector *h55_real;
     REAL8Vector *h55_imag;
-}pyOutputStruct_t;
+} pyOutputStruct_t;
 
-typedef struct {
+typedef struct
+{
     INT length;
     REAL8Vector *timeM;
     REAL8Vector *xVec;
@@ -192,11 +174,11 @@ typedef struct {
     REAL8Vector *phiModVec;
     REAL8Vector *prTDotVec;
     REAL8Vector *hamVec;
-}pyDynOutputStruct_t;
+} pyDynOutputStruct_t;
 
 pyOutputStruct_t *CreatePyOutputStruct_t(INT length)
 {
-    pyOutputStruct_t *output = (pyOutputStruct_t *) MYMalloc(sizeof(pyOutputStruct_t));
+    pyOutputStruct_t *output = (pyOutputStruct_t *)MYMalloc(sizeof(pyOutputStruct_t));
     output->length = length;
     output->time = CreateREAL8Vector(length);
     output->timeM = CreateREAL8Vector(length);
@@ -221,7 +203,7 @@ pyOutputStruct_t *CreatePyOutputStruct_t(INT length)
 
 pyDynOutputStruct_t *CreatepyDynOutputStruct_t(INT length)
 {
-    pyDynOutputStruct_t *output = (pyDynOutputStruct_t *) MYMalloc(sizeof(pyDynOutputStruct_t));
+    pyDynOutputStruct_t *output = (pyDynOutputStruct_t *)MYMalloc(sizeof(pyDynOutputStruct_t));
     output->length = length;
     output->timeM = CreateREAL8Vector(length);
 
@@ -311,14 +293,25 @@ void DestroypyDynOutputStruct_t(pyDynOutputStruct_t *out)
     return;
 }
 
-void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec, pyOutputStruct_t **ret);
-void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBCoreOutputs *All_prec, pyOutputStruct_t **ret);
-void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *hLM, SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret);
-void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *PLM, pyOutputStruct_t **ret);
+void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc,
+                                                     REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec,
+                                                     pyOutputStruct_t **ret);
+void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc,
+                                                 REAL8 phic, REAL8 beta, SEOBCoreOutputs *All_prec,
+                                                 pyOutputStruct_t **ret);
+void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL,
+                                                              REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec,
+                                                              SphHarmListCAmpPhaseSequence *hLM,
+                                                              SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret);
+void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL,
+                                                                  REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec,
+                                                                  SphHarmListCAmpPhaseSequence *PLM,
+                                                                  pyOutputStruct_t **ret);
 
 void convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(SEOBPrecCoreOutputs *All_prec, pyDynOutputStruct_t **ret);
 void convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(SEOBCoreOutputs *All, pyDynOutputStruct_t **ret);
-void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, REAL8 m1, REAL8 m2, REAL8 chi1, REAL8 chi2, pyDynOutputStruct_t **ret);
+void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, REAL8 m1, REAL8 m2, REAL8 chi1,
+                                                   REAL8 chi2, pyDynOutputStruct_t **ret);
 
 INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynOutputStruct_t **dynoutput)
 {
@@ -347,16 +340,17 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     hparams.inEPS_REL = params->inEPS_REL;
     hparams.inEPS_ABS = params->inEPS_ABS;
     hparams.is_coframe = params->is_coframe;
-    hparams.Mf_min = (params->m1+params->m2) * CST_MTSUN_SI * params->f_min;
-    hparams.Mf_max = (params->m1+params->m2) * CST_MTSUN_SI * params->f_max;
+    hparams.Mf_min = (params->m1 + params->m2) * CST_MTSUN_SI * params->f_min;
+    hparams.Mf_max = (params->m1 + params->m2) * CST_MTSUN_SI * params->f_max;
     hparams.Mf_ref = params->Mf_ref;
     hparams.zero_dyncoaphase = params->zero_dyncoaphase;
     hparams.t_max = params->t_max;
-    hparams.tM_max = params->t_max / ((params->m1+params->m2) * CST_MTSUN_SI);
+    hparams.tM_max = params->t_max / ((params->m1 + params->m2) * CST_MTSUN_SI);
     hparams.initValues = NULL;
-    if (params->initValues) {
+    if (params->initValues)
+    {
         hparams.initValues = CreateREAL8Vector(14);
-        memcpy(hparams.initValues->data, params->initValues->data, 14*sizeof(REAL8));
+        memcpy(hparams.initValues->data, params->initValues->data, 14 * sizeof(REAL8));
     }
     set_egw_flag(params->egw_flag);
     SET_CODE_VERSION(params->code_version);
@@ -367,114 +361,129 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
         SET_CONSERV(params->conserve_flag, params->conserve_time);
     if (use_geom)
     {
-        REAL8 mTScaled = (params->m1+params->m2) * CST_MTSUN_SI;
+        REAL8 mTScaled = (params->m1 + params->m2) * CST_MTSUN_SI;
         params->f_min = params->f_min / mTScaled;
     }
     if (ctpms.level >= 10)
     {
         SET_INPUT_DEBUG_FLAG(ctpms.level - 10);
     }
-    if (strcmp(ctpms.flog, "None")!=0)
+    if (strcmp(ctpms.flog, "None") != 0)
     {
         LOG_SetPrintLogPlaceFlag(1);
     }
     LOG_SetPrintDebugLogFlag(ctpms.level);
     LOG_Init(ctpms.flog, 40960);
-    PRINT_LOG_INFO(LOG_DEBUG, "params: m1, m2 = (%g, %g)\n\tchi1Vec = (%g, %g, %g), chi2Vec = (%g, %g, %g)\n\teccentricity = %g, deltaT = %g,\n\tf-min=%g, inclination=%g, phiRef=%g, zeta=%g\n", 
-        params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x, params->s2y, params->s2z, params->ecc, params->deltaT, params->f_min, params->inc * 180/CST_PI, params->beta*180/CST_PI,
-        params->zeta*180/CST_PI);
-    // print_debug("params: m1, m2 = (%g, %g)\n\tchi1Vec = (%g, %g, %g), chi2Vec = (%g, %g, %g)\n\teccentricity = %g, deltaT = %g,\n\tf-min=%g, inclination=%g, phiRef=%g\n", 
-    //     params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x, params->s2y, params->s2z, params->ecc, params->deltaT, params->f_min, params->inc * 180/CST_PI, params->phiRef*180/CST_PI);
+    PRINT_LOG_INFO(LOG_DEBUG,
+                   "params: m1, m2 = (%g, %g)\n\tchi1Vec = (%g, %g, %g), chi2Vec "
+                   "= (%g, %g, %g)\n\teccentricity = %g, deltaT = "
+                   "%g,\n\tf-min=%g, inclination=%g, phiRef=%g, zeta=%g\n",
+                   params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x, params->s2y, params->s2z,
+                   params->ecc, params->deltaT, params->f_min, params->inc * 180 / CST_PI, params->beta * 180 / CST_PI,
+                   params->zeta * 180 / CST_PI);
+    // print_debug("params: m1, m2 = (%g, %g)\n\tchi1Vec = (%g, %g, %g), chi2Vec
+    // =
+    // (%g, %g, %g)\n\teccentricity = %g, deltaT = %g,\n\tf-min=%g,
+    // inclination=%g, phiRef=%g\n",
+    //     params->m1, params->m2, params->s1x, params->s1y, params->s1z,
+    //     params->s2x, params->s2y, params->s2z, params->ecc, params->deltaT,
+    //     params->f_min, params->inc * 180/CST_PI, params->phiRef*180/CST_PI);
     // return 0;
     if (params->debug_id)
     {
-        choose_debug(params->debug_id, params->m1, params->m2,
-            params->s1x, params->s1y, params->s1z,
-            params->s2x, params->s2y, params->s2z,
-            params->beta, params->distance, params->ecc, params->zeta, params->xi,
-            params->f_min, params->Mf_ref, params->deltaT, params->inc,
-            &hparams);
+        choose_debug(params->debug_id, params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x,
+                     params->s2y, params->s2z, params->beta, params->distance, params->ecc, params->zeta, params->xi,
+                     params->f_min, params->Mf_ref, params->deltaT, params->inc, &hparams);
         return CEV_FAILURE;
     }
     // call waveform generator
     INT status, is_failed;
     is_failed = 0;
-    if (get_PrecFlag() != 0) 
+    if (get_PrecFlag() != 0)
     {
         SEOBPrecCoreOutputs *All_prec = (SEOBPrecCoreOutputs *)MYCalloc(1, sizeof(SEOBPrecCoreOutputs));
         PRINT_LOG_INFO(LOG_DEBUG, "prec code");
-        status = evolve_prec(params->m1, params->m2, 
-            params->s1x, params->s1y, params->s1z, 
-            params->s2x, params->s2y, params->s2z, 
-            params->beta, params->distance, params->ecc, params->zeta, 
-            params->xi, params->f_min, params->Mf_ref,
-            params->deltaT, params->inc, &hparams, All_prec);
+        status = evolve_prec(params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x, params->s2y,
+                             params->s2z, params->beta, params->distance, params->ecc, params->zeta, params->xi,
+                             params->f_min, params->Mf_ref, params->deltaT, params->inc, &hparams, All_prec);
         if (status == CEV_SUCCESS)
         {
             if (hparams.is_coframe)
-                convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All_prec->tVec, All_prec->Plm, output);
+                convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(
+                    params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc,
+                    params->phiRef, params->beta, All_prec->tVec, All_prec->Plm, output);
             else
-                convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All_prec, output);
+                convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase,
+                                                                params->m1 + params->m2, params->distance, params->inc,
+                                                                params->phiRef, params->beta, All_prec, output);
             if (params->ret_dyn)
                 convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(All_prec, dynoutput);
         }
         else
             is_failed = 1;
         STRUCTFREE(All_prec, SEOBPrecCoreOutputs);
-    } else if (CONSERVE_FLAG != 0) {
+    }
+    else if (CONSERVE_FLAG != 0)
+    {
         PRINT_LOG_INFO(LOG_DEBUG, "conserve code");
         SEOBCoreOutputs *All = (SEOBCoreOutputs *)MYCalloc(1, sizeof(SEOBCoreOutputs));
-        status = evolve_conserv(params->m1, params->m2, 
-            params->s1x, params->s1y, params->s1z, 
-            params->s2x, params->s2y, params->s2z, 
-            params->beta, params->distance, params->ecc, params->zeta, 
-            params->xi, params->f_min, params->Mf_ref,
-            params->deltaT, params->inc, &hparams, All);
+        status = evolve_conserv(params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x, params->s2y,
+                                params->s2z, params->beta, params->distance, params->ecc, params->zeta, params->xi,
+                                params->f_min, params->Mf_ref, params->deltaT, params->inc, &hparams, All);
         if (status == CEV_SUCCESS)
         {
-            convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All, output);
+            convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase,
+                                                        params->m1 + params->m2, params->distance, params->inc,
+                                                        params->phiRef, params->beta, All, output);
             if (params->ret_dyn)
                 convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(All, dynoutput);
         }
         else
             is_failed = 1;
         STRUCTFREE(All, SEOBCoreOutputs);
-    } else if ( (!params->is_constp) && (sqrt(params->s1x*params->s1x + params->s1y*params->s1y) < 1e-5 && sqrt(params->s2x*params->s2x + params->s2y*params->s2y) < 1e-5)) {
+    }
+    else if ((!params->is_constp) && (sqrt(params->s1x * params->s1x + params->s1y * params->s1y) < 1e-5 &&
+                                      sqrt(params->s2x * params->s2x + params->s2y * params->s2y) < 1e-5))
+    {
         /* default */
         PRINT_LOG_INFO(LOG_DEBUG, "default SA code");
         REAL8Vector *tVec = NULL;
         SphHarmListCAmpPhaseSequence *hLM = NULL;
         SEOBSAdynamics *dyn_debug = NULL;
-        status = evolve_SA(params->m1, params->m2, params->s1z, params->s2z, params->ecc, params->zeta, 
-            params->f_min, params->Mf_ref, 
-            params->deltaT, &hparams, &tVec, &hLM, params->is_noringdown, params->ret_dyn, &dyn_debug);
+        status = evolve_SA(params->m1, params->m2, params->s1z, params->s2z, params->ecc, params->zeta, params->f_min,
+                           params->Mf_ref, params->deltaT, &hparams, &tVec, &hLM, params->is_noringdown,
+                           params->ret_dyn, &dyn_debug);
         if (status == CEV_SUCCESS)
         {
-            convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, tVec, hLM, dyn_debug, output);
+            convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(
+                params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc,
+                params->phiRef, params->beta, tVec, hLM, dyn_debug, output);
             if (params->ret_dyn)
-                convert_SEOBSAdynamics_to_pyDynOutputStruct_t(dyn_debug, params->m1, params->m2, params->s1z, params->s2z, dynoutput);
+                convert_SEOBSAdynamics_to_pyDynOutputStruct_t(dyn_debug, params->m1, params->m2, params->s1z,
+                                                              params->s2z, dynoutput);
         }
         else
             is_failed = 1;
         STRUCTFREE(tVec, REAL8Vector);
         STRUCTFREE(hLM, SphHarmListCAmpPhaseSequence);
         STRUCTFREE(dyn_debug, SEOBSAdynamics);
-    } else {
+    }
+    else
+    {
         if (params->is_constp)
         {
             REAL8TimeSeries *hplus = NULL;
             REAL8TimeSeries *hcross = NULL;
             SEOBCoreOutputs *All = (SEOBCoreOutputs *)MYCalloc(1, sizeof(SEOBCoreOutputs));
-            status = evolve(params->m1, params->m2, 
-                params->s1x, params->s1y, params->s1z, 
-                params->s2x, params->s2y, params->s2z, 
-                params->beta, params->distance, params->ecc, params->zeta, 
-                params->xi, params->f_min, params->Mf_ref,
-                params->deltaT, params->inc, params->is_only22,
-                &hparams, &hplus, &hcross, All);
+            status = evolve(params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x, params->s2y,
+                            params->s2z, params->beta, params->distance, params->ecc, params->zeta, params->xi,
+                            params->f_min, params->Mf_ref, params->deltaT, params->inc, params->is_only22, &hparams,
+                            &hplus, &hcross, All);
             if (status == CEV_SUCCESS)
             {
-                convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All, output);
+                convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase,
+                                                            params->m1 + params->m2, params->distance, params->inc,
+                                                            params->phiRef, params->beta, All, output);
                 if (params->ret_dyn)
                     convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(All, dynoutput);
             }
@@ -483,20 +492,21 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
             STRUCTFREE(All, SEOBCoreOutputs);
             STRUCTFREE(hplus, REAL8TimeSeries);
             STRUCTFREE(hcross, REAL8TimeSeries);
-        } else {
+        }
+        else
+        {
             REAL8TimeSeries *hplus = NULL;
             REAL8TimeSeries *hcross = NULL;
             SEOBCoreOutputs *All = (SEOBCoreOutputs *)MYCalloc(1, sizeof(SEOBCoreOutputs));
-            status = evolve_adaptive(params->m1, params->m2, 
-                params->s1x, params->s1y, params->s1z, 
-                params->s2x, params->s2y, params->s2z, 
-                params->beta, params->distance, params->ecc, params->zeta, 
-                params->xi, params->f_min, params->Mf_ref,
-                params->deltaT, params->inc, params->is_only22,
-                &hparams, &hplus, &hcross, All);
+            status = evolve_adaptive(params->m1, params->m2, params->s1x, params->s1y, params->s1z, params->s2x,
+                                     params->s2y, params->s2z, params->beta, params->distance, params->ecc,
+                                     params->zeta, params->xi, params->f_min, params->Mf_ref, params->deltaT,
+                                     params->inc, params->is_only22, &hparams, &hplus, &hcross, All);
             if (status == CEV_SUCCESS)
             {
-                convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase, params->m1 + params->m2, params->distance, params->inc, params->phiRef, params->beta, All, output);
+                convert_SEOBCoreOutputs_to_pyOutputStruct_t(params->is_only22, params->use_coaphase,
+                                                            params->m1 + params->m2, params->distance, params->inc,
+                                                            params->phiRef, params->beta, All, output);
                 if (params->ret_dyn)
                     convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(All, dynoutput);
             }
@@ -510,15 +520,14 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     if (hparams.initValues)
         STRUCTFREE(hparams.initValues, REAL8Vector);
     tend = clock();
-    PRINT_LOG_INFO(LOG_INFO, "Time Cost: %fs\n", ((REAL8)(tend-tstart)/CLOCKS_PER_SEC));  
-    if (is_failed) return CEV_FAILURE;
+    PRINT_LOG_INFO(LOG_INFO, "Time Cost: %fs\n", ((REAL8)(tend - tstart) / CLOCKS_PER_SEC));
+    if (is_failed)
+        return CEV_FAILURE;
     return CEV_SUCCESS;
 }
 
-INT calculate_QNMFrequenciesFromFinal(REAL8 mFinal, REAL8 chiFinal,
-                        UINT modeL, UINT modeM, size_t nmodes,
-                        REAL8Vector **ret_FreqRVec, 
-                        REAL8Vector **ret_FreqIVec)
+INT calculate_QNMFrequenciesFromFinal(REAL8 mFinal, REAL8 chiFinal, UINT modeL, UINT modeM, size_t nmodes,
+                                      REAL8Vector **ret_FreqRVec, REAL8Vector **ret_FreqIVec)
 {
     COMPLEX16Vector modefreqVec;
     COMPLEX16 modeFreq[nmodes];
@@ -526,14 +535,13 @@ INT calculate_QNMFrequenciesFromFinal(REAL8 mFinal, REAL8 chiFinal,
     modefreqVec.data = modeFreq;
     REAL8Vector *FreqRVec = CreateREAL8Vector(nmodes);
     REAL8Vector *FreqIVec = CreateREAL8Vector(nmodes);
-    if (XLALSimIMREOBGenerateQNMFreqV2FromFinalPrec(&modefreqVec, 0.5, 0.5, mFinal, chiFinal,
-                                            modeL, modeM,
-                                            nmodes) == CEV_FAILURE) 
+    if (XLALSimIMREOBGenerateQNMFreqV2FromFinalPrec(&modefreqVec, 0.5, 0.5, mFinal, chiFinal, modeL, modeM, nmodes) ==
+        CEV_FAILURE)
     {
         return CEV_FAILURE;
     }
     int i;
-    for (i=0; i<nmodes; i++)
+    for (i = 0; i < nmodes; i++)
     {
         FreqRVec->data[i] = creal(modeFreq[i]) * CST_MTSUN_SI;
         FreqIVec->data[i] = cimag(modeFreq[i]) * CST_MTSUN_SI;
@@ -543,12 +551,9 @@ INT calculate_QNMFrequenciesFromFinal(REAL8 mFinal, REAL8 chiFinal,
     return CEV_SUCCESS;
 }
 
-INT calculate_QNMFrequencies(REAL8 m1, REAL8 m2, 
-                        REAL8 chi1x, REAL8 chi1y, REAL8 chi1z,
-                        REAL8 chi2x, REAL8 chi2y, REAL8 chi2z,
-                        UINT modeL, UINT modeM, size_t nmodes,
-                        REAL8Vector **ret_FreqRVec, 
-                        REAL8Vector **ret_FreqIVec)
+INT calculate_QNMFrequencies(REAL8 m1, REAL8 m2, REAL8 chi1x, REAL8 chi1y, REAL8 chi1z, REAL8 chi2x, REAL8 chi2y,
+                             REAL8 chi2z, UINT modeL, UINT modeM, size_t nmodes, REAL8Vector **ret_FreqRVec,
+                             REAL8Vector **ret_FreqIVec)
 {
     COMPLEX16Vector modefreqVec;
     COMPLEX16 modeFreq[nmodes];
@@ -564,14 +569,12 @@ INT calculate_QNMFrequencies(REAL8 m1, REAL8 m2,
     spin2[0] = chi2x;
     spin2[1] = chi2y;
     spin2[2] = chi2z;
-    if (XLALSimIMREOBGenerateQNMFreqV2Prec(&modefreqVec, m1, m2, spin1, spin2,
-                                            modeL, modeM,
-                                            nmodes) == CEV_FAILURE) 
+    if (XLALSimIMREOBGenerateQNMFreqV2Prec(&modefreqVec, m1, m2, spin1, spin2, modeL, modeM, nmodes) == CEV_FAILURE)
     {
         return CEV_FAILURE;
     }
     int i;
-    for (i=0; i<nmodes; i++)
+    for (i = 0; i < nmodes; i++)
     {
         FreqRVec->data[i] = creal(modeFreq[i]) * CST_MTSUN_SI;
         FreqIVec->data[i] = cimag(modeFreq[i]) * CST_MTSUN_SI;
@@ -581,10 +584,9 @@ INT calculate_QNMFrequencies(REAL8 m1, REAL8 m2,
     return CEV_SUCCESS;
 }
 
-REAL8 calculate_QNMFrequency(REAL8 m1, REAL8 m2, 
-                        REAL8 chi1x, REAL8 chi1y, REAL8 chi1z,
-                        REAL8 chi2x, REAL8 chi2y, REAL8 chi2z,
-                        UINT modeL, UINT modeM) 
+REAL8
+calculate_QNMFrequency(REAL8 m1, REAL8 m2, REAL8 chi1x, REAL8 chi1y, REAL8 chi1z, REAL8 chi2x, REAL8 chi2y, REAL8 chi2z,
+                       UINT modeL, UINT modeM)
 {
     // UINT mode_highest_freqL = 5;
     // UINT mode_highest_freqM = 5;
@@ -601,9 +603,7 @@ REAL8 calculate_QNMFrequency(REAL8 m1, REAL8 m2,
     spin2[0] = chi2x;
     spin2[1] = chi2y;
     spin2[2] = chi2z;
-    if (XLALSimIMREOBGenerateQNMFreqV2Prec(&modefreqVec, m1, m2, spin1, spin2,
-                                            modeL, modeM,
-                                            1) == CEV_FAILURE) 
+    if (XLALSimIMREOBGenerateQNMFreqV2Prec(&modefreqVec, m1, m2, spin1, spin2, modeL, modeM, 1) == CEV_FAILURE)
     {
         return -1.;
     }
@@ -611,7 +611,8 @@ REAL8 calculate_QNMFrequency(REAL8 m1, REAL8 m2,
     //     PRINT_LOG_INFO(LOG_CRITICAL, "Ringdown frequency > Nyquist");
     //     return CEV_FAILURE;
     // }
-// print_debug("deltaT = %.16e, modeFreq = %.16e\n", deltaT, CST_PI /creal(modeFreq));
+    // print_debug("deltaT = %.16e, modeFreq = %.16e\n", deltaT, CST_PI
+    // /creal(modeFreq));
     return creal(modeFreq) / CST_PI;
 }
 
@@ -626,7 +627,7 @@ static INT find_exact_amp_peak(REAL8Vector *tMVec, REAL8Vector *amp22)
     // gsl_spline_init(spline, tMVec->data, amp22->data, length);
     amp = amp22->data[0];
     ii = 0;
-    for(i=1; i<length; i++)
+    for (i = 1; i < length; i++)
     {
         if (amp < amp22->data[i])
         {
@@ -646,7 +647,7 @@ static void apply_phic_on_hpc(REAL8Vector *tMVec, REAL8Vector *hplus, REAL8Vecto
     hc = hcross->data[ipeak22];
     phi0 = atan2(-hc, hp);
     dphi = phic - phi0;
-    for(int i=0; i<hplus->length; i++)
+    for (int i = 0; i < hplus->length; i++)
     {
         hp = hplus->data[i];
         hc = hcross->data[i];
@@ -661,31 +662,33 @@ void convert_SEOBPrecCoreOutputs_to_pyDynOutputStruct_t(SEOBPrecCoreOutputs *All
     INT i, length;
     length = All_prec->dyn->length;
     pyDynOutputStruct_t *output = CreatepyDynOutputStruct_t(length);
-    memcpy(output->timeM->data, All_prec->dyn->tVec, length*sizeof(REAL8));
-    memcpy(output->xVec->data, All_prec->dyn->posVecx, length*sizeof(REAL8));
-    memcpy(output->yVec->data, All_prec->dyn->posVecy, length*sizeof(REAL8));
-    memcpy(output->zVec->data, All_prec->dyn->posVecz, length*sizeof(REAL8));
-    memcpy(output->pTxVec->data, All_prec->dyn->momTVecx, length*sizeof(REAL8));
-    memcpy(output->pTyVec->data, All_prec->dyn->momTVecy, length*sizeof(REAL8));
-    memcpy(output->pTzVec->data, All_prec->dyn->momTVecz, length*sizeof(REAL8));
-    memcpy(output->vxVec->data, All_prec->dyn->velVecx, length*sizeof(REAL8));
-    memcpy(output->vyVec->data, All_prec->dyn->velVecy, length*sizeof(REAL8));
-    memcpy(output->vzVec->data, All_prec->dyn->velVecz, length*sizeof(REAL8));
-    memcpy(output->s1xVec->data, All_prec->dyn->s1Vecx, length*sizeof(REAL8));
-    memcpy(output->s1yVec->data, All_prec->dyn->s1Vecy, length*sizeof(REAL8));
-    memcpy(output->s1zVec->data, All_prec->dyn->s1Vecz, length*sizeof(REAL8));
-    memcpy(output->s2xVec->data, All_prec->dyn->s2Vecx, length*sizeof(REAL8));
-    memcpy(output->s2yVec->data, All_prec->dyn->s2Vecy, length*sizeof(REAL8));
-    memcpy(output->s2zVec->data, All_prec->dyn->s2Vecz, length*sizeof(REAL8));
-    memcpy(output->phiDModVec->data, All_prec->dyn->phiDMod, length*sizeof(REAL8));
-    memcpy(output->phiModVec->data, All_prec->dyn->phiMod, length*sizeof(REAL8));
-    memcpy(output->prTDotVec->data, All_prec->dyn->prTDotVec, length*sizeof(REAL8));
-    memcpy(output->hamVec->data, All_prec->dyn->HamVec, length*sizeof(REAL8));
+    memcpy(output->timeM->data, All_prec->dyn->tVec, length * sizeof(REAL8));
+    memcpy(output->xVec->data, All_prec->dyn->posVecx, length * sizeof(REAL8));
+    memcpy(output->yVec->data, All_prec->dyn->posVecy, length * sizeof(REAL8));
+    memcpy(output->zVec->data, All_prec->dyn->posVecz, length * sizeof(REAL8));
+    memcpy(output->pTxVec->data, All_prec->dyn->momTVecx, length * sizeof(REAL8));
+    memcpy(output->pTyVec->data, All_prec->dyn->momTVecy, length * sizeof(REAL8));
+    memcpy(output->pTzVec->data, All_prec->dyn->momTVecz, length * sizeof(REAL8));
+    memcpy(output->vxVec->data, All_prec->dyn->velVecx, length * sizeof(REAL8));
+    memcpy(output->vyVec->data, All_prec->dyn->velVecy, length * sizeof(REAL8));
+    memcpy(output->vzVec->data, All_prec->dyn->velVecz, length * sizeof(REAL8));
+    memcpy(output->s1xVec->data, All_prec->dyn->s1Vecx, length * sizeof(REAL8));
+    memcpy(output->s1yVec->data, All_prec->dyn->s1Vecy, length * sizeof(REAL8));
+    memcpy(output->s1zVec->data, All_prec->dyn->s1Vecz, length * sizeof(REAL8));
+    memcpy(output->s2xVec->data, All_prec->dyn->s2Vecx, length * sizeof(REAL8));
+    memcpy(output->s2yVec->data, All_prec->dyn->s2Vecy, length * sizeof(REAL8));
+    memcpy(output->s2zVec->data, All_prec->dyn->s2Vecz, length * sizeof(REAL8));
+    memcpy(output->phiDModVec->data, All_prec->dyn->phiDMod, length * sizeof(REAL8));
+    memcpy(output->phiModVec->data, All_prec->dyn->phiMod, length * sizeof(REAL8));
+    memcpy(output->prTDotVec->data, All_prec->dyn->prTDotVec, length * sizeof(REAL8));
+    memcpy(output->hamVec->data, All_prec->dyn->HamVec, length * sizeof(REAL8));
     *ret = output;
     return;
 }
 
-void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec, pyOutputStruct_t **ret)
+void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc,
+                                                     REAL8 phic, REAL8 beta, SEOBPrecCoreOutputs *All_prec,
+                                                     pyOutputStruct_t **ret)
 {
     PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i;
@@ -701,17 +704,16 @@ void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coap
     INT length = h22->data->length;
     pyOutputStruct_t *output = CreatePyOutputStruct_t(length);
     REAL8Vector *amp22 = CreateREAL8Vector(length);
-    for(i=0; i<length; i++)
+    for (i = 0; i < length; i++)
     {
-        output->timeM->data[i] = deltaT*i;
+        output->timeM->data[i] = deltaT * i;
         output->time->data[i] = output->timeM->data[i] * mT;
         output->h22_real->data[i] = creal(h22->data->data[i]);
         output->h22_imag->data[i] = cimag(h22->data->data[i]);
         output->h21_real->data[i] = creal(h21->data->data[i]);
         output->h21_imag->data[i] = cimag(h21->data->data[i]);
         output->h33_real->data[i] = creal(h33->data->data[i]);
-        output->h33_imag->data[i] = cimag(h33->data->data[i]),
-        output->h44_real->data[i] = creal(h44->data->data[i]);
+        output->h33_imag->data[i] = cimag(h33->data->data[i]), output->h44_real->data[i] = creal(h44->data->data[i]);
         output->h44_imag->data[i] = cimag(h44->data->data[i]);
         output->h55_real->data[i] = creal(h55->data->data[i]);
         output->h55_imag->data[i] = cimag(h55->data->data[i]);
@@ -777,15 +779,15 @@ void convert_SEOBPrecCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coap
     }
     INT l, m;
     COMPLEX16 hpc_contrib, sYlm;
-    for (l = 2; l <= 5; l++) 
+    for (l = 2; l <= 5; l++)
     {
-        for (m = -l; m <= l; m++) 
+        for (m = -l; m <= l; m++)
         {
             if (is_only22 && (l != 2 || abs(m) != 2))
                 continue;
             SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
             COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All_prec->hLM, l, m);
-            for (i = 0; i < length; i++) 
+            for (i = 0; i < length; i++)
             {
                 hpc_contrib = sYlm * hIlm->data->data[i];
                 output->hplus->data[i] += amp0 * creal(hpc_contrib);
@@ -809,31 +811,32 @@ void convert_SEOBCoreOutputs_to_pyDynOutputStruct_t(SEOBCoreOutputs *All, pyDynO
     INT i, length;
     length = All->dyn->length;
     pyDynOutputStruct_t *output = CreatepyDynOutputStruct_t(length);
-    memcpy(output->timeM->data, All->dyn->tVec, length*sizeof(REAL8));
-    memcpy(output->xVec->data, All->dyn->posVecx, length*sizeof(REAL8));
-    memcpy(output->yVec->data, All->dyn->posVecy, length*sizeof(REAL8));
-    memcpy(output->zVec->data, All->dyn->posVecz, length*sizeof(REAL8));
-    memcpy(output->pTxVec->data, All->dyn->momVecx, length*sizeof(REAL8));
-    memcpy(output->pTyVec->data, All->dyn->momVecy, length*sizeof(REAL8));
-    memcpy(output->pTzVec->data, All->dyn->momVecz, length*sizeof(REAL8));
-    memcpy(output->vxVec->data, All->dyn->velVecx, length*sizeof(REAL8));
-    memcpy(output->vyVec->data, All->dyn->velVecy, length*sizeof(REAL8));
-    memcpy(output->vzVec->data, All->dyn->velVecz, length*sizeof(REAL8));
-    memcpy(output->s1xVec->data, All->dyn->s1Vecx, length*sizeof(REAL8));
-    memcpy(output->s1yVec->data, All->dyn->s1Vecy, length*sizeof(REAL8));
-    memcpy(output->s1zVec->data, All->dyn->s1Vecz, length*sizeof(REAL8));
-    memcpy(output->s2xVec->data, All->dyn->s2Vecx, length*sizeof(REAL8));
-    memcpy(output->s2yVec->data, All->dyn->s2Vecy, length*sizeof(REAL8));
-    memcpy(output->s2zVec->data, All->dyn->s2Vecz, length*sizeof(REAL8));
-    memcpy(output->phiDModVec->data, All->dyn->phiDMod, length*sizeof(REAL8));
-    memcpy(output->phiModVec->data, All->dyn->phiMod, length*sizeof(REAL8));
-    memcpy(output->prTDotVec->data, All->dyn->polarprDotVec, length*sizeof(REAL8));
-    memcpy(output->hamVec->data, All->dyn->hamVec, length*sizeof(REAL8));
+    memcpy(output->timeM->data, All->dyn->tVec, length * sizeof(REAL8));
+    memcpy(output->xVec->data, All->dyn->posVecx, length * sizeof(REAL8));
+    memcpy(output->yVec->data, All->dyn->posVecy, length * sizeof(REAL8));
+    memcpy(output->zVec->data, All->dyn->posVecz, length * sizeof(REAL8));
+    memcpy(output->pTxVec->data, All->dyn->momVecx, length * sizeof(REAL8));
+    memcpy(output->pTyVec->data, All->dyn->momVecy, length * sizeof(REAL8));
+    memcpy(output->pTzVec->data, All->dyn->momVecz, length * sizeof(REAL8));
+    memcpy(output->vxVec->data, All->dyn->velVecx, length * sizeof(REAL8));
+    memcpy(output->vyVec->data, All->dyn->velVecy, length * sizeof(REAL8));
+    memcpy(output->vzVec->data, All->dyn->velVecz, length * sizeof(REAL8));
+    memcpy(output->s1xVec->data, All->dyn->s1Vecx, length * sizeof(REAL8));
+    memcpy(output->s1yVec->data, All->dyn->s1Vecy, length * sizeof(REAL8));
+    memcpy(output->s1zVec->data, All->dyn->s1Vecz, length * sizeof(REAL8));
+    memcpy(output->s2xVec->data, All->dyn->s2Vecx, length * sizeof(REAL8));
+    memcpy(output->s2yVec->data, All->dyn->s2Vecy, length * sizeof(REAL8));
+    memcpy(output->s2zVec->data, All->dyn->s2Vecz, length * sizeof(REAL8));
+    memcpy(output->phiDModVec->data, All->dyn->phiDMod, length * sizeof(REAL8));
+    memcpy(output->phiModVec->data, All->dyn->phiMod, length * sizeof(REAL8));
+    memcpy(output->prTDotVec->data, All->dyn->polarprDotVec, length * sizeof(REAL8));
+    memcpy(output->hamVec->data, All->dyn->hamVec, length * sizeof(REAL8));
     *ret = output;
     return;
 }
 
-void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, SEOBCoreOutputs *All, pyOutputStruct_t **ret)
+void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc,
+                                                 REAL8 phic, REAL8 beta, SEOBCoreOutputs *All, pyOutputStruct_t **ret)
 {
     PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i;
@@ -852,17 +855,16 @@ void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase
     REAL8Vector *amp22 = CreateREAL8Vector(length);
     pyOutputStruct_t *output = CreatePyOutputStruct_t(length);
     // print_debug("inc = %.16e, phi = %.16e\n", inc, beta);
-    for(i=0;i<length;i++)
+    for (i = 0; i < length; i++)
     {
-        output->timeM->data[i] = deltaT*i;
+        output->timeM->data[i] = deltaT * i;
         output->time->data[i] = output->timeM->data[i] * mT;
         output->h22_real->data[i] = creal(h22->data->data[i]);
         output->h22_imag->data[i] = cimag(h22->data->data[i]);
         output->h21_real->data[i] = creal(h21->data->data[i]);
         output->h21_imag->data[i] = cimag(h21->data->data[i]);
         output->h33_real->data[i] = creal(h33->data->data[i]);
-        output->h33_imag->data[i] = cimag(h33->data->data[i]),
-        output->h44_real->data[i] = creal(h44->data->data[i]);
+        output->h33_imag->data[i] = cimag(h33->data->data[i]), output->h44_real->data[i] = creal(h44->data->data[i]);
         output->h44_imag->data[i] = cimag(h44->data->data[i]);
         output->h55_real->data[i] = creal(h55->data->data[i]);
         output->h55_imag->data[i] = cimag(h55->data->data[i]);
@@ -881,7 +883,7 @@ void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase
         hpc_contrib = sYlm * (output->h22_real->data[i] - I*output->h22_imag->data[i]);
         output->hplus->data[i] += amp0 * creal(hpc_contrib);
         output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
-        if (!is_only22) 
+        if (!is_only22)
         {
             // 2, 1
             SpinWeightedSphericalHarmonic(inc, CST_PI/2. - beta, -2, 2, 1, &sYlm);
@@ -926,31 +928,34 @@ void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase
         }
 #endif
     }
-    
+
     INT l, m;
     COMPLEX16 hpc_contrib, sYlm;
-    for (l = 2; l <= 5; l++) 
+    for (l = 2; l <= 5; l++)
     {
-        for (m = -l; m <= l; m++) 
+        for (m = -l; m <= l; m++)
         {
             if (is_only22 && (l != 2 || abs(m) != 2))
                 continue;
             SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
             // print_debug("Y%d%d = %f + i%f\n", l, m, creal(sYlm), cimag(sYlm));
             COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
-            for (i = 0; i < length; i++) 
+            for (i = 0; i < length; i++)
             {
-                // print_debug("hIlm->data->data[%d] = %f + i%f\n", i, creal(hIlm->data->data[i]), cimag(hIlm->data->data[i]));
+                // print_debug("hIlm->data->data[%d] = %f + i%f\n", i,
+                // creal(hIlm->data->data[i]), cimag(hIlm->data->data[i]));
                 hpc_contrib = sYlm * hIlm->data->data[i];
                 output->hplus->data[i] += amp0 * creal(hpc_contrib);
                 output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
-                // print_debug("hpc_contrib[%d] = %e + i%e\n", i, amp0*creal(hpc_contrib), -amp0*cimag(hpc_contrib));
+                // print_debug("hpc_contrib[%d] = %e + i%e\n", i,
+                // amp0*creal(hpc_contrib), -amp0*cimag(hpc_contrib));
             }
         }
     }
     // for (i=0; i<length; i++)
     // {
-    //     print_debug("hp, hc [%d] = %f, %f\n", output->hplus->data[i], output->hcross->data[i]);
+    //     print_debug("hp, hc [%d] = %f, %f\n", output->hplus->data[i],
+    //     output->hcross->data[i]);
     // }
     if (use_coaphase)
     {
@@ -962,7 +967,8 @@ void convert_SEOBCoreOutputs_to_pyOutputStruct_t(INT is_only22, INT use_coaphase
     return;
 }
 
-void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, REAL8 m1, REAL8 m2, REAL8 chi1, REAL8 chi2, pyDynOutputStruct_t **ret)
+void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, REAL8 m1, REAL8 m2, REAL8 chi1,
+                                                   REAL8 chi2, pyDynOutputStruct_t **ret)
 {
     PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i, length;
@@ -970,18 +976,18 @@ void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, RE
     REAL8 r, phi, vr, vf, prT, pphi;
     pyDynOutputStruct_t *output = CreatepyDynOutputStruct_t(length);
     REAL8 mtot = m1 + m2;
-    REAL8 s1NormFac = m1*m1/mtot/mtot;
-    REAL8 s2NormFac = m2*m2/mtot/mtot;
-    memset(output->zVec->data, 0, length*sizeof(REAL8));
-    memset(output->pTzVec->data, 0, length*sizeof(REAL8));
-    memset(output->vzVec->data, 0, length*sizeof(REAL8));
-    memset(output->s1xVec->data, 0, length*sizeof(REAL8));
-    memset(output->s1yVec->data, 0, length*sizeof(REAL8));
-    memset(output->s2xVec->data, 0, length*sizeof(REAL8));
-    memset(output->s2yVec->data, 0, length*sizeof(REAL8));
-    memset(output->phiDModVec->data, 0, length*sizeof(REAL8));
-    memset(output->phiModVec->data, 0, length*sizeof(REAL8));
-    for (i=0; i<length; i++)
+    REAL8 s1NormFac = m1 * m1 / mtot / mtot;
+    REAL8 s2NormFac = m2 * m2 / mtot / mtot;
+    memset(output->zVec->data, 0, length * sizeof(REAL8));
+    memset(output->pTzVec->data, 0, length * sizeof(REAL8));
+    memset(output->vzVec->data, 0, length * sizeof(REAL8));
+    memset(output->s1xVec->data, 0, length * sizeof(REAL8));
+    memset(output->s1yVec->data, 0, length * sizeof(REAL8));
+    memset(output->s2xVec->data, 0, length * sizeof(REAL8));
+    memset(output->s2yVec->data, 0, length * sizeof(REAL8));
+    memset(output->phiDModVec->data, 0, length * sizeof(REAL8));
+    memset(output->phiModVec->data, 0, length * sizeof(REAL8));
+    for (i = 0; i < length; i++)
     {
         r = dyn_debug->rVec[i];
         phi = dyn_debug->phiVec[i];
@@ -989,14 +995,15 @@ void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, RE
         vf = r * dyn_debug->dphiVec[i];
         prT = dyn_debug->prTVec[i];
         pphi = dyn_debug->pphiVec[i];
-        // print_debug("[%d](r, phi, vr, vf, prT, pphi) = (%f, %f, %f, %f, %f)\n",
+        // print_debug("[%d](r, phi, vr, vf, prT, pphi) = (%f, %f, %f, %f,
+        // %f)\n",
         //     i, r, phi, vr, vf, prT, pphi);
         output->timeM->data[i] = dyn_debug->tVec[i];
         output->xVec->data[i] = r * cos(phi);
         output->yVec->data[i] = r * sin(phi);
         // output->zVec->data[i] = 0.0;
-        output->pTxVec->data[i] = prT * cos(phi) - pphi * sin(phi)/r;
-        output->pTyVec->data[i] = prT * sin(phi) + pphi * cos(phi)/r;
+        output->pTxVec->data[i] = prT * cos(phi) - pphi * sin(phi) / r;
+        output->pTyVec->data[i] = prT * sin(phi) + pphi * cos(phi) / r;
         // output->pTzVec->data[i] = 0.0;
         output->vxVec->data[i] = vr * cos(phi) - vf * sin(phi);
         output->vyVec->data[i] = vr * sin(phi) + vf * cos(phi);
@@ -1010,7 +1017,10 @@ void convert_SEOBSAdynamics_to_pyDynOutputStruct_t(SEOBSAdynamics *dyn_debug, RE
     return;
 }
 
-void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *PLM, pyOutputStruct_t **ret)
+void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL,
+                                                                  REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec,
+                                                                  SphHarmListCAmpPhaseSequence *PLM,
+                                                                  pyOutputStruct_t **ret)
 {
     PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i;
@@ -1026,7 +1036,7 @@ void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22,
     INT length = xVec->length;
     pyOutputStruct_t *output = CreatePyOutputStruct_t(length);
     REAL8Vector *amp22 = CreateREAL8Vector(length);
-    for(i=0;i<length;i++)
+    for (i = 0; i < length; i++)
     {
         output->timeM->data[i] = xVec->data[i];
         output->time->data[i] = output->timeM->data[i] * mT;
@@ -1042,94 +1052,117 @@ void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22,
         output->h55_imag->data[i] = h55->camp_imag->data[i];
         output->hplus->data[i] = 0.0;
         output->hcross->data[i] = 0.0;
-        amp22->data[i] = cabs(h22->camp_real->data[i] + I*h22->camp_imag->data[i]);
+        amp22->data[i] = cabs(h22->camp_real->data[i] + I * h22->camp_imag->data[i]);
     }
 
     INT l, m;
     COMPLEX16 hpc_contrib, sYlm;
-    // for (l = 2; l <= 5; l++) 
+    // for (l = 2; l <= 5; l++)
     // {
-    //     for (m = -l; m <= l; m++) 
+    //     for (m = -l; m <= l; m++)
     //     {
     //         if (is_only22 && (l != 2 || abs(m) != 2))
     //             continue;
-    //         SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-    //         // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
-    //         CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(PLM, l, m)->campphase;
-            for (i = 0; i < length; i++)
-            {
-                // 22
-                l=2;m=2;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) + I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+    //         SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m,
+    //         &sYlm);
+    //         // COMPLEX16TimeSeries *hIlm =
+    //         XLALSphHarmTimeSeriesGetMode(All->hLM, l, m); CAmpPhaseSequence
+    //         *hIlm = SphHarmListCAmpPhaseSequence_GetMode(PLM, l,
+    //         m)->campphase;
+    for (i = 0; i < length; i++)
+    {
+        // 22
+        l = 2;
+        m = 2;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h22->camp_real->data[i] * cos(h22->phase->data[i]) +
+                              I * h22->camp_real->data[i] * sin(h22->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 2-2
-                l=2;m=-2;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) - I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 2-2
+        l = 2;
+        m = -2;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h22->camp_real->data[i] * cos(h22->phase->data[i]) -
+                              I * h22->camp_real->data[i] * sin(h22->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                if (is_only22)
-                    continue;
-                // 21
-                l=2;m=1;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h21->camp_real->data[i]*cos(h21->phase->data[i]) + I*h21->camp_real->data[i]*sin(h21->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        if (is_only22)
+            continue;
+        // 21
+        l = 2;
+        m = 1;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h21->camp_real->data[i] * cos(h21->phase->data[i]) +
+                              I * h21->camp_real->data[i] * sin(h21->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 2-1
-                l=2;m=-1;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h21->camp_real->data[i]*cos(h21->phase->data[i]) - I*h21->camp_real->data[i]*sin(h21->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 2-1
+        l = 2;
+        m = -1;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h21->camp_real->data[i] * cos(h21->phase->data[i]) -
+                              I * h21->camp_real->data[i] * sin(h21->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 33
-                l=3;m=3;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h33->camp_real->data[i]*cos(h33->phase->data[i]) + I*h33->camp_real->data[i]*sin(h33->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 33
+        l = 3;
+        m = 3;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h33->camp_real->data[i] * cos(h33->phase->data[i]) +
+                              I * h33->camp_real->data[i] * sin(h33->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 3-3
-                l=3;m=-3;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (-h33->camp_real->data[i]*cos(h33->phase->data[i]) + I*h33->camp_real->data[i]*sin(h33->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 3-3
+        l = 3;
+        m = -3;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (-h33->camp_real->data[i] * cos(h33->phase->data[i]) +
+                              I * h33->camp_real->data[i] * sin(h33->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 44
-                l=4;m=4;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h44->camp_real->data[i]*cos(h44->phase->data[i]) + I*h44->camp_real->data[i]*sin(h44->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 44
+        l = 4;
+        m = 4;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h44->camp_real->data[i] * cos(h44->phase->data[i]) +
+                              I * h44->camp_real->data[i] * sin(h44->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 4-4
-                l=4;m=-4;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h44->camp_real->data[i]*cos(h44->phase->data[i]) - I*h44->camp_real->data[i]*sin(h44->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 4-4
+        l = 4;
+        m = -4;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h44->camp_real->data[i] * cos(h44->phase->data[i]) -
+                              I * h44->camp_real->data[i] * sin(h44->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 55
-                l=5;m=5;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h55->camp_real->data[i]*cos(h55->phase->data[i]) + I*h55->camp_real->data[i]*sin(h55->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 55
+        l = 5;
+        m = 5;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h55->camp_real->data[i] * cos(h55->phase->data[i]) +
+                              I * h55->camp_real->data[i] * sin(h55->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 5-5
-                l=5;m=-5;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (-h55->camp_real->data[i]*cos(h55->phase->data[i]) + I*h55->camp_real->data[i]*sin(h55->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
-            }
+        // 5-5
+        l = 5;
+        m = -5;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (-h55->camp_real->data[i] * cos(h55->phase->data[i]) +
+                              I * h55->camp_real->data[i] * sin(h55->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+    }
     //     }
     // }
     if (use_coaphase)
@@ -1142,7 +1175,10 @@ void convert_PrecSphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22,
     return;
 }
 
-void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL, REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec, SphHarmListCAmpPhaseSequence *hLM, SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret)
+void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT use_coaphase, REAL8 mtot, REAL8 dL,
+                                                              REAL8 inc, REAL8 phic, REAL8 beta, REAL8Vector *tVec,
+                                                              SphHarmListCAmpPhaseSequence *hLM,
+                                                              SEOBSAdynamics *dyn_debug, pyOutputStruct_t **ret)
 {
     PRINT_LOG_INFO(LOG_DEBUG, "convert output struct...");
     INT i;
@@ -1157,20 +1193,20 @@ void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT
     INT length = tVec->length;
     pyOutputStruct_t *output = CreatePyOutputStruct_t(length);
     REAL8Vector *amp22 = CreateREAL8Vector(length);
-    for(i=0;i<length;i++)
+    for (i = 0; i < length; i++)
     {
         output->timeM->data[i] = tVec->data[i];
         output->time->data[i] = output->timeM->data[i] * mT;
-        output->h22_real->data[i] = h22->camp_real->data[i]*cos(h22->phase->data[i]);
-        output->h22_imag->data[i] = h22->camp_real->data[i]*sin(h22->phase->data[i]);
-        output->h21_real->data[i] = h21->camp_real->data[i]*cos(h21->phase->data[i]);
-        output->h21_imag->data[i] = h21->camp_real->data[i]*sin(h21->phase->data[i]);
-        output->h33_real->data[i] = h33->camp_real->data[i]*cos(h33->phase->data[i]);
-        output->h33_imag->data[i] = h33->camp_real->data[i]*sin(h33->phase->data[i]);
-        output->h44_real->data[i] = h44->camp_real->data[i]*cos(h44->phase->data[i]);
-        output->h44_imag->data[i] = h44->camp_real->data[i]*sin(h44->phase->data[i]);
-        output->h55_real->data[i] = h55->camp_real->data[i]*cos(h55->phase->data[i]);
-        output->h55_imag->data[i] = h55->camp_real->data[i]*sin(h55->phase->data[i]);
+        output->h22_real->data[i] = h22->camp_real->data[i] * cos(h22->phase->data[i]);
+        output->h22_imag->data[i] = h22->camp_real->data[i] * sin(h22->phase->data[i]);
+        output->h21_real->data[i] = h21->camp_real->data[i] * cos(h21->phase->data[i]);
+        output->h21_imag->data[i] = h21->camp_real->data[i] * sin(h21->phase->data[i]);
+        output->h33_real->data[i] = h33->camp_real->data[i] * cos(h33->phase->data[i]);
+        output->h33_imag->data[i] = h33->camp_real->data[i] * sin(h33->phase->data[i]);
+        output->h44_real->data[i] = h44->camp_real->data[i] * cos(h44->phase->data[i]);
+        output->h44_imag->data[i] = h44->camp_real->data[i] * sin(h44->phase->data[i]);
+        output->h55_real->data[i] = h55->camp_real->data[i] * cos(h55->phase->data[i]);
+        output->h55_imag->data[i] = h55->camp_real->data[i] * sin(h55->phase->data[i]);
         output->hplus->data[i] = 0.0;
         output->hcross->data[i] = 0.0;
         amp22->data[i] = h22->camp_real->data[i];
@@ -1186,7 +1222,7 @@ void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT
         hpc_contrib = sYlm * (output->h22_real->data[i] - I*output->h22_imag->data[i]);
         output->hplus->data[i] += amp0 * creal(hpc_contrib);
         output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
-        if (!is_only22) 
+        if (!is_only22)
         {
             // 2, 1
             SpinWeightedSphericalHarmonic(inc, CST_PI/2. - beta, -2, 2, 1, &sYlm);
@@ -1233,90 +1269,113 @@ void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT
     }
     INT l, m;
     COMPLEX16 hpc_contrib, sYlm;
-    // for (l = 2; l <= 5; l++) 
+    // for (l = 2; l <= 5; l++)
     // {
-    //     for (m = -l; m <= l; m++) 
+    //     for (m = -l; m <= l; m++)
     //     {
     //         if (is_only22 && (l != 2 || abs(m) != 2))
     //             continue;
     //         //print_debug("here%d%d\n", l, m);
-    //         SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-    //         // COMPLEX16TimeSeries *hIlm = XLALSphHarmTimeSeriesGetMode(All->hLM, l, m);
-    //         CAmpPhaseSequence *hIlm = SphHarmListCAmpPhaseSequence_GetMode(hLM, l, abs(m))->campphase;
-            for (i = 0; i < length; i++)
-            {
-                // 22
-                l=2;m=2;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) + I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+    //         SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m,
+    //         &sYlm);
+    //         // COMPLEX16TimeSeries *hIlm =
+    //         XLALSphHarmTimeSeriesGetMode(All->hLM, l, m); CAmpPhaseSequence
+    //         *hIlm = SphHarmListCAmpPhaseSequence_GetMode(hLM, l,
+    //         abs(m))->campphase;
+    for (i = 0; i < length; i++)
+    {
+        // 22
+        l = 2;
+        m = 2;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h22->camp_real->data[i] * cos(h22->phase->data[i]) +
+                              I * h22->camp_real->data[i] * sin(h22->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 2-2
-                l=2;m=-2;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h22->camp_real->data[i]*cos(h22->phase->data[i]) - I*h22->camp_real->data[i]*sin(h22->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 2-2
+        l = 2;
+        m = -2;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h22->camp_real->data[i] * cos(h22->phase->data[i]) -
+                              I * h22->camp_real->data[i] * sin(h22->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                if (is_only22)
-                    continue;
-                // 21
-                l=2;m=1;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h21->camp_real->data[i]*cos(h21->phase->data[i]) + I*h21->camp_real->data[i]*sin(h21->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        if (is_only22)
+            continue;
+        // 21
+        l = 2;
+        m = 1;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h21->camp_real->data[i] * cos(h21->phase->data[i]) +
+                              I * h21->camp_real->data[i] * sin(h21->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 2-1
-                l=2;m=-1;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h21->camp_real->data[i]*cos(h21->phase->data[i]) - I*h21->camp_real->data[i]*sin(h21->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 2-1
+        l = 2;
+        m = -1;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h21->camp_real->data[i] * cos(h21->phase->data[i]) -
+                              I * h21->camp_real->data[i] * sin(h21->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 33
-                l=3;m=3;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h33->camp_real->data[i]*cos(h33->phase->data[i]) + I*h33->camp_real->data[i]*sin(h33->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 33
+        l = 3;
+        m = 3;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h33->camp_real->data[i] * cos(h33->phase->data[i]) +
+                              I * h33->camp_real->data[i] * sin(h33->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 3-3
-                l=3;m=-3;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (-h33->camp_real->data[i]*cos(h33->phase->data[i]) + I*h33->camp_real->data[i]*sin(h33->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 3-3
+        l = 3;
+        m = -3;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (-h33->camp_real->data[i] * cos(h33->phase->data[i]) +
+                              I * h33->camp_real->data[i] * sin(h33->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 44
-                l=4;m=4;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h44->camp_real->data[i]*cos(h44->phase->data[i]) + I*h44->camp_real->data[i]*sin(h44->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 44
+        l = 4;
+        m = 4;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h44->camp_real->data[i] * cos(h44->phase->data[i]) +
+                              I * h44->camp_real->data[i] * sin(h44->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 4-4
-                l=4;m=-4;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h44->camp_real->data[i]*cos(h44->phase->data[i]) - I*h44->camp_real->data[i]*sin(h44->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 4-4
+        l = 4;
+        m = -4;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h44->camp_real->data[i] * cos(h44->phase->data[i]) -
+                              I * h44->camp_real->data[i] * sin(h44->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 55
-                l=5;m=5;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (h55->camp_real->data[i]*cos(h55->phase->data[i]) + I*h55->camp_real->data[i]*sin(h55->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+        // 55
+        l = 5;
+        m = 5;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (h55->camp_real->data[i] * cos(h55->phase->data[i]) +
+                              I * h55->camp_real->data[i] * sin(h55->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
 
-                // 5-5
-                l=5;m=-5;
-                SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
-                hpc_contrib = sYlm * (-h55->camp_real->data[i]*cos(h55->phase->data[i]) + I*h55->camp_real->data[i]*sin(h55->phase->data[i]));
-                output->hplus->data[i] += amp0 * creal(hpc_contrib);
-                output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
-            }
+        // 5-5
+        l = 5;
+        m = -5;
+        SpinWeightedSphericalHarmonic(inc, CST_PI / 2. - beta, -2, l, m, &sYlm);
+        hpc_contrib = sYlm * (-h55->camp_real->data[i] * cos(h55->phase->data[i]) +
+                              I * h55->camp_real->data[i] * sin(h55->phase->data[i]));
+        output->hplus->data[i] += amp0 * creal(hpc_contrib);
+        output->hcross->data[i] += -amp0 * cimag(hpc_contrib);
+    }
     //     }
     // }
     if (use_coaphase)
@@ -1329,22 +1388,19 @@ void convert_SphHarmListCAmpPhaseSequence_to_pyOutputStruct_t(INT is_only22, INT
     return;
 }
 
-
 // Create Spin Params
 NewtonMultipolePrefixes *test_interface(REAL8 m1, REAL8 m2)
 {
-    NewtonMultipolePrefixes *prefixes = (NewtonMultipolePrefixes *) MYCalloc(1, sizeof(NewtonMultipolePrefixes));
+    NewtonMultipolePrefixes *prefixes = (NewtonMultipolePrefixes *)MYCalloc(1, sizeof(NewtonMultipolePrefixes));
     if (XLALSimIMREOBComputeNewtonMultipolePrefixes(prefixes, m1, m2) != CEV_SUCCESS)
     {
         return NULL;
     }
     INT l, m;
-    for(l=2; l<8; l++)
-        for (m=1; m<=l; m++)
-            print_debug("prefixes[%d][%d] = %.5e + I %.5e\n", 
-                l, m,
-                creal(prefixes->values[l][m]), 
-                cimag(prefixes->values[l][m]));
+    for (l = 2; l < 8; l++)
+        for (m = 1; m <= l; m++)
+            print_debug("prefixes[%d][%d] = %.5e + I %.5e\n", l, m, creal(prefixes->values[l][m]),
+                        cimag(prefixes->values[l][m]));
     prefixes->values[0][0] = 1.0;
     return prefixes;
 }

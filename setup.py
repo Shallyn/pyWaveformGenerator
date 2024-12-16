@@ -1,9 +1,11 @@
 # setup.py
 
-from setuptools import setup, find_packages
 import os
 import sys
+
+from setuptools import find_packages, setup
 from setuptools.command.install import install as _install
+
 
 class InstallWithEOBLib(_install):
     """Custom install command to ensure EOBLib.so is included."""
@@ -15,6 +17,7 @@ class InstallWithEOBLib(_install):
         # This is already handled via package_data, so additional steps may not be necessary
         # However, if you have post-install steps, add them here
         pass
+
 
 setup(
     name='pySEOBNREPHM',

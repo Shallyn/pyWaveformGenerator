@@ -5,12 +5,14 @@ Created on Tue, 18 Apr 2023 05:31:27 +0000
 
 @author: Shallyn
 """
-import numpy as np
-import matplotlib.pyplot as plt
-import sys, os
+import os
+import sys
 from optparse import OptionParser
 from pathlib import Path
-#pwd = Path(__file__).absolute().parent
-#pwd = Path(sys.path[0])
-pwd = Path(os.getcwd())
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+# pwd = Path(__file__).absolute().parent
+# pwd = Path(sys.path[0])
+pwd = Path(os.getcwd())

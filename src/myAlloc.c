@@ -1,12 +1,12 @@
 /**
-* Writer: Xiaolin.liu
-* xiaolin.liu@mail.bnu.edu.cn
-*
-* This module contains basic functions for  calculation.
-* Functions list:
-* Kernel: 
-* 20xx.xx.xx, LOC
-**/
+ * Writer: Xiaolin.liu
+ * xiaolin.liu@mail.bnu.edu.cn
+ *
+ * This module contains basic functions for  calculation.
+ * Functions list:
+ * Kernel:
+ * 20xx.xx.xx, LOC
+ **/
 
 #include "myAlloc.h"
 #include <pthread.h>
@@ -54,8 +54,8 @@ static void AddNodeToList(AllocNodeList *new)
         return;
     }
     AllocNodeList *i = NULL;
-    i=alloc_node_head;
-    while(i->next)
+    i = alloc_node_head;
+    while (i->next)
     {
         i = i->next;
     }
@@ -73,8 +73,8 @@ static int RemoveNodeFromList(void *addr)
     }
     AllocNodeList *now = NULL, *prev = NULL;
     INT icount = 0;
-    now=alloc_node_head;
-    while(now != NULL)
+    now = alloc_node_head;
+    while (now != NULL)
     {
         icount++;
         if (now->addr == addr)

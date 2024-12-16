@@ -1,5 +1,13 @@
 numpy
 scipy
 astropy
+gwpy
 pycbc
 ephem
+corner
+
+black
+flake8
+isort
+pre-commit
+blacken-docs
