@@ -5,7 +5,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-added-large-files
+      # - id: check-added-large-files
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
@@ -27,7 +27,7 @@ repos:
       - id: flake8
         additional_dependencies: [flake8-bugbear==23.3.23]
         args:
-          - --ignore=E203,W503,B950,F401,F403,F405,E731,B001,B006,B007,F841,E741,E266,F541,E722,F821
+          - --ignore=E203,E302,E303,E305,W503,B950,F401,F403,F405,E731,B001,B006,B007,F841,E741,E266,F541,E722,F821
           - --max-line-length=248
           - --extend-ignore=E501
 

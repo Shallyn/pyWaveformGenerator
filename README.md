@@ -10,26 +10,33 @@ sudo apt-get install clang-format
 ```
 
 
-## Compile C code and install libraries
+<!-- ## Compile C code and install libraries
 ```bash
 mkdir build
 cd build
 cmake ..
 make
 make install
-```
+``` -->
 
 ## Install Python package
 ```bash
-cd ..
-pip install -r requirements.txt
+python setup.py build
+```
+Then install, or install directly
+```bash
 pip install -e .
 ```
+for `dev` mode:
+```bash
+pip install -e .[dev]
+```
+
 sometimes the lib cannot use in Apple core macbook.
 
 
 ## Run in python
-This is Tutorial in `example/tutorial.ipynb`
+This is Tutorial in `example/test.ipynb`
 ```python
 from pySEOBNREPHM.waveform import calculate_waveform
 
