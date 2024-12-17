@@ -43,7 +43,7 @@ def dim_t(M):
     return c_SI**3 / (M * M_Sun_SI * G_SI)
 
 
-lib_path = Path(__file__).parent / 'lib/EOBLib.so'
+lib_path = Path(__file__).parent / 'lib/libEOB.so'
 my_waveform_lib = ctypes.CDLL(lib_path)
 my_waveform_lib.CreateREAL8Vector.restype = ctypes.POINTER(pyREAL8Vector)
 my_waveform_lib.CreateSpinEOBParams.restype = ctypes.POINTER(pySpinEOBParams)
