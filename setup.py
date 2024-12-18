@@ -38,21 +38,21 @@ class CMakeBuild(build_ext):
 
     def build_extension(self, ext):
         # Absolute path to the directory where the extension will be placed
-        extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        # extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
 
-        # Ensure the directory exists
-        if not os.path.exists(extdir):
-            os.makedirs(extdir)
+        # Create the build temporary directory if it doesn't exist
+        if not os.path.exists(self.build_temp):
+            os.makedirs(self.build_temp)
 
         # CMake configuration arguments
-        cmake_args = [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}", f"-DCMAKE_BUILD_TYPE={'Debug' if self.debug else 'Release'}", f"-DPYTHON_EXECUTABLE={sys.executable}"]
+        cmake_args = [f"-DCMAKE_BUILD_TYPE={'Debug' if self.debug else 'Release'}", f"-DPYTHON_EXECUTABLE={sys.executable}"]
 
         # CMake build arguments
         build_args = []
         cfg = 'Debug' if self.debug else 'Release'
 
         if platform.system() == "Windows":
-            cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"]
+            cmake_args += [f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={self.build_temp}"]
             build_args += ['--', '/m']
         else:
             build_args += ['--', '-j2']  # Adjust '-j2' based on your CPU cores
@@ -60,10 +60,6 @@ class CMakeBuild(build_ext):
         # Environment variables for the build
         env = os.environ.copy()
         env['CXXFLAGS'] = f'{env.get("CXXFLAGS", "")} -DVERSION_INFO="{self.distribution.get_version()}"'
-
-        # Create the build temporary directory if it doesn't exist
-        if not os.path.exists(self.build_temp):
-            os.makedirs(self.build_temp)
 
         # Configure the project with CMake
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
