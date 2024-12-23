@@ -17,15 +17,15 @@ repos:
           "--line-length=248"
         ]
 
-  # - repo: https://github.com/PyCQA/flake8
-  #   rev: 7.1.1
-  #   hooks:
-  #     - id: flake8
-  #       additional_dependencies: [flake8-bugbear==23.3.23]
-  #       args:
-  #         - --ignore=E203,E302,E303,E305,W503,B950,F401,F403,F405,E731,B001,B006,B007,F841,E741,E266,F541,E722,F821
-  #         - --max-line-length=248
-  #         - --extend-ignore=E501
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-bugbear==23.3.23]
+        args:
+          - --ignore=E203,E302,E303,E305,W503,B950,F401,F403,F405,E731,B001,B006,B007,F841,E741,E266,F541,E722,F821
+          - --max-line-length=248
+          - --extend-ignore=E501
 
   - repo: https://github.com/adamchainz/blacken-docs
     rev: 1.19.1
