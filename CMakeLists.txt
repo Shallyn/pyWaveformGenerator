@@ -25,6 +25,15 @@ else()
     message(FATAL_ERROR "GSL library not found. Please install GSL.")
 endif()
 
+# Find the CBLAS library
+find_library(CBLAS_LIB cblas REQUIRED)
+if (CBLAS_LIB)
+    message(STATUS "Found CBLAS: ${CBLAS_LIB}")
+    target_link_libraries(EOB PRIVATE ${CBLAS_LIB})
+else()
+    message(FATAL_ERROR "CBLAS library not found. Please install CBLAS.")
+endif()
+
 # **Set CMAKE_INSTALL_PREFIX to the project root directory**
 # This ensures that installation paths are relative to the project directory
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}" CACHE PATH "Install prefix" FORCE)
