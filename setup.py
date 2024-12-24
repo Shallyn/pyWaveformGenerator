@@ -115,7 +115,10 @@ setup(
         "pySEOBNREPHM": ["lib/libEOB.so"],
     },
     entry_points={
-        "pycbc.waveform.td": ["SEOBNREPHM = pySEOBNREPHM.pycbc_plugin:gen_seobnrephm_td"],
+        "pycbc.waveform.td": [
+            "SEOBNREPHM = pySEOBNREPHM.pycbc_plugin:gen_seobnrephm_td",
+            "SEOBNREP = pySEOBNREPHM.pycbc_plugin:gen_seobnrep_td",
+        ]
     },
     classifiers=[
         "Programming Language :: Python :: 3",

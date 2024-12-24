@@ -5,40 +5,32 @@ Python module calculate GW waveform
 ```bash
 sudo apt-get update
 sudo apt-get install libgsl-dev
+sudo apt-get install libblas-dev
 sudo apt-get install cmake
 sudo apt-get install clang-format
 ```
 
 
-<!-- ## Compile C code and install libraries
-```bash
-mkdir build
-cd build
-cmake ..
-make
-make install
-``` -->
-
 ## Install Python package
+
 ```bash
-python setup.py build
-```
-Then install, or install directly
-```bash
+pip install .
+# or in editable mode
 pip install -e .
 ```
 for `dev` mode:
 ```bash
 pip install -e .[dev]
+# (optional) for the formatter and linter
+pre-commit install
 ```
 
 sometimes the lib cannot use in Apple core macbook.
 
 
-## Run in python
-This is Tutorial in `example/test.ipynb`
-```python
-from pySEOBNREPHM.waveform import calculate_waveform
+## Use it in `PyCBC` (Recommended)
+ ```python
+from pycbc.waveform import get_td_waveform
 
 m1 = m2 = 10
 chi1x = chi1y = chi1z = 0
@@ -47,6 +39,50 @@ e0 = 0
 dL = 100
 zeta_rad = iota_rad = beta_rad = Phic_rad = 0
 fMin = 20
+
+hp, hc = get_td_waveform(
+    approximant="SEOBNREPHM",
+    mass1=m1,
+    mass2=m2,
+    spin1x=chi1x,
+    spin1y=chi1y,
+    spin1z=chi1z,
+    spin2x=chi2x,
+    spin2y=chi2y,
+    spin2z=chi2z,
+    eccentricity=e0,
+    distance=dL,
+    rel_anomaly=zeta_rad,
+    inclination=iota_rad,
+    coa_phase=beta_rad,
+    delta_t=1.0/16384,
+    f_lower=fMin,
+)
+
+hp_22, hc_22 = get_td_waveform(
+    approximant="SEOBNREP",
+    mass1=m1,
+    mass2=m2,
+    spin1x=chi1x,
+    spin1y=chi1y,
+    spin1z=chi1z,
+    spin2x=chi2x,
+    spin2y=chi2y,
+    spin2z=chi2z,
+    eccentricity=e0,
+    distance=dL,
+    rel_anomaly=zeta_rad,
+    inclination=iota_rad,
+    coa_phase=beta_rad,
+    delta_t=1.0/16384,
+    f_lower=fMin,
+)
+```
+
+## Run in python for generic usage
+```python
+from pySEOBNREPHM.waveform import calculate_waveform
+
 waveform, dynamics = calculate_waveform(
     (
         m1,
