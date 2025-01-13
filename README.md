@@ -1,19 +1,37 @@
 # pyWaveformGenerator of SEOBNRE
-
 Python module calculate GW waveform
 
-Installation && compile
+## Pre-requisites
+```bash
+sudo apt-get update
+sudo apt-get install libgsl-dev
+sudo apt-get install libblas-dev
+sudo apt-get install cmake
+sudo apt-get install clang-format
 ```
-./mkconf.sh
-./configure
-make
+
+
+## Install Python package
+
+```bash
+pip install .
+# or in editable mode
+pip install -e .
 ```
+for `dev` mode:
+```bash
+pip install -e .[dev]
+# (optional) for the formatter and linter
+pre-commit install
+```
+
 sometimes the lib cannot use in Apple core macbook.
 
 
-Run in python
-```python
-from pyWaveformGenerator.waveform import calculate_waveform
+## Use it in `PyCBC` (Recommended)
+ ```python
+from pycbc.waveform import get_td_waveform
+
 m1 = m2 = 10
 chi1x = chi1y = chi1z = 0
 chi2x = chi2y = chi2z = 0
@@ -21,12 +39,69 @@ e0 = 0
 dL = 100
 zeta_rad = iota_rad = beta_rad = Phic_rad = 0
 fMin = 20
-waveform, dynamics = calculate_waveform((m1, m2, 
-	chi1x, chi1y, chi1z, 
-	chi2x, chi2y, chi2z, 
-	e0, dL, 
-	zeta_rad, iota_rad, 
-  beta_rad, Phic_rad), fMin)
+
+hp, hc = get_td_waveform(
+    approximant="SEOBNREPHM",
+    mass1=m1,
+    mass2=m2,
+    spin1x=chi1x,
+    spin1y=chi1y,
+    spin1z=chi1z,
+    spin2x=chi2x,
+    spin2y=chi2y,
+    spin2z=chi2z,
+    eccentricity=e0,
+    distance=dL,
+    rel_anomaly=zeta_rad,
+    inclination=iota_rad,
+    coa_phase=beta_rad,
+    delta_t=1.0/16384,
+    f_lower=fMin,
+)
+
+hp_22, hc_22 = get_td_waveform(
+    approximant="SEOBNREP",
+    mass1=m1,
+    mass2=m2,
+    spin1x=chi1x,
+    spin1y=chi1y,
+    spin1z=chi1z,
+    spin2x=chi2x,
+    spin2y=chi2y,
+    spin2z=chi2z,
+    eccentricity=e0,
+    distance=dL,
+    rel_anomaly=zeta_rad,
+    inclination=iota_rad,
+    coa_phase=beta_rad,
+    delta_t=1.0/16384,
+    f_lower=fMin,
+)
+```
+
+## Run in python for generic usage
+```python
+from pySEOBNREPHM.waveform import calculate_waveform
+
+waveform, dynamics = calculate_waveform(
+    (
+        m1,
+        m2,
+        chi1x,
+        chi1y,
+        chi1z,
+        chi2x,
+        chi2y,
+        chi2z,
+        e0,
+        dL,
+        zeta_rad,
+        iota_rad,
+        beta_rad,
+        Phic_rad,
+    ),
+    fMin,
+)
 ```
 see more details and description in waveform.py
 
@@ -35,7 +110,8 @@ Cite this repo via [arXiv:2102.08614](https://arxiv.org/abs/2102.08614)  and [ar
 Generate eccentric-precession waveform, run
 
 ```python
-from pyWaveformGenerator.waveform import calculate_waveform_ep
+from pySEOBNREPHM.waveform import calculate_waveform_ep
+
 m1 = m2 = 10
 chi1x = 0.2
 chi1y = chi1z = 0
@@ -47,12 +123,28 @@ zeta_rad = 0
 iota_rad = beta_rad = Phic_rad = 0
 fMin = 20
 Mf_ref = 0.003
-waveform, dynamics = calculate_waveform_ep((m1, m2, 
-	chi1x, chi1y, chi1z, 
-	chi2x, chi2y, chi2z, 
-	e0, dL, 
-	zeta_rad, iota_rad, 
-  beta_rad, Phic_rad), fMin, Mf_ref = Mf_ref, srate=16384, is_coframe=False)
+waveform, dynamics = calculate_waveform_ep(
+    (
+        m1,
+        m2,
+        chi1x,
+        chi1y,
+        chi1z,
+        chi2x,
+        chi2y,
+        chi2z,
+        e0,
+        dL,
+        zeta_rad,
+        iota_rad,
+        beta_rad,
+        Phic_rad,
+    ),
+    fMin,
+    Mf_ref=Mf_ref,
+    srate=16384,
+    is_coframe=False,
+)
 ```
 
 In this case one have to make sure that one of $\chi_{1x,1y,2x,2y}\neq0$.
@@ -89,54 +181,85 @@ which will looks like
 ## Anomaly and reference frequency
 
 ```python
-from pyWaveformGenerator.waveform import calculate_waveform
+from pySEOBNREPHM.waveform import calculate_waveform
+
 m1 = m2 = 10
 chi1x = chi1y = chi1z = 0
 chi2x = chi2y = chi2z = 0
 e0 = 0.3
 dL = 100
 iota_rad = beta_rad = Phic_rad = 0
-zeta_rad = 30 * np.pi/180
+zeta_rad = 30 * np.pi / 180
 fMin = 20
 Mf_ref = 0.003
-waveform, dynamics = calculate_waveform((m1, m2, 
-	chi1x, chi1y, chi1z, 
-	chi2x, chi2y, chi2z, 
-	e0, dL, 
-	zeta_rad, iota_rad, 
-  beta_rad, Phic_rad), fMin, Mf_ref = Mf_ref)
+waveform, dynamics = calculate_waveform(
+    (
+        m1,
+        m2,
+        chi1x,
+        chi1y,
+        chi1z,
+        chi2x,
+        chi2y,
+        chi2z,
+        e0,
+        dL,
+        zeta_rad,
+        iota_rad,
+        beta_rad,
+        Phic_rad,
+    ),
+    fMin,
+    Mf_ref=Mf_ref,
+)
 ```
 
 for spin-precession case (on test)
 
 ```python
-from pyWaveformGenerator.waveform import calculate_waveform_ep
+from pySEOBNREPHM.waveform import calculate_waveform_ep
 
 q = 1.3
 mtot = 20
-m1 = q * mtot / (1. + q)
-m2 = mtot / (1. + q)
+m1 = q * mtot / (1.0 + q)
+m2 = mtot / (1.0 + q)
 chi1x = 0.4
 chi1y = chi1z = 0
 chi2y = -0.3
 chi2x = chi2z = 0
 e0 = 0.2
 dL = 100
-zeta_rad = 0 * np.pi/180 
-# Warning: Here we assumed that the period of spin precession 
-#			is much greater than the period of eccentric precession.
+zeta_rad = 0 * np.pi / 180
+# Warning: Here we assumed that the period of spin precession
+# 			is much greater than the period of eccentric precession.
 #     We suggest you set zeta_rad = 0 here.
-#		 	If you need non-zero zeta, you need to set egw_flag=True
+# 		 	If you need non-zero zeta, you need to set egw_flag=True
 iota_rad = beta_rad = Phic_rad = 0
 fMin = 20
 Mf_ref = 0.002
-waveform, dynamics = calculate_waveform_ep((m1, m2, 
-	chi1x, chi1y, chi1z, 
-	chi2x, chi2y, chi2z, 
-	e0, dL, 
-	zeta_rad, iota_rad, 
-  beta_rad, Phic_rad), fMin, Mf_ref = Mf_ref, srate=16384, is_coframe=False, egw_flag = False)
-
+waveform, dynamics = calculate_waveform_ep(
+    (
+        m1,
+        m2,
+        chi1x,
+        chi1y,
+        chi1z,
+        chi2x,
+        chi2y,
+        chi2z,
+        e0,
+        dL,
+        zeta_rad,
+        iota_rad,
+        beta_rad,
+        Phic_rad,
+    ),
+    fMin,
+    Mf_ref=Mf_ref,
+    srate=16384,
+    is_coframe=False,
+    egw_flag=False,
+)
 ```
 
 The waveform looks like
@@ -147,25 +270,25 @@ import matplotlib.pyplot as plt
 h22 = waveform.h22
 h21 = waveform.h21
 
-fig = plt.figure(figsize = (12, 6))
+fig = plt.figure(figsize=(12, 6))
 
 ax1 = fig.add_subplot(3, 1, 1)
 ax2 = fig.add_subplot(3, 1, 2)
 ax3 = fig.add_subplot(3, 1, 3)
 
 ax1.plot(h22.time, h22.real)
-ax1.set_ylabel(r'$\Re[h_{22}]$')
+ax1.set_ylabel(r"$\Re[h_{22}]$")
 
 ax2.plot(h21.time, h21.real)
-ax2.set_ylabel(r'$\Re[h_{21}]$')
+ax2.set_ylabel(r"$\Re[h_{21}]$")
 
 ax3.plot(h22.time, h22.amp)
 ax3.plot(h21.time, h21.amp)
-ax3.set_ylabel(r'${\rm Amp}[h_{2m}]$')
+ax3.set_ylabel(r"${\rm Amp}[h_{2m}]$")
 
-ax3.set_xlabel(r'$t[M]$')
+ax3.set_xlabel(r"$t[M]$")
 
-plt.savefig(pwd / 'example2.jpg',dpi = 200)
+plt.savefig(pwd / "example2.jpg", dpi=200)
 plt.show()
 ```
 

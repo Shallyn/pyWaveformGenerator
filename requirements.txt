@@ -1,0 +1,7 @@
+numpy
+scipy
+astropy
+gwpy
+pycbc
+ephem
+corner
