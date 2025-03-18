@@ -354,6 +354,7 @@ INT generate_waveform(pyInputParams_t *params, pyOutputStruct_t **output, pyDynO
     }
     set_egw_flag(params->egw_flag);
     SET_CODE_VERSION(params->code_version);
+    if (fabs(params->s1x) < 1e-6 && fabs(params->s1y) < 1e-6 && fabs(params->s2x) < 1e-6 && fabs(params->s2y) < 1e-6) params->prec_flag = 0;
     set_PrecFlag(params->prec_flag);
     if (params->risco > 0.0)
         SET_RISCO(params->risco);
