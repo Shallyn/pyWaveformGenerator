@@ -30,8 +30,10 @@ def normalize_spin_parameters(p):
 
     # Check for zero norms to avoid division by zero
     if norm1 == 0:
+        norm1 = 1
         raise ValueError("The norm of spin1 is zero. Cannot normalize a zero vector.")
     if norm2 == 0:
+        norm2 = 1
         raise ValueError("The norm of spin2 is zero. Cannot normalize a zero vector.")
 
     # Normalize spin vectors
